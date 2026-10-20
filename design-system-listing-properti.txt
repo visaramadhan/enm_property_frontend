@@ -1,0 +1,585 @@
+==============================================================================
+DESIGN SYSTEM - PLATFORM LISTING PROPERTI
+Versi 1.1 (integrasi referensi pola UI)
+==============================================================================
+
+Panduan referensi lengkap untuk implementasi antarmuka platform listing
+properti. Dokumen ini mencakup color palette, typography, komponen UI, layout
+grid, dan standar aksesibilitas untuk memastikan konsistensi visual dan
+pengalaman pengguna di seluruh platform.
+
+CATATAN VERSI 1.1
+- Bagian bertanda [BARU] adalah tambahan dari analisis pola UI Bali Villa Hub
+  (balivillahub.com) yang dipakai HANYA sebagai referensi pola/interaksi.
+- COLOR PALETTE TIDAK DIUBAH. Seluruh komponen baru memakai token warna
+  brand yang sudah ada. Tidak ada warna dari situs referensi yang dipakai
+  (termasuk hijau WhatsApp). Jangan menambah hex baru tanpa persetujuan brand.
+- Nilai ukuran/animasi pada bagian [BARU] adalah rekomendasi yang disesuaikan
+  dengan skala design system ini, bukan nilai asli situs referensi.
+- Tabel pada dokumen asli (Font Scale, varian Button, Form Elements, Sidebar,
+  Table, Modal, Toast, Example Token) tidak terbawa saat dokumen disalin.
+  Bagian tersebut ditandai [TABEL BELUM ADA] dan perlu dilengkapi.
+
+
+==============================================================================
+1. COLOR PALETTE  (TIDAK BERUBAH)
+==============================================================================
+
+Primary Colors
+- Canvas Background : #FBF9F6  (warm off-white)
+                      Digunakan sebagai background utama semua halaman
+- Button Primary    : #C85A32  (terracotta/burnt orange)
+                      CTA utama: Masuk, Bayar, Simpan, Daftar
+- Button Secondary  : #2E4A3E  (dark forest green)
+                      Aksi sekunder: Batal, Lihat Perjanjian, Simpan Draft
+- Accent/Tag        : #E2A03F  (golden amber)
+                      Badge, tag paket, highlight, notification dot
+
+Neutral Colors
+- Text Primary   : #1A1A1A  (near black)
+- Text Secondary : #6B7280  (gray-500)
+- Text Muted     : #9CA3AF  (gray-400)
+- Border         : #E5E7EB  (gray-200)
+- Card Background: #FFFFFF
+- Divider        : #F3F4F6  (gray-100)
+- Hover State    : #F9FAFB  (gray-50)
+
+Semantic Colors
+- Success      : #16A34A  (green-600)  pembayaran berhasil, status aktif
+- Warning      : #F59E0B  (amber-500)  alert masa berlaku, status pending
+- Error/Danger : #DC2626  (red-600)    validasi error, hapus, nonaktif
+- Info         : #2563EB  (blue-600)   tooltip, info badge
+
+[BARU] Aturan pemakaian warna pada komponen baru
+- Tombol kontak/hubungi (pengganti tombol WhatsApp hijau): Button Primary.
+- Tab/filter terpilih: Button Secondary, teks putih.
+- Efek hover tombol: gunakan filter: brightness(.94) atau (1.06), BUKAN hex
+  baru.
+- Overlay agar teks terbaca di atas foto: gradient dari rgba(26,26,26,.65)
+  (turunan Text Primary) ke transparan.
+- Bayangan (shadow): berbasis rgba(26,26,26, alpha) (turunan Text Primary).
+- Teks di atas Accent #E2A03F: gunakan Text Primary #1A1A1A (lihat catatan
+  kontras di bagian Accessibility).
+
+
+==============================================================================
+2. TYPOGRAPHY
+==============================================================================
+
+Font Family
+- Heading  : Inter (bold/semibold)
+- Body     : Inter (regular/medium)
+- Fallback : system-ui, -apple-system, sans-serif
+
+Font Scale
+[TABEL BELUM ADA - lengkapi: H1, H2, H3, Body, Small, Caption]
+
+[BARU] Angka & penomoran
+- Gunakan font-variant-numeric: tabular-nums untuk harga, statistik, dan
+  penomoran (01, 02, 03).
+- Harga: angka semibold, satuan ("/ bulan") regular dengan warna Text
+  Secondary dan ukuran lebih kecil.
+
+
+==============================================================================
+3. SPACING SYSTEM
+==============================================================================
+
+Berbasis 8px grid:
+- xs   : 4px
+- sm   : 8px
+- md   : 12px
+- base : 16px
+- lg   : 24px
+- xl   : 32px
+- 2xl  : 48px
+- 3xl  : 64px
+
+Spacing Khusus
+- Padding card                  : 24px
+- Gap antar kartu grid          : 24px
+- Margin section                : 48px
+- Padding halaman horizontal    : 64px (desktop), 16px (mobile)
+
+[BARU] Catatan konsistensi
+- "Padding card 24px" berlaku untuk card umum (panel, modal, form card).
+- Kartu properti memakai padding konten 16px (lihat bagian Cards). Ini
+  disengaja agar kartu listing lebih padat; jangan disamakan.
+
+
+==============================================================================
+4. BUTTONS
+==============================================================================
+
+Primary Button    [TABEL BELUM ADA]
+Secondary Button  [TABEL BELUM ADA]
+Outline Button    [TABEL BELUM ADA]
+Ghost Button      [TABEL BELUM ADA]
+Danger Button     [TABEL BELUM ADA]
+
+Spesifikasi Tambahan
+- Icon size dalam button : 20px
+- Gap icon dari text     : 8px
+- Minimum touch target   : 44x44px (mobile)
+
+[BARU] Interaksi tombol
+- Transisi: background, filter, transform, box-shadow selama 150ms.
+- Hover (hanya perangkat mouse): filter brightness(.94) pada Primary dan
+  Secondary.
+- Active/pressed: transform scale(.98).
+- Tombol kontak di kartu properti: lebar penuh, Primary, label "Hubungi".
+- Tombol di dalam kartu yang seluruhnya bisa diklik harus punya z-index di
+  atas link kartu (lihat bagian Cards).
+
+
+==============================================================================
+5. CARDS (KARTU PROPERTI)
+==============================================================================
+
+Struktur Kartu
+- Image aspect ratio : 16:9
+- Image border-radius: 12px (top corners)
+- Padding konten     : 16px
+- Badge paket        : background #E2A03F, color white, font-size 11px,
+                       padding 4px 8px, border-radius 4px
+- Tombol favorit     : position absolute (top-right image), size 36x36px,
+                       background white/70, backdrop-blur
+
+[BARU] Anatomi kartu (urutan dari atas)
+1. Media (gambar 16:9) dengan badge paket dan tombol favorit di atasnya.
+2. Avatar pengelola/agen (opsional): lingkaran 36px di kiri-bawah media,
+   border 2px putih, shadow-sm. Label kecil "Dikelola oleh" boleh
+   ditampilkan di samping avatar.
+3. Judul: 16px semibold, maksimal 2 baris (line-clamp: 2).
+4. Meta: "Lokasi - n kamar tidur", 14px, Text Secondary.
+5. Ketersediaan: "Tersedia mulai ..." 13px (Secondary green #2E4A3E).
+6. Harga: angka semibold + "/ bulan" Text Secondary.
+7. Chip periode (Bulanan / Tahunan): pill, border 1px #E5E7EB, 12px,
+   Text Secondary.
+8. Tombol kontak (Primary, lebar penuh).
+
+[BARU] Efek hover kartu (inti referensi: foto membesar)
+- Wrapper media WAJIB overflow: hidden dan memiliki border-radius; yang
+  di-scale adalah GAMBAR di dalamnya, bukan kartu atau wrapper.
+- Gambar: transform scale(1) -> scale(1.06) saat hover (rentang aman
+  1.04 - 1.08). Durasi 600ms, easing --ease-out.
+- Kartu: naik translateY(-4px) dan shadow berubah dari shadow-sm ke
+  shadow-lg, durasi 250ms.
+- Border kartu tetap #E5E7EB (tidak berubah warna saat hover).
+- Efek hanya aktif di perangkat dengan mouse:
+  @media (hover: hover) and (pointer: fine)
+  Di layar sentuh tidak ada zoom/lift.
+- Seluruh kartu dapat diklik (link overlay dengan position:absolute; inset:0;
+  z-index:1). Tombol favorit, chip, dan tombol kontak ber-z-index lebih
+  tinggi (2) agar tetap bisa diklik terpisah.
+- Keyboard: :focus-within pada kartu menampilkan ring 2px #C85A32,
+  offset 3px.
+- Placeholder saat gambar belum termuat: background Divider #F3F4F6.
+
+[BARU] Varian kartu compact ("Unggulan")
+- Padding konten 12px, tanpa chip dan tanpa tombol kontak.
+- Menampilkan badge verifikasi (pill) dan harga singkat.
+- Efek hover sama dengan kartu standar.
+
+CSS referensi kartu:
+
+  .property-card {
+    position: relative;
+    background: #FFFFFF;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 250ms var(--ease-out),
+                box-shadow 250ms var(--ease-out);
+  }
+  .property-card__link { position: absolute; inset: 0; z-index: 1; }
+  .property-card .btn,
+  .property-card .chip,
+  .property-card .btn-favorite { position: relative; z-index: 2; }
+
+  .property-card__media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 12px 12px 0 0;
+    background: #F3F4F6;
+  }
+  .property-card__media > img.cover {
+    width: 100%; height: 100%; object-fit: cover;
+    transform: scale(1);
+    transition: transform 600ms var(--ease-out);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .property-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
+    .property-card:hover .property-card__media > img.cover { transform: scale(1.06); }
+  }
+  .property-card:focus-within { outline: 2px solid #C85A32; outline-offset: 3px; }
+  .property-card__body { padding: 16px; display: grid; gap: 8px; }
+
+
+==============================================================================
+6. FORM ELEMENTS
+==============================================================================
+
+Input Field      [TABEL BELUM ADA]
+Label            [TABEL BELUM ADA]
+Textarea         [TABEL BELUM ADA]
+Select/Dropdown  Sama dengan input field, dengan chevron icon di kanan
+Checkbox         [TABEL BELUM ADA]
+File Upload Zone [TABEL BELUM ADA]
+
+[BARU] State interaksi field (berlaku untuk semua field)
+- Hover  : border-color tetap #E5E7EB, background Hover State #F9FAFB.
+- Focus  : border-color #C85A32 + ring 3px rgba(200,90,50,.20).
+- Error  : border-color #DC2626 + pesan error 12px #DC2626 di bawah field.
+- Transisi border-color dan box-shadow 150ms.
+
+
+==============================================================================
+7. NAVBAR
+==============================================================================
+
+Struktur
+- Logo area: left aligned
+- Menu items: font-size 14px, font-weight 500, color #2E4A3E,
+  hover color #C85A32
+- Active menu: color #C85A32, border-bottom 2px #C85A32
+- Mobile: hamburger menu dengan slide-in drawer dari kanan
+
+[BARU] Pola navbar listing
+- Urutan kanan: menu utama, switcher bahasa/mata uang (mis. "id - IDR"),
+  CTA utama (Primary, pill, mis. "Tambah Properti").
+- Switcher bahasa/mata uang: ghost button, border-radius 8px.
+
+
+==============================================================================
+8. SIDEBAR (DASHBOARD MITRA & ADMIN)
+==============================================================================
+
+Item Navigasi  [TABEL BELUM ADA]
+
+Area Khusus
+- Logo/brand area: padding 24px, border-bottom rgba(255,255,255,0.1)
+- Mobile: overlay drawer dengan backdrop blur
+
+
+==============================================================================
+9. TABLE
+==============================================================================
+
+Header  [TABEL BELUM ADA]
+Row     [TABEL BELUM ADA]
+
+Status Badge
+- Pill shape: border-radius 9999px, font-size 12px, padding 4px 12px
+- [TABEL VARIAN WARNA BELUM ADA]
+
+
+==============================================================================
+10. MODAL / DIALOG, TOAST / NOTIFICATION
+==============================================================================
+
+Modal/Dialog  [TABEL BELUM ADA]
+
+Toast/Notification
+- [TABEL BELUM ADA]
+- Variant:
+  Success : left border 4px #16A34A
+  Error   : left border 4px #DC2626
+  Warning : left border 4px #F59E0B
+
+
+==============================================================================
+11. KOMPONEN LAIN  [BARU]
+==============================================================================
+
+Semua komponen di bagian ini memakai token yang sudah ada.
+
+11.1 Search Bar (pencarian listing)
+- Container: background #FFFFFF, border 1px #E5E7EB, border-radius 16px,
+  shadow-md, padding 16px.
+- Tab tipe properti (mis. Villa / Guest House / Kamar / Dijual):
+  pill (9999px), padding 8px 16px, 14px medium.
+  Default : transparan, teks Text Secondary, hover bg #F9FAFB.
+  Terpilih: bg #2E4A3E, teks putih.
+- Field filter (Lokasi, Kamar Tidur, Harga): ikuti state Form Elements,
+  border-radius 8px, label kecil 12px Text Secondary di atas nilai.
+- Tombol Cari: Primary. Tombol "Filter Lanjutan": Outline atau Ghost.
+- Layout desktop: 3 field + tombol dalam 1 baris. Mobile: 1 kolom.
+
+11.2 Logo Marquee ("Dipercaya oleh ...")
+- Daftar logo diduplikasi 2x di markup, track digeser translateX(-50%)
+  untuk loop tanpa putus, linear, durasi 30 - 40 detik.
+- Logo tinggi 40px, grayscale, opacity .7; hover: warna asli, opacity 1.
+- Pause animasi saat hover container.
+- Fade di tepi kiri/kanan dengan mask-image gradient.
+- Wajib: nonaktif saat prefers-reduced-motion (logo ditampilkan statis,
+  boleh wrap).
+- Duplikat markup diberi aria-hidden="true".
+
+  .marquee { overflow: hidden;
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+  .marquee__track { display: flex; gap: 48px; width: max-content;
+    animation: marquee 35s linear infinite; }
+  .marquee:hover .marquee__track { animation-play-state: paused; }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+
+11.3 Tile Area & Durasi (kartu gambar klik penuh)
+- Rasio 4:3, border-radius 16px (Large), overflow hidden.
+- Gambar full-bleed + gradient overlay dari bawah (rgba(26,26,26,.65)).
+- Label putih semibold di kiri-bawah, padding 24px.
+- Hover (mouse): gambar scale(1.08) 700ms; teks "Lihat listing" muncul
+  (opacity 0 -> 1, translateY 6px -> 0, 250ms).
+- Di layar sentuh teks "Lihat listing" selalu tampil.
+
+11.4 FAQ Accordion
+- Pakai elemen <details>/<summary>.
+- Penomoran 01, 02, ... di kiri (tabular-nums, Text Muted).
+- Ikon "+" di kanan; saat terbuka berputar 45 derajat (250ms).
+- Separator border-bottom 1px #E5E7EB. Padding vertikal 20px.
+- Jawaban max-width 70ch, warna Text Secondary.
+
+11.5 Testimonial Card
+- Lebar 360px (maks 85vw), padding 24px, border 1px #E5E7EB,
+  border-radius 12px, background #FFFFFF.
+- Author: avatar bulat 40px (inisial atau logo) + nama semibold +
+  peran (Agen / Penyewa) 12px Text Secondary.
+- Boleh ditampilkan sebagai marquee (aturan sama seperti 11.2) atau
+  carousel scroll-snap.
+
+11.6 Langkah Bernomor ("Cara kerja")
+- Angka 01 / 02 / 03: 14px semibold, tabular-nums, warna #C85A32,
+  letter-spacing .04em.
+- Judul langkah: H3. Deskripsi: Body, Text Secondary.
+- Desktop 3 kolom, mobile 1 kolom, gap 24px.
+
+11.7 Stat Hero
+- Angka besar semibold (mis. "100+") + caption 14px Text Secondary.
+- Dipisah divider vertikal 1px #E5E7EB di desktop.
+
+11.8 Perbandingan 2 kolom ("Cara lama" vs "Cara kami")
+- Dua card sejajar, border-radius 12px.
+- Daftar poin: ikon silang (Error #DC2626) vs centang (Success #16A34A),
+  ikon 20px, gap 8px.
+
+
+==============================================================================
+12. LAYOUT GRID
+==============================================================================
+
+- Max content width: 1280px (centered)
+- Grid: 12 column, gap 24px
+- Breakpoints:
+  Mobile : 0 - 640px
+  Tablet : 641 - 1024px
+  Desktop: 1025px+
+- Katalog grid: 3 kolom (desktop), 2 kolom (tablet), 1 kolom (mobile)
+- Dashboard: sidebar 260px + main content fluid
+
+[BARU] Pola grid
+- Grid kartu fleksibel:
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;
+  (alternatif otomatis dari aturan 3/2/1 kolom di atas)
+- Grid area (11.3): 3 kolom desktop, 2 tablet, 1-2 mobile.
+
+
+==============================================================================
+13. BORDER RADIUS SCALE
+==============================================================================
+
+- Small  (input, badge)       : 4 - 8px
+- Medium (card, button)       : 8 - 12px
+- Large  (modal, panel)       : 16px
+- Full   (avatar, pill badge) : 9999px
+
+[BARU] Pemetaan komponen baru ke skala
+- Kartu properti & testimonial : 12px
+- Gambar kartu (sudut atas)    : 12px
+- Tile area/durasi, search bar : 16px (Large)
+- Tab, chip, avatar, badge     : 9999px
+- Field filter                 : 8px
+- Jangan membuat nilai radius di luar skala ini.
+
+
+==============================================================================
+14. SHADOW SCALE  [BARU - tabel asli belum ada]
+==============================================================================
+
+- shadow-sm : 0 1px 2px rgba(26,26,26,.06)
+              avatar, badge, kartu default
+- shadow-md : 0 6px 20px rgba(26,26,26,.08)
+              search bar, dropdown, popover
+- shadow-lg : 0 14px 40px rgba(26,26,26,.14)
+              kartu saat hover, modal
+Semua bayangan berbasis Text Primary (#1A1A1A) agar selaras dengan brand.
+
+
+==============================================================================
+15. ICON SYSTEM
+==============================================================================
+
+- Library: Lucide Icons atau Heroicons
+- Size: 16px (small), 20px (default), 24px (large)
+- Stroke width: 1.5px
+- Color: inherit dari parent text color
+
+
+==============================================================================
+16. ANIMATION & TRANSITIONS  [BARU - tabel asli belum ada]
+==============================================================================
+
+Durasi
+- fast : 150ms  (warna, border, fokus, tombol)
+- base : 250ms  (hover kartu, muncul teks, accordion)
+- slow : 600 - 700ms (zoom gambar)
+
+Easing
+- --ease-out: cubic-bezier(.22, .61, .36, 1)
+
+Aturan
+- Animasikan hanya transform dan opacity (ringan untuk GPU). Hindari
+  animasi width, height, top, left.
+- Scale gambar hover maksimal 1.08.
+- Efek hover hanya di (hover: hover) and (pointer: fine).
+- Hormati preferensi pengguna:
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition-duration: .01ms !important;
+    }
+    .property-card:hover,
+    .property-card:hover img.cover { transform: none; }
+  }
+
+
+==============================================================================
+17. GAMBAR & PERFORMA  [BARU]
+==============================================================================
+
+- Format WebP. Sediakan beberapa lebar (mis. 256, 384, 768) dan pakai
+  srcset + sizes.
+- Selalu set width/height atau aspect-ratio agar tidak terjadi layout shift.
+- loading="lazy" dan decoding="async" untuk gambar di bawah layar pertama.
+  Gambar hero/LCP: tanpa lazy, tambahkan fetchpriority="high".
+- object-fit: cover untuk semua gambar kartu.
+
+  <img src="villa-768.webp"
+       srcset="villa-256.webp 256w, villa-384.webp 384w, villa-768.webp 768w"
+       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+       width="768" height="432" loading="lazy" decoding="async" alt="...">
+
+
+==============================================================================
+18. RESPONSIVE RULES
+==============================================================================
+
+- Mobile first approach
+- Touch target minimum: 44x44px
+- Font tidak lebih kecil dari 12px di mobile
+- Sidebar collapse di tablet, drawer di mobile
+- Tabel scroll horizontal di mobile
+- Kartu properti stack vertikal di mobile
+
+[BARU]
+- Tanpa efek hover zoom/lift di layar sentuh.
+- Marquee tetap berjalan di mobile kecuali prefers-reduced-motion aktif.
+- Search bar: field ditumpuk 1 kolom di mobile, tombol Cari lebar penuh.
+
+
+==============================================================================
+19. ACCESSIBILITY
+==============================================================================
+
+- Color contrast ratio minimum: 4.5:1 (WCAG AA)
+- Focus visible ring: 2px offset, #C85A32
+- ARIA labels pada semua icon-only button
+- Skip navigation link tersedia
+- Keyboard navigable pada semua interactive elements
+
+[BARU] Tambahan
+- Kartu yang seluruhnya klik: link overlay wajib punya aria-label atau teks
+  tersembunyi (nama properti).
+- Konten marquee duplikat: aria-hidden="true". Sediakan versi statis untuk
+  prefers-reduced-motion.
+- Teks di atas foto harus melewati gradient overlay agar kontras terjaga.
+- Accordion memakai <details>/<summary> (keyboard-friendly secara bawaan).
+
+[CATATAN KONTRAS - perlu keputusan tim, warna tidak diubah]
+Hasil hitung perkiraan rasio kontras dari spesifikasi saat ini:
+- Teks putih di atas Accent #E2A03F (badge paket): sekitar 2.3:1.
+  Di bawah 4.5:1. Rekomendasi: ganti warna TEKS badge menjadi #1A1A1A
+  (sekitar 7.7:1), warna background tetap #E2A03F.
+- Teks putih di atas Primary #C85A32: sekitar 4.2:1. Sedikit di bawah
+  4.5:1 untuk teks kecil. Rekomendasi: label tombol Primary minimal 14px
+  bold atau 16px semibold (masuk kategori large/bold text), dan hindari
+  teks kecil reguler di atas Primary.
+- #C85A32 sebagai teks di atas Canvas #FBF9F6: sekitar 4.0:1. Pakai untuk
+  teks bold/besar (angka langkah, menu aktif 14px medium perlu dicek).
+Rasio di atas adalah estimasi; verifikasi dengan tool kontras sebelum rilis.
+
+
+==============================================================================
+20. NAMING CONVENTION
+==============================================================================
+
+CSS/Tailwind Classes
+- Gunakan BEM atau Tailwind utility classes
+- Color tokens: primary, secondary, accent, neutral, success, warning,
+  error, info
+- Spacing: gunakan 8px grid (space-1=4px, space-2=8px, dst)
+
+[BARU] Penamaan komponen baru (BEM)
+- property-card, property-card__media, property-card__body
+- search, search__tab, search__field
+- marquee, marquee__track
+- tile, tile__label, tile__cta
+- faq-item, faq-item__answer
+- testimonial, testimonial__author
+
+Contoh Token (CSS variables, berbasis palette brand)
+
+  :root {
+    /* Color - TIDAK BERUBAH */
+    --color-canvas:     #FBF9F6;
+    --color-primary:    #C85A32;
+    --color-secondary:  #2E4A3E;
+    --color-accent:     #E2A03F;
+    --color-text:       #1A1A1A;
+    --color-text-2:     #6B7280;
+    --color-text-muted: #9CA3AF;
+    --color-border:     #E5E7EB;
+    --color-card:       #FFFFFF;
+    --color-divider:    #F3F4F6;
+    --color-hover:      #F9FAFB;
+    --color-success:    #16A34A;
+    --color-warning:    #F59E0B;
+    --color-error:      #DC2626;
+    --color-info:       #2563EB;
+
+    /* Radius */
+    --radius-sm:   8px;
+    --radius-md:   12px;
+    --radius-lg:   16px;
+    --radius-full: 9999px;
+
+    /* Spacing (8px grid) */
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+    --space-6: 24px; --space-8: 32px; --space-12: 48px; --space-16: 64px;
+
+    /* Shadow [BARU] */
+    --shadow-sm: 0 1px 2px  rgba(26,26,26,.06);
+    --shadow-md: 0 6px 20px rgba(26,26,26,.08);
+    --shadow-lg: 0 14px 40px rgba(26,26,26,.14);
+
+    /* Motion [BARU] */
+    --ease-out:  cubic-bezier(.22, .61, .36, 1);
+    --dur-fast:  150ms;
+    --dur-base:  250ms;
+    --dur-slow:  600ms;
+  }
+
+==============================================================================
+AKHIR DOKUMEN
+==============================================================================

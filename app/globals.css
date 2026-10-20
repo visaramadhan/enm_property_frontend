@@ -1,26 +1,87 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ==========================================================================
+   DESIGN TOKEN - PLATFORM LISTING PROPERTI
+   Sumber: design-system-listing-properti.txt (v1.1)
+   Jangan menambah hex baru tanpa persetujuan brand.
+   ========================================================================== */
+
+@theme {
+  /* --- Color Palette -------------------------------- */
+  --color-canvas: #fbf9f6;
+  --color-surface: #ffffff;
+
+  --color-primary: #c85a32;
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #2e4a3e;
+  --color-secondary-foreground: #ffffff;
+
+  --color-accent: #e2a03f;
+  --color-accent-foreground: #1a1a1a; /* kontras 7.7:1, lihat catatan aksesibilitas */
+
+  --color-ink: #1a1a1a;
+  --color-ink-muted: #6b7280;
+  --color-ink-subtle: #9ca3af;
+
+  --color-line: #e5e7eb;
+  --color-divider: #f3f4f6;
+  --color-hover: #f9fafb;
+
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  /* --- Radius Scale --------------------------------- */
+  --radius-field: 8px; /* input, badge besar, field filter */
+  --radius-card: 12px; /* card, button, gambar kartu */
+  --radius-panel: 16px; /* modal, panel, search bar */
+
+  /* --- Shadow Scale (berbasis Text Primary) --------- */
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.06);
+  --shadow-md: 0 6px 20px rgba(26, 26, 26, 0.08);
+  --shadow-lg: 0 14px 40px rgba(26, 26, 26, 0.14);
+
+  /* --- Motion --------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --default-transition-duration: 150ms;
+
+  /* --- Typography ----------------------------------- */
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+
+  /* Focus visible: ring 2px offset, #C85A32 (bagian 19) */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Angka & penomoran: harga, statistik, penomoran (bagian 2) */
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Bagian 16 - hormati preferensi pengguna */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
