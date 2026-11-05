@@ -1,12 +1,21 @@
 const SNAP_SANDBOX_URL = "https://app.sandbox.midtrans.com/snap/snap.js";
 const SNAP_PRODUCTION_URL = "https://app.midtrans.com/snap/snap.js";
 
+/**
+ * Prefiks client key yang menandakan lingkungan non-produksi.
+ *
+ * `SB-` adalah prefiks sandbox Midtrans standar, sedangkan `VT-` dipakai
+ * kredensial simulator proyek ini. Keduanya harus memuat snap.js sandbox agar
+ * tidak pernah mengirim transaksi uji ke gateway produksi.
+ */
+const PREFIKS_NON_PRODUKSI = ["SB-", "VT-"];
+
 let snapPromise: Promise<Snap> | null = null;
 
 function snapScriptUrl() {
   const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ?? "";
-  const isProduction = !clientKey.startsWith("SB-");
-  return isProduction ? SNAP_PRODUCTION_URL : SNAP_SANDBOX_URL;
+  const nonProduksi = PREFIKS_NON_PRODUKSI.some((prefiks) => clientKey.startsWith(prefiks));
+  return nonProduksi ? SNAP_SANDBOX_URL : SNAP_PRODUCTION_URL;
 }
 
 /**

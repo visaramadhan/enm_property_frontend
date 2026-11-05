@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Bell, ChevronDown, LogOut, Menu, Search, Settings, UserCog } from "lucide-react";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { PageTransition } from "@/components/layout/page-transition";
+import { useAuth } from "@/components/providers/auth-provider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +20,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { cariJudulHalaman, dashboardMeta, type DashboardRole } from "@/lib/navigation";
+import { LABEL_PERAN } from "@/lib/enum";
 import { formatTanggalWib } from "@/lib/format";
+import {
+  cariJudulHalaman,
+  dashboardMeta,
+  navTerlihat,
+  type DashboardRole,
+} from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import type { Role } from "@/types/api";
 
 const subscribeTanggal = () => () => {};
 
@@ -36,42 +45,65 @@ function useTanggalWib() {
   );
 }
 
-/* Bagian 8 - Sidebar (Dashboard Mitra & Admin) */
+/** Membentuk inisial dari nama pengguna, contoh: "Budi Santoso" -> "BS". */
+function inisialDari(nama: string) {
+  const bagian = nama.trim().split(/\s+/).filter(Boolean);
+  if (bagian.length === 0) return "EN";
+  if (bagian.length === 1) return bagian[0].slice(0, 2).toUpperCase();
+  return `${bagian[0][0]}${bagian[bagian.length - 1][0]}`.toUpperCase();
+}
+
+type Identitas = {
+  nama: string;
+  email: string;
+  inisial: string;
+  avatarUrl?: string;
+  label: string;
+};
+
+/* Bagian 8.3 - Sidebar dashboard 248 putih (nav item sesuai 7.12) */
 function SidebarContent({
   role,
   pathname,
+  identitas,
+  peranAktif,
   onNavigate,
 }: {
   role: DashboardRole;
   pathname: string;
+  identitas: Identitas;
+  peranAktif?: Role;
   onNavigate?: () => void;
 }) {
   const meta = dashboardMeta[role];
+  const sections = navTerlihat(role, peranAktif);
 
   return (
     <>
-      {/* Logo/brand area: padding 24px, border-bottom rgba(255,255,255,.1) */}
+      {/* Brand area: penanda kotak + wordmark + sub portal */}
       <Link
         href={`/${role}`}
         onClick={onNavigate}
-        className="flex items-center gap-3 border-b border-white/10 p-6"
+        className="flex items-center gap-3 border-b border-line px-5 py-[18px]"
       >
-        <span className="grid size-10 shrink-0 place-items-center rounded-field bg-primary text-sm font-bold text-primary-foreground">
-          EN
+        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-secondary text-[12px] font-extrabold text-secondary-foreground">
+          ENM
         </span>
         <span className="flex min-w-0 flex-col">
-          <span className="truncate text-sm font-semibold text-secondary-foreground">
+          <span className="truncate text-sm font-extrabold tracking-tight text-ink">
             {meta.brand}
           </span>
-          <span className="truncate text-xs text-secondary-foreground/60">{meta.brandTagline}</span>
+          <span className="truncate text-[10px] font-semibold tracking-[0.145em] text-ink-subtle uppercase">
+            {meta.brandTagline}
+          </span>
         </span>
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-6 overflow-y-auto p-4">
-        {meta.nav.map((section) => (
-          <div key={section.label ?? "utama"} className="flex flex-col gap-1">
+      <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4">
+        {sections.map((section) => (
+          <div key={section.label ?? "utama"} className="flex flex-col gap-0.5">
             {section.label ? (
-              <p className="px-3 pb-1 text-[11px] font-medium uppercase tracking-wider text-secondary-foreground/50">
+              <p className="px-[11px] pt-[14px] pb-2 text-[10px] font-bold tracking-[0.145em] text-ink-subtle uppercase">
                 {section.label}
               </p>
             ) : null}
@@ -86,24 +118,23 @@ function SidebarContent({
                   onClick={onNavigate}
                   aria-current={aktif ? "page" : undefined}
                   className={cn(
-                    "flex h-11 items-center gap-3 rounded-field px-3 text-sm font-medium transition-colors duration-150 ease-out",
+                    "relative flex h-11 items-center gap-[11px] rounded-sm px-3 text-xs font-medium transition-colors duration-150 ease-out",
                     aktif
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-secondary-foreground/80 hover:bg-white/10 hover:text-secondary-foreground",
+                      ? "bg-secondary-tint font-bold text-secondary"
+                      : "text-nav-ink hover:bg-hover hover:text-ink",
                   )}
                 >
-                  <item.icon className="size-5 shrink-0" aria-hidden="true" />
-                  <span className="truncate">{item.label}</span>
-                  {item.badge ? (
+                  {aktif ? (
                     <span
-                      className={cn(
-                        "ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium",
-                        aktif ? "bg-white/20 text-primary-foreground" : "bg-white/10 text-secondary-foreground/80",
-                      )}
-                    >
-                      {item.badge}
-                    </span>
+                      aria-hidden="true"
+                      className="absolute inset-y-[9px] left-0 w-[3px] rounded-r-[3px] bg-primary"
+                    />
                   ) : null}
+                  <item.icon
+                    className={cn("size-[17px] shrink-0", aktif ? "text-secondary" : "text-icon-muted")}
+                    aria-hidden="true"
+                  />
+                  <span className="truncate">{item.label}</span>
                 </Link>
               );
             })}
@@ -111,18 +142,15 @@ function SidebarContent({
         ))}
       </nav>
 
-      <div className="border-t border-white/10 p-4">
-        <div className="flex items-center gap-3 rounded-field bg-white/5 p-3">
+      <div className="border-t border-line p-3">
+        <div className="flex items-center gap-3 rounded-sm bg-canvas p-3">
           <Avatar size="sm">
-            <AvatarFallback>{meta.user.inisial}</AvatarFallback>
+            {identitas.avatarUrl ? <AvatarImage src={identitas.avatarUrl} alt="" /> : null}
+            <AvatarFallback>{identitas.inisial}</AvatarFallback>
           </Avatar>
           <div className="flex min-w-0 flex-col">
-            <span className="truncate text-[13px] font-medium text-secondary-foreground">
-              {meta.user.nama}
-            </span>
-            <span className="truncate text-[11px] text-secondary-foreground/60">
-              {meta.user.email}
-            </span>
+            <span className="truncate text-[12px] font-semibold text-ink">{identitas.nama}</span>
+            <span className="truncate text-[11px] text-ink-muted">{identitas.email}</span>
           </div>
         </div>
       </div>
@@ -138,30 +166,33 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const tanggalWib = useTanggalWib();
+  const { pengguna, keluar } = useAuth();
   const meta = dashboardMeta[role];
   const judul = cariJudulHalaman(role, pathname);
 
-  async function handleKeluar() {
-    try {
-      const [{ signOut }, { getFirebaseAuth }] = await Promise.all([
-        import("firebase/auth"),
-        import("@/lib/firebase/client"),
-      ]);
-      await signOut(getFirebaseAuth());
-    } catch {
-      // Firebase belum dikonfigurasi - pengguna tetap diarahkan ke halaman login.
-    }
-    router.push("/login");
-  }
+  const identitas = React.useMemo<Identitas>(() => {
+    const nama = pengguna?.name ?? meta.roleLabel;
+    return {
+      nama,
+      email: pengguna?.email ?? "",
+      inisial: inisialDari(nama),
+      avatarUrl: pengguna?.avatar_url || undefined,
+      label: pengguna?.role_label || (pengguna ? LABEL_PERAN[pengguna.role] : meta.roleLabel),
+    };
+  }, [pengguna, meta.roleLabel]);
 
   return (
-    <div className="flex min-h-screen bg-canvas">
-      {/* Sidebar desktop: 260px (bagian 12) */}
-      <aside className="sticky top-0 hidden h-screen w-[260px] shrink-0 flex-col bg-secondary lg:flex">
-        <SidebarContent role={role} pathname={pathname} />
+    <div data-density="compact" className="flex min-h-screen bg-canvas">
+      {/* Sidebar desktop: 248px (bagian 4/8.3) */}
+      <aside className="sticky top-0 hidden h-screen w-[248px] shrink-0 flex-col border-r border-line bg-surface lg:flex">
+        <SidebarContent
+          role={role}
+          pathname={pathname}
+          identitas={identitas}
+          peranAktif={pengguna?.role}
+        />
       </aside>
 
       {/* Drawer mobile dengan backdrop blur (bagian 8) */}
@@ -172,6 +203,8 @@ export function DashboardShell({
             <SidebarContent
               role={role}
               pathname={pathname}
+              identitas={identitas}
+              peranAktif={pengguna?.role}
               onNavigate={() => setDrawerOpen(false)}
             />
           </div>
@@ -179,7 +212,8 @@ export function DashboardShell({
       </Sheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-surface/95 px-4 backdrop-blur lg:px-8">
+        {/* Topbar 66px (bagian 8.3) */}
+        <header className="sticky top-0 z-30 flex h-[66px] items-center gap-3 border-b border-line bg-surface/96 px-4 backdrop-blur lg:px-8">
           <Button
             variant="ghost"
             size="icon"
@@ -219,16 +253,17 @@ export function DashboardShell({
                 <button
                   type="button"
                   aria-label="Menu akun"
-                  className="flex items-center gap-2 rounded-field p-1 pr-2 transition-colors duration-150 ease-out hover:bg-hover"
+                  className="flex items-center gap-2 rounded-sm p-1 pr-2 transition-colors duration-150 ease-out hover:bg-hover"
                 >
                   <Avatar size="sm">
-                    <AvatarFallback>{meta.user.inisial}</AvatarFallback>
+                    {identitas.avatarUrl ? <AvatarImage src={identitas.avatarUrl} alt="" /> : null}
+                    <AvatarFallback>{identitas.inisial}</AvatarFallback>
                   </Avatar>
                   <span className="hidden flex-col items-start md:flex">
                     <span className="text-[13px] font-medium leading-tight text-ink">
-                      {meta.user.nama}
+                      {identitas.nama}
                     </span>
-                    <span className="text-[11px] text-ink-muted">{meta.roleLabel}</span>
+                    <span className="text-[11px] text-ink-muted">{identitas.label}</span>
                   </span>
                   <ChevronDown className="size-4 text-ink-subtle" aria-hidden="true" />
                 </button>
@@ -237,23 +272,29 @@ export function DashboardShell({
               <DropdownMenuContent align="end" className="w-64">
                 <DropdownMenuLabel>Masuk sebagai</DropdownMenuLabel>
                 <div className="px-3 pb-1">
-                  <p className="truncate text-sm font-medium text-ink">{meta.user.nama}</p>
-                  <p className="truncate text-xs text-ink-muted">{meta.user.email}</p>
+                  <p className="truncate text-sm font-medium text-ink">{identitas.nama}</p>
+                  <p className="truncate text-xs text-ink-muted">{identitas.email}</p>
                 </div>
                 <div className="px-3 pb-2">
-                  <Badge variant="accent">{meta.roleLabel}</Badge>
+                  <Badge variant="accent">{identitas.label}</Badge>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <UserCog />
-                  Profil Saya
+                <DropdownMenuItem asChild>
+                  <Link href={`/${role}/profil`}>
+                    <UserCog />
+                    Profil Saya
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings />
-                  Pengaturan
-                </DropdownMenuItem>
+                {pengguna?.role === "superadmin" ? (
+                  <DropdownMenuItem asChild>
+                    <Link href="/admin/pengaturan">
+                      <Settings />
+                      Pengaturan
+                    </Link>
+                  </DropdownMenuItem>
+                ) : null}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="danger" onSelect={handleKeluar}>
+                <DropdownMenuItem variant="danger" onSelect={() => void keluar()}>
                   <LogOut />
                   Keluar
                 </DropdownMenuItem>
@@ -262,9 +303,11 @@ export function DashboardShell({
           </div>
         </header>
 
-        {/* Main content: max 1280px centered (bagian 12) */}
-        <main className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
-          <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6">{children}</div>
+        {/* Konten dashboard: maks 1500px (bagian 4/8.3) */}
+        <main className="flex-1 px-4 py-[30px] lg:px-8 xl:px-11">
+          <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6">
+            <PageTransition>{children}</PageTransition>
+          </div>
         </main>
       </div>
     </div>

@@ -1,0 +1,630 @@
+==============================================================================
+DESIGN SYSTEM - ENM PROPERTY (Platform Listing Properti)
+Versi 1.3 - disinkronkan dengan layar Figma + arsitektur komponen OOP
+==============================================================================
+
+SUMBER KEBENARAN
+1. Layar Figma ENM Property (Dashboard Mitra, Daftar Properti, Tambah
+   Properti, Login, Profil, Auth Action, Checkout Free, Status Pembayaran).
+2. Dokumen design system v1.0 (palette brand).
+3. Referensi Bali Villa Hub: HANYA inspirasi pola, tidak mengikat. Bila
+   bertentangan dengan layar ENM, layar ENM yang menang.
+
+ATURAN TETAP
+- Color palette brand tidak diubah (Bagian 2.1).
+- Jangan menyalin CSS Figma mentah ke produksi (lihat Bagian 12).
+
+------------------------------------------------------------------------------
+DAFTAR PERUBAHAN V1.2 -> V1.3
+------------------------------------------------------------------------------
+Layar Figma ENM berbeda dari asumsi v1.2 yang diambil dari situs referensi.
+Karena layar ENM adalah sumber kebenaran, nilai berikut DIKEMBALIKAN:
+
+  Item                     v1.2 (referensi)       v1.3 (layar ENM)
+  -----------------------  ---------------------  ---------------------------
+  Font heading             Playfair Display       Inter (semua layar)
+  Radius tombol            9999px (pill)          8px
+  Radius panel/kartu       16px                   16px (panel), 12px (kompak)
+  Tinggi tombol/input      56px                   sm 36 / md 44 / lg 48
+  Shadow                   rgba(0,0,0) xl/2xl     rgba(26,26,26) sm/md/lg
+  Sidebar dashboard        260px                  248px (layar terbaru)
+  Komponen situs referensi 11.x aktif             dipindah ke Backlog (YAGNI)
+
+Tambahan baru: arsitektur komponen (Bagian 1), token tint turunan (2.2),
+katalog komponen dari layar (Bagian 7), template halaman (Bagian 8),
+cetak biru kode (Bagian 9), audit konsistensi (Bagian 11).
+
+
+==============================================================================
+1. ARSITEKTUR KOMPONEN & PRINSIP KODE
+==============================================================================
+
+Tujuan: setiap pola UI didefinisikan SEKALI, dipakai berkali-kali.
+"OOP" di UI = enkapsulasi + komposisi (bukan pewarisan berlapis).
+
+1.1 Lapisan (dependensi satu arah ke bawah)
+
+  app/        route & halaman (menyusun feature + shell)
+    -> features/   logika domain (listing, auth, checkout, profil)
+      -> patterns/ komposit lintas-fitur (StatusScreen, PageHeading, Shell)
+        -> ui/     atom & molekul murni (Button, Field, Badge, Card, ...)
+          -> tokens/  CSS variables (warna, radius, shadow, tipografi)
+
+  lib/ (format.ts: rupiah, tanggal) dipakai semua lapisan, tanpa UI.
+  Aturan: lapisan bawah TIDAK boleh mengimpor lapisan atas.
+
+1.2 Pemetaan prinsip -> aturan konkret di sistem ini
+
+  KISS      Satu komponen = satu tugas jelas. Varian secukupnya
+            (primary, secondary, outline, quiet) - tidak ada varian
+            "jaga-jaga".
+  YAGNI     Hanya bangun yang SUDAH muncul di layar Figma. Pola yang baru
+            muncul 1x (Stepper, Segmented, Switch, UploadZone, Pagination)
+            tetap lokal di fitur pemakainya. Komponen situs referensi
+            (marquee, testimonial, FAQ, dll) ada di Backlog, tidak dibuat.
+  WET       (Write Everything Twice) Toleransi duplikasi sekali;
+            abstraksikan saat salinan ke-2/ke-3 muncul (Rule of Three).
+            Tabel keputusan di 1.3. Token tetap DRY: nilai warna/radius
+            hanya ditulis di tokens/.
+  SoC       Pisahkan: tampilan (ui/), komposisi (patterns/), domain
+            (features/), data/format (lib/, hooks). Komponen UI tidak
+            memanggil API.
+  SRP       Satu alasan berubah per komponen. Button hanya merender tombol;
+            PropertyTable hanya merender baris; format rupiah ada di lib/.
+  OCP       Tambah varian/kolom/status = tambah ENTRI KONFIG, bukan
+            mengubah logika komponen (lihat StatusBadge & DataTable).
+  LSP       Semua varian Button (dan LinkButton) memakai kontrak props yang
+            sama sehingga dapat saling menggantikan tanpa merusak layout.
+  ISP       Props kecil dan spesifik (Labelled, WithHint, WithError) -
+            jangan satu FieldProps raksasa yang dipaksakan ke semua.
+  DIP       Komponen UI bergantung pada ABSTRAKSI (peta status, kolom,
+            token), bukan pada data domain. Domain "ListingStatus" meng-
+            injeksi konfigurasinya ke StatusBadge.
+  Clean Code Nama jelas (BEM/PascalCase), fungsi kecil, tanpa angka ajaib
+            (pakai token), tanpa komentar yang mengulang kode.
+  Boy Scout Setiap menyentuh layar/komponen, rapikan sedikit: gabungkan
+            hex mirip, hapus artefak Figma, naikkan teks <10px.
+  Refactoring Lakukan bertahap dengan tabel konsolidasi (2.3, 5.2) sebagai
+            checklist; satu PR = satu jenis perapian.
+
+1.3 Keputusan abstraksi (berdasarkan jumlah pemakaian di Figma)
+
+  Pola                         Muncul  Keputusan
+  ---------------------------  ------  -------------------------------------
+  Button                       semua   KOMPONEN (ui/)
+  Brand (logo + wordmark)      8       KOMPONEN
+  Eyebrow (garis + label)      8       KOMPONEN
+  Notice (kotak info/peringatan) 8+    KOMPONEN
+  Field (label+input+hint)     5 layar KOMPONEN
+  Card + CardHeader            semua   KOMPONEN
+  IconBox (kotak ikon tint)    10+     KOMPONEN
+  StatusBadge / Pill           6+      KOMPONEN
+  DefinitionRow (label:nilai)  5 layar KOMPONEN
+  NavItem + SidebarSection     3       KOMPONEN
+  Avatar                       6       KOMPONEN
+  Breadcrumb                   4       KOMPONEN
+  AppFooter                    semua   KOMPONEN
+  StatusScreen (ikon+judul+aksi) 7     PATTERN
+  DataTable                    2       TUNGGU: abstraksikan saat tabel ke-3
+                                       (Admin/Paket) dibuat
+  Stepper                      1       LOKAL di checkout
+  SegmentedControl             1       LOKAL di form properti
+  Switch, UploadZone           1 / 1   LOKAL di form properti
+  Pagination, StatusTabs       1 / 1   LOKAL di Daftar Properti
+
+
+==============================================================================
+2. COLOR
+==============================================================================
+
+2.1 Palette brand  (TIDAK BERUBAH)
+
+Primary Colors
+- Canvas Background : #FBF9F6   (Spring Wood)
+- Button Primary    : #C85A32   (Tuscany)   CTA utama
+- Button Secondary  : #2E4A3E   (Stromboli) aksi sekunder, nav aktif
+- Accent/Tag        : #E2A03F   (Anzac)     badge, highlight, notifikasi
+
+Neutral
+- Text Primary   : #1A1A1A  (Cod Gray)
+- Text Secondary : #6B7280  (Pale Sky)
+- Text Muted     : #9CA3AF  (Gray Chateau)
+- Border         : #E5E7EB  (Athens Gray)
+- Card Background: #FFFFFF
+- Divider        : #F3F4F6
+- Hover State    : #F9FAFB   (juga dipakai sebagai surface subtle)
+
+Semantic
+- Success #16A34A | Warning #F59E0B | Error #DC2626 | Info #2563EB
+
+2.2 Token tint turunan  [BARU - sudah dipakai di layar Figma]
+
+Tint adalah versi terang/gelap dari warna brand untuk latar badge, kotak
+ikon, dan notice. Jumlah dibatasi (hasil konsolidasi ~60 hex mirip).
+
+  Token                       Hex      Dipakai untuk
+  --------------------------  -------  ------------------------------------
+  --color-primary-tint        #F8EDE7  avatar, nomor section, pill "Disewakan"
+  --color-primary-ink         #9B4A2D  teks di atas primary-tint
+  --color-secondary-tint      #EAF0EC  nav/tab aktif, kotak ikon, pill "Dijual"
+  --color-note-bg             #F2F5F1  notice info/sukses
+  --color-note-border         #DCE6DD  border notice info/sukses
+  --color-nav-ink             #626E67  teks nav tidak aktif
+  --color-icon-muted          #7A867F  ikon tidak aktif
+  --color-success-tint        #E6F4EA  latar status sukses
+  --color-success-border      #D6E9DA
+  --color-success-ink         #176B37  teks pada tint sukses
+  --color-warning-tint        #FFF4D9  alert, notice peringatan, "menunggu"
+  --color-warning-border      #F1E4C7
+  --color-warning-ink         #6D572C
+  --color-danger-tint         #FDECEC  latar status gagal/nonaktif
+  --color-danger-border       #F4D2D2
+  --color-danger-ink          #B42318  teks pada tint gagal
+
+  Catatan: ikon/stroke status tetap memakai warna semantic (#16A34A,
+  #DC2626); teks kecil pada tint memakai varian "-ink" agar kontras aman.
+
+2.3 Tabel konsolidasi hex Figma -> token kanonik (checklist refactoring)
+
+  Hex di Figma (varian)                                  -> Token
+  -----------------------------------------------------  --------------------
+  #F8EDE7 #F8EAE3 #F8E9E1                                -> primary-tint
+  #EAF0EC #E8EFEB #E8EEE8                                -> secondary-tint
+  #F2F5F1 #F4F6F3 #F0F5F1 #F4F7F5 #F0F7F1                -> note-bg
+  #DCE8DF #E3E9E3 #DCE6DD #E2E9E4                        -> note-border
+  #59645F #626E67 #59665F #626D66 #586B5F (teks/ikon nav)-> nav-ink / icon-muted
+  #7A867F #718077 #7D8982 #7D8881 #87928B                -> icon-muted
+  #526159 #4F5B54 #444F48 #3F4944 #515B56 #496356 #476351-> text-secondary
+  #F9FAF8 #FAFAF8 #FCFCFA #FCFCFB #FBFCFB #F8F9FA #FFFEFC-> hover (#F9FAFB)
+  #DDE2E7 #D9DEE5 #DDE2DD #D6DCD8 #9BAEA4 #9AA69E #9AA39D-> border (#E5E7EB)
+  #A0A6AE #A1AAB5                                        -> text-muted
+  #8A929B #9AA39D (teks footer)                          -> text-muted
+  #4B5563                                                -> text-secondary
+  #E6F4EA #E4F5EA #E7F4EB                                -> success-tint
+  #FFF4D9 #FFF2D9 #FFF8E9                                -> warning-tint
+  #F5E6C6 #F1E4C7                                        -> warning-border
+  #8D6719 #805B18 #6D572C #D97706 (teks)                 -> warning-ink
+  #FDECEC #FDE9E9 #FFF1F1                                -> danger-tint
+  #F6DADA #F4D2D2                                        -> danger-border
+  #9E3030 #934141 #B42318 (teks)                         -> danger-ink
+
+2.4 Peta status domain  [PERLU KEPUTUSAN - lihat Bagian 11]
+
+  Status listing   Tone       Latar              Teks
+  ---------------  ---------  -----------------  ----------------
+  Aktif            success    success-tint       success-ink
+  Draft            neutral    divider (#F3F4F6)  text-secondary
+  Nonaktif         danger     danger-tint        danger-ink
+  Pembayaran:
+  Berhasil         success    success-tint       success-ink
+  Menunggu         warning    warning-tint       warning-ink
+  Gagal/Kedaluwarsa danger    danger-tint        danger-ink
+
+
+==============================================================================
+3. TYPOGRAPHY
+==============================================================================
+
+Font: Inter untuk semua teks (heading dan body). Wajib Inter VARIABLE
+(layar memakai bobot 550, 650, 750). Fallback: system-ui, sans-serif.
+Hapus font-variation-settings 'slnt' 0 dari Figma (artefak).
+
+3.1 Skala peran (hasil konsolidasi)
+
+  Peran         Size/LH   Bobot  Tracking   Dipakai di
+  ------------  --------  -----  ---------  ------------------------------
+  display       36/42     700    -0.036em   hero panel login
+  title-xl      32/38     700    -0.027em   judul halaman customer/checkout
+  title-lg      28/34     750    -0.032em   judul halaman dashboard/status
+  title-md      24/30     700    -0.03em    judul state (auth action/status)
+  title-form    30/36     700    -0.027em   judul form login
+  heading-lg    18/24     700    -0.017em   judul panel (profil, checkout)
+  heading-md    15/20     800    -0.017em   judul section form/workspace
+  heading-sm    13/20     750    0          judul side panel
+  body-lg       15/25     400    0          lead paragraph
+  body          13/20     400    0          teks isi
+  body-sm       12/19     400    0          deskripsi panel
+  caption       11/16     400    0          hint, catatan
+  micro         10/15     400    0          badge, hint padat (dashboard)
+  label         12/18     650    0          label field
+  eyebrow       10/15     800    +0.15em    UPPERCASE (11px di halaman customer)
+  nav-label     10/15     750    +0.145em   UPPERCASE
+  th            10/14     800    +0.07em    UPPERCASE (Figma 9px -> naik ke 10)
+
+3.2 Aturan
+- Angka (harga, hitungan, nomor 01/02): font-variant-numeric: tabular-nums.
+- Teks yang membawa informasi minimal 11px; 10px hanya untuk label
+  UPPERCASE dan badge. Di mobile minimal 12px.
+- Satu H1 per halaman.
+
+
+==============================================================================
+4. SPACING, UKURAN, DENSITY
+==============================================================================
+
+Spacing (grid 8px; tambahan 2/4 untuk mikro): 4, 8, 12, 16, 20, 24, 32,
+40, 48, 64.
+
+Tinggi kontrol (konsolidasi dari 40/42/43/44/46/48):
+  sm 36  (tab, toolbar kompak, desktop saja)
+  md 44  (default tombol & input; memenuhi target sentuh 44px)
+  lg 48  (login, CTA utama checkout)
+
+Container:
+  Konten customer/checkout : 1120px
+  Header inner/auth shell  : 1280px
+  Konten dashboard (maks)  : 1500px
+  Sidebar dashboard        : 248px
+  Form properti            : kolom utama fleksibel + side panel 300px
+
+Density (atur SEKALI lewat atribut, komponen membaca variabel - OCP):
+  data-density="compact"      (dashboard)  --fs-body 12px  --panel-pad 22px
+  data-density="comfortable"  (customer, auth, checkout)
+                                           --fs-body 14px  --panel-pad 26px
+
+
+==============================================================================
+5. RADIUS, BORDER, SHADOW, MOTION
+==============================================================================
+
+5.1 Radius kanonik
+  xs   4px   checkbox, pill transaksi kecil
+  sm   8px   tombol, input, nav item, notice, tab, ikon-aksi
+  md   12px  kotak ikon, receipt, help card, upload zone, bar stepper
+  lg   16px  panel/card utama, state frame
+  xl   20px  auth shell
+  full 9999px badge status, avatar, chip hitungan
+
+5.2 Konsolidasi nilai Figma -> radius
+  {5} -> 4 | {7,8,9,10,11} -> 8 (kontrol/notice) | {12} -> 12
+  {13,14,16} -> 16 (panel) | {20} -> 20 | {999} -> full
+  Kotak ikon proporsional: 32px r8, 44px r12, 64px r16.
+
+5.3 Border: 1px solid #E5E7EB (default). Dashed hanya untuk upload zone.
+    Tombol outline: 1px solid #2E4A3E.
+
+5.4 Shadow (berbasis #1A1A1A)
+  shadow-sm : 0 1px 2px rgba(26,26,26,.06)        panel dashboard/form
+  shadow-md : 0 8px 24px rgba(26,26,26,.06)       checkout, status, auth shell
+  shadow-lg : 0 14px 40px rgba(26,26,26,.12)      hover kartu, modal [REKOMENDASI]
+  shadow-cta: 0 3px 8px rgba(200,90,50,.12)       tombol primary
+
+5.5 Motion: fast 150ms (warna, border, fokus), base 250ms (hover kartu),
+    easing cubic-bezier(.22,.61,.36,1). Hormati prefers-reduced-motion.
+    Hover hanya di (hover: hover) and (pointer: fine).
+
+
+==============================================================================
+6. ICON
+==============================================================================
+Lucide/Heroicons, stroke 1.5-1.6px (Figma: 1.2px pada 17px). Ukuran: 12
+(dalam badge), 15-17 (default UI), 20-22 (kotak ikon), 26-30 (status).
+Warna: inherit; ikon tidak aktif #7A867F.
+
+
+==============================================================================
+7. KATALOG KOMPONEN (ui/)
+==============================================================================
+Format: nama - props - spesifikasi - state.
+
+7.1 Button
+  props: variant primary|secondary|outline|quiet, size sm|md|lg,
+         fullWidth, leadingIcon, trailing "arrow", loading
+  Dasar: Inter 700, 12-14px (sm 12 / md 13 / lg 14), radius 8, gap 8,
+         ikon 16px, padding horizontal 16-20.
+  primary   : bg #C85A32, teks putih, shadow-cta
+  secondary : bg #2E4A3E, teks putih            (mis. Simpan Draft)
+  outline   : bg putih, border 1px #2E4A3E, teks #2E4A3E
+  quiet     : bg putih, border 1px #E5E7EB, teks #2E4A3E (Batal, Kembali)
+  State: hover brightness(.94); active scale(.98); disabled opacity .5;
+         fokus ring 2px #C85A32 offset 2px.
+  LinkButton memakai kontrak props yang sama (render <a>).
+  Catatan: tombol danger (#DC2626) belum ada di layar - tambahkan saat
+  dibutuhkan (YAGNI).
+
+7.2 TextLink: 11-12px, bobot 750, warna #2E4A3E (default) atau #C85A32
+    (aksi di panel); akhiran "->" lewat prop trailing.
+
+7.3 Field (molekul) - tersusun dari Label, Control, Hint, Error
+  Label  : 12/18, bobot 650; wajib = "*" #C85A32; opsional = teks
+           "Opsional" 11px #6B7280.
+  Control: bg putih, border 1px #E5E7EB, radius 8, tinggi md 44 / lg 48,
+           teks 13-14px, placeholder #9CA3AF. Readonly: bg #F9FAFB.
+           Ikon di kiri (left 14px, padding-left 42px) atau aksi di kanan.
+  Hint   : 11px #6B7280.   Error: border #DC2626, teks danger-ink 11px.
+  Fokus  : border #C85A32 + ring 3px rgba(200,90,50,.20).
+  Varian : text, select (chevron 15px, padding-right 34px), textarea
+           (min-tinggi 98px), checkbox (18px, radius 4, border #9CA3AF).
+
+7.4 Badge / Pill
+  StatusBadge: pill, padding 5px 9px, gap 6px, dot 6px, teks 10px/750.
+    Tone dari konfigurasi (Bagian 2.4): success, neutral, warning, danger.
+  TransactionPill: radius 4, padding 5px 8px, 10px/750.
+    Disewakan = primary-tint + primary-ink; Dijual = secondary-tint + #2E4A3E.
+  CountChip: pill 20px, 10px/750 (di tab filter).
+
+7.5 IconBox: kotak tint berisi ikon.
+  props: tone primary|secondary|warning|success|danger, size 32|44|64.
+  Latar = tint tone; ikon = warna tone (secondary #2E4A3E, primary #C85A32).
+
+7.6 Avatar: lingkaran 32/34/36, bg primary-tint, inisial 10-11px/800 #C85A32.
+
+7.7 Brand
+  props: tone primary|secondary, size, withWordmark, portalLabel.
+  Mark kotak berinisial: customer/auth = bg #C85A32 ("EN", radius 7-9);
+  portal mitra = bg #2E4A3E ("ENM", 38px radius 12) + sub "PARTNER PORTAL"
+  9px/600 tracking .155em #6B7280. Wordmark "ENM PROPERTY" 14-16px/800.
+
+7.8 Eyebrow: garis 17x2 #C85A32 radius 2 + label eyebrow.
+  props: tone secondary (teks #2E4A3E, dashboard) | primary (teks #C85A32).
+
+7.9 Card + CardHeader
+  Card: bg putih, border 1px #E5E7EB, radius 16, shadow-sm (md untuk
+        checkout/status), padding --panel-pad.
+  CardHeader props: title, description, leading (mis. nomor 01), trailing
+        (link "Lihat semua"). Judul heading-md/lg; deskripsi caption/body-sm.
+  Variasi tinggi header: padding 19-20px 21-22px 15-17px.
+
+7.10 Notice
+  props: tone info|warning|danger|success, icon, children.
+  Padding 12px 13px, radius 8, ikon 15px + teks 10-11px/16, gap 9.
+  info/success: bg note-bg, border note-border, teks #2E4A3E
+  warning     : bg warning-tint, border warning-border, teks warning-ink
+  danger      : bg danger-tint,  border danger-border,  teks danger-ink
+
+7.11 DefinitionRow: label (#6B7280, 11-12px) kiri, nilai (600-750,
+  #1A1A1A atau warna status) kanan; jarak antar-baris 10px. Dipakai di
+  receipt, ringkasan paket, ringkasan input.
+
+7.12 NavItem + SidebarSection
+  NavItem: tinggi 44 (Figma 42), radius 8, padding 12, gap 11, ikon 17px,
+    teks 12px/550 #626E67, ikon #7A867F.
+    Aktif: bg #EAF0EC, teks #2E4A3E bobot 750, ikon #2E4A3E, penanda kiri
+    3px #C85A32 (radius 0 3 3 0, top/bottom 9px).
+  SidebarSection: label nav-label (#9CA3AF), padding 14px 11px 8px.
+
+7.13 Breadcrumb: 11-12px, pemisah "/" #9CA3AF, item aktif bobot 650 #1A1A1A.
+7.14 AppFooter: bg putih, border-top #E5E7EB, teks "(c) 2026 ENM Property.
+     Semua hak dilindungi undang-undang." 10-11px #9CA3AF; opsional tautan.
+
+7.15 Lokal per fitur (belum dijadikan komponen bersama - YAGNI)
+  - Stepper checkout: nomor 30px; selesai = bg success-tint + centang
+    #16A34A; aktif = bg #2E4A3E teks putih; garis 60x1 #E5E7EB.
+  - SegmentedControl (Jenis listing): wadah bg #F9FAFB, border, radius 8,
+    padding 5; opsi tinggi 39, radius 8.
+  - Switch: 36x21 radius pill; aktif bg #2E4A3E; knob 15px putih.
+  - UploadZone: dashed 1px #E5E7EB, radius 12, bg #FCFCFA->#F9FAFB,
+    min-tinggi 176, IconBox 44 + judul + tombol.
+  - Pagination: kotak 28px radius 8; aktif bg #2E4A3E teks putih.
+  - StatusTabs: tinggi 36, radius 8; aktif bg #EAF0EC border #DCE6DD.
+  State "terpilih" untuk Segmented/ChoiceChip belum ada di Figma.
+
+
+==============================================================================
+8. PATTERN & TEMPLATE HALAMAN
+==============================================================================
+
+8.1 StatusScreen (dipakai 7x: auth action 4 state, status pembayaran 3)
+  props: tone success|warning|danger, icon, kicker, title, description,
+         details (DefinitionRow[]), notice, actions (Button[]), helpText
+  Susunan: IconBox 54-64 -> kicker (eyebrow, warna tone) -> judul
+  title-md -> deskripsi body-sm -> receipt (Card radius 12, padding 17/18)
+  -> Notice -> aksi (kolom, tombol penuh tinggi 44) -> help link.
+  Satu pattern, banyak konfigurasi (OCP): tambah state = tambah objek config.
+
+8.2 PageHeading: Eyebrow + judul (title-lg/xl) + deskripsi + slot aksi kanan.
+8.3 DashboardShell: sidebar 248 (putih) + topbar 66 (rgba(255,255,255,.96),
+    breadcrumb kiri, notifikasi 36px + akun kanan) + konten max 1500,
+    padding 30px 34-44px. Background Canvas.
+8.4 SiteShell (customer): header 68 putih (brand, nav 13px, aksi), konten
+    1120, footer.
+8.5 AuthShell (login): topbar 76; shell 1280 radius 20 border shadow-md;
+    panel visual kiri ~49% (bg #2E4A3E + foto + gradient
+    rgba(26,26,26,.25)->.08->.68), panel form kanan bg Canvas dengan
+    form 420px; footer 58.
+8.6 CheckoutShell: header 76, stepper bar (radius 12), grid kiri ~708 /
+    kanan ~388 gap 24, ringkasan: kepala bg #2E4A3E + eyebrow terang
+    (#F4C48E) + badge "Tanpa biaya paket".
+
+
+==============================================================================
+9. CETAK BIRU KODE
+==============================================================================
+
+9.1 tokens/tokens.css  (satu-satunya tempat nilai desain)
+
+  :root {
+    /* brand - tidak berubah */
+    --color-canvas:#FBF9F6; --color-primary:#C85A32; --color-secondary:#2E4A3E;
+    --color-accent:#E2A03F; --color-text:#1A1A1A; --color-text-2:#6B7280;
+    --color-text-muted:#9CA3AF; --color-border:#E5E7EB; --color-card:#FFFFFF;
+    --color-divider:#F3F4F6; --color-hover:#F9FAFB;
+    --color-success:#16A34A; --color-warning:#F59E0B;
+    --color-danger:#DC2626;  --color-info:#2563EB;
+    /* tint turunan */
+    --color-primary-tint:#F8EDE7; --color-primary-ink:#9B4A2D;
+    --color-secondary-tint:#EAF0EC; --color-note-bg:#F2F5F1;
+    --color-note-border:#DCE6DD; --color-nav-ink:#626E67; --color-icon-muted:#7A867F;
+    --color-success-tint:#E6F4EA; --color-success-border:#D6E9DA; --color-success-ink:#176B37;
+    --color-warning-tint:#FFF4D9; --color-warning-border:#F1E4C7; --color-warning-ink:#6D572C;
+    --color-danger-tint:#FDECEC;  --color-danger-border:#F4D2D2;  --color-danger-ink:#B42318;
+    /* bentuk */
+    --radius-xs:4px; --radius-sm:8px; --radius-md:12px; --radius-lg:16px;
+    --radius-xl:20px; --radius-full:9999px;
+    --shadow-sm:0 1px 2px rgba(26,26,26,.06);
+    --shadow-md:0 8px 24px rgba(26,26,26,.06);
+    --shadow-lg:0 14px 40px rgba(26,26,26,.12);
+    --shadow-cta:0 3px 8px rgba(200,90,50,.12);
+    /* ukuran */
+    --control-sm:36px; --control-md:44px; --control-lg:48px;
+    --font:'Inter',system-ui,sans-serif;
+    --ease:cubic-bezier(.22,.61,.36,1);
+  }
+  [data-density="compact"]     { --fs-body:12px; --panel-pad:22px; }
+  [data-density="comfortable"] { --fs-body:14px; --panel-pad:26px; }
+
+9.2 ui/Button  (SRP, LSP, OCP)
+
+  // Varian = data. Menambah varian = menambah satu entri CSS (.btn--x),
+  // tipe ikut berubah di sini saja.
+  export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'quiet';
+  export type Size = 'sm' | 'md' | 'lg';
+
+  // ISP: kontrak visual kecil, dipakai Button DAN LinkButton (LSP)
+  export interface ButtonLook {
+    variant?: ButtonVariant;
+    size?: Size;
+    fullWidth?: boolean;
+    trailing?: 'arrow';
+  }
+
+  export function Button({ variant='primary', size='md', fullWidth, trailing,
+                           children, ...rest }: ButtonLook & ButtonHTMLAttributes<HTMLButtonElement>) {
+    return (
+      <button className={cx('btn', `btn--${variant}`, `btn--${size}`, fullWidth && 'btn--block')} {...rest}>
+        {children}{trailing === 'arrow' && <span aria-hidden>→</span>}
+      </button>
+    );
+  }
+
+9.3 ui/StatusBadge  (DIP + OCP: UI tidak tahu domain)
+
+  export type Tone = 'success' | 'neutral' | 'warning' | 'danger';
+  export interface StatusDef { label: string; tone: Tone }
+  export type StatusMap<K extends string> = Record<K, StatusDef>;
+
+  export function StatusBadge<K extends string>({ status, map }: { status: K; map: StatusMap<K> }) {
+    const { label, tone } = map[status];
+    return <span className={cx('badge', `badge--${tone}`)}><i className="badge__dot" />{label}</span>;
+  }
+
+  // features/listing/status.ts  (domain meng-injeksi konfigurasi)
+  export const LISTING_STATUS: StatusMap<'active'|'draft'|'inactive'> = {
+    active:   { label: 'Aktif',    tone: 'success' },
+    draft:    { label: 'Draft',    tone: 'neutral' },
+    inactive: { label: 'Nonaktif', tone: 'danger'  },
+  };
+  // features/checkout/status.ts
+  export const PAYMENT_STATUS: StatusMap<'paid'|'pending'|'failed'> = { ... };
+
+9.4 patterns/StatusScreen  (komposisi, bukan pewarisan)
+
+  export interface StatusScreenProps {
+    tone: 'success' | 'warning' | 'danger';
+    icon: ReactNode; kicker: string; title: string; description: string;
+    details?: Array<{ label: string; value: string }>;
+    notice?: { tone: Tone; text: string };
+    actions: ReactNode[]; helpText?: ReactNode;
+  }
+  // Auth action & status pembayaran = hanya memanggil StatusScreen dengan
+  // objek konfigurasi berbeda. Tidak ada salinan markup.
+
+9.5 Aturan penulisan
+- Nama: komponen PascalCase, CSS BEM (.card__header--compact), token
+  kebab-case. Tanpa nilai warna/ukuran literal di komponen.
+- Komponen ui/ tidak mengimpor features/, tidak fetch data, tidak format
+  rupiah/tanggal (pakai lib/format.ts).
+- Satu file = satu komponen publik; test visual per varian.
+
+
+==============================================================================
+10. AKSESIBILITAS & KONTRAS (audit layar Figma)
+==============================================================================
+Estimasi rasio; verifikasi dengan tool kontras sebelum rilis.
+- Placeholder/label #9CA3AF di atas putih: ~2.5:1 (gagal untuk teks info).
+  Boleh untuk placeholder; JANGAN untuk teks yang membawa informasi
+  (nav-label, copyright pakai text-secondary #6B7280 bila penting).
+- Eyebrow 10px #C85A32 di atas Canvas: ~4.0:1 (<4.5). Gunakan tone
+  secondary (#2E4A3E) untuk eyebrow kecil, atau perbesar >=11px bold.
+- Putih di atas #C85A32 (tombol): ~4.2:1. OK untuk teks bold >=13px;
+  hindari teks kecil reguler.
+- Teks 9-10px (th, hint, footer): naikkan ke min 10px (label UPPERCASE)
+  / 11px (informasi); mobile min 12px.
+- Pending: teks #D97706 pada #FFF4D9 hanya ~2.9:1 -> pakai warning-ink.
+- Target sentuh min 44x44: tombol 40-42px -> md = 44px.
+- Fokus terlihat: ring 2px #C85A32 offset 2px; ikon-saja wajib aria-label.
+
+
+==============================================================================
+11. AUDIT KONSISTENSI LAYAR  [PERLU KEPUTUSAN TIM DESAIN]
+==============================================================================
+Ditemukan perbedaan antar layar. Rekomendasi sudah dipakai di v1.3.
+
+1. Warna status Draft/Nonaktif tidak sama.
+   Dashboard_Mitra_2: Draft = tint amber, Nonaktif = abu-abu.
+   Daftar_Properti  : Draft = abu-abu,   Nonaktif = merah.
+   Dokumen palette  : Nonaktif = Error (merah).
+   Rekomendasi: ikuti Daftar_Properti (Draft abu, Nonaktif merah); perbarui
+   Dashboard (tabel + LED ringkasan).
+2. Jenis transaksi: Dashboard = teks biasa "Disewakan"; Daftar = pill
+   berwarna. Rekomendasi: TransactionPill di semua tabel.
+3. Stepper checkout: langkah 3 "Aktivasi" (belum terjadi) berwarna hijau
+   seperti selesai. Rekomendasi: gaya netral (bg #F3F4F6, angka #9CA3AF).
+4. Lebar sidebar: 260 (Dashboard_Mitra_2) vs 248 (layar lain) vs 260 di
+   dokumen lama. v1.3 memakai 248; selaraskan semua layar.
+5. Tinggi kontrol 40-48 dan radius 7-14 bervariasi -> sudah dikanonkan
+   (Bagian 4 dan 5).
+6. Pemisah breadcrumb "/" vs ">" -> pakai "/".
+7. ~60 hex mirip (hijau-abu, putih kehijauan, border) -> dikonsolidasi
+   (Bagian 2.3).
+
+
+==============================================================================
+12. CHECKLIST REFACTORING (Boy Scout Rule)
+==============================================================================
+Saat mengimplementasi dari export Figma, JANGAN salin apa adanya:
+- Hapus position:absolute + calc() hasil auto-layout; pakai flex/grid.
+- Hapus width/height tetap (1920px, 1120px, dll); pakai max-width +
+  container fluid, mobile-first.
+- Hapus margin negatif/pembulatan (-1.13687e-13px, 0.585px dst).
+- Hapus order/flex-grow/align-self bawaan yang tidak diperlukan.
+- Hapus font-variation-settings 'slnt'.
+- Ganti hex literal dengan token (Bagian 2.3); radius/tinggi dengan token.
+- Ganti glyph "->" di tombol dengan prop trailing.
+- Ganti teks contoh Figma (mis. "Villa Cendana Dago Pakar") dengan data.
+- Urutan kerja: tokens -> ui/ -> patterns/ -> features/ -> halaman.
+
+
+==============================================================================
+13. PLANNED / BACKLOG (belum ada di Figma ENM - YAGNI)
+==============================================================================
+Jangan dibangun sebelum layarnya didesain.
+
+13.1 Kartu properti publik (katalog)  - rencana
+  Gunakan komponen yang sudah ada (Card, StatusBadge/TransactionPill,
+  Button). Nilai awal: radius 12-16, gambar 16:9 (spec asli) atau 4:3,
+  padding 16-20, judul Inter 700, harga #C85A32 bold, tombol kontak
+  Primary. Hover (rekomendasi): gambar scale 1.06 di dalam wrapper
+  overflow:hidden, kartu naik 4px, shadow-md -> shadow-lg; hanya pada
+  (hover: hover) and (pointer: fine).
+  Tombol favorit (spec asli): 36x36, kanan-atas, white/70 + backdrop-blur.
+  Badge paket: bg #E2A03F, teks 11px (gunakan teks #1A1A1A agar kontras).
+
+13.2 Search bar katalog, tab tipe properti  - rencana
+13.3 Dari situs referensi (tidak direncanakan): logo marquee, testimonial,
+     tile area, FAQ accordion, stat hero, perbandingan 2 kolom.
+     Hidupkan hanya bila ada layar/kebutuhan nyata.
+13.4 Komponen yang disebut di dokumen lama namun belum ada layar: Modal,
+     Toast, Sidebar Admin, Danger Button. Spesifikasi awal (rekomendasi):
+     Modal radius 16 + shadow-lg; Toast border-kiri 4px (success #16A34A,
+     error #DC2626, warning #F59E0B).
+
+
+==============================================================================
+14. NAMING & STRUKTUR
+==============================================================================
+  src/
+    design-tokens/  tokens.css
+    ui/             Button, TextLink, Field, Badge, IconBox, Avatar, Brand,
+                    Eyebrow, Card, Notice, DefinitionRow, NavItem,
+                    Breadcrumb, AppFooter
+    patterns/       StatusScreen, PageHeading, DashboardShell, SiteShell,
+                    AuthShell, CheckoutShell
+    features/       listing/, auth/, checkout/, profile/
+    lib/            format.ts (rupiah id-ID, tanggal "22 Okt 2026")
+    app/            route & halaman
+  Dependensi: app -> features -> patterns -> ui -> design-tokens.
+
+==============================================================================
+AKHIR DOKUMEN
+==============================================================================
