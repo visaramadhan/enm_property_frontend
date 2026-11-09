@@ -4,6 +4,7 @@ import {
   HandCoins,
   Heart,
   LayoutDashboard,
+  LayoutTemplate,
   Package,
   Plus,
   Receipt,
@@ -69,6 +70,10 @@ export const dashboardMeta: Record<DashboardRole, DashboardMeta> = {
         ],
       },
       {
+        label: "Konten",
+        items: [{ label: "Landing Page", href: "/admin/landing", icon: LayoutTemplate }],
+      },
+      {
         label: "Superadmin",
         items: [
           { label: "Manajemen Akun", href: "/admin/akun", icon: UserCog, peran: ["superadmin"] },
@@ -119,6 +124,10 @@ export const dashboardMeta: Record<DashboardRole, DashboardMeta> = {
         label: "Kepatuhan",
         items: [{ label: "Audit Log", href: "/owner/audit", icon: ShieldCheck }],
       },
+      {
+        label: "Konten",
+        items: [{ label: "Landing Page", href: "/owner/landing", icon: LayoutTemplate }],
+      },
     ],
   },
 
@@ -139,6 +148,7 @@ export const dashboardMeta: Record<DashboardRole, DashboardMeta> = {
         label: "Langganan & Akun",
         items: [
           { label: "Paket & Langganan", href: "/mitra/langganan", icon: Package },
+          { label: "Transaksi", href: "/mitra/transaksi", icon: Receipt },
           { label: "Favorit", href: "/mitra/favorit", icon: Heart },
           { label: "Profil Mitra", href: "/mitra/profil", icon: UserCog },
         ],
@@ -203,4 +213,20 @@ export function dashboardPeran(peran: string | undefined): string {
   if (nilai === "admin" || nilai === "superadmin") return "/admin";
   if (nilai === "mitra") return "/mitra";
   return "/";
+}
+
+/**
+ * Tujuan pengalihan yang diminta lewat parameter `?callbackUrl=...` atau
+ * `?lanjut=...` (nama lama, tetap didukung).
+ *
+ * Dipakai bersama oleh halaman masuk dan daftar agar pengguna kembali ke halaman
+ * yang dituju (mis. tautan checkout) setelah autentikasi berhasil (DRY). Nilai
+ * hanya diterima bila berupa path internal, sehingga tidak menjadi celah open
+ * redirect ke domain lain.
+ */
+export function tujuanLanjut(): string | null {
+  if (typeof window === "undefined") return null;
+  const parameter = new URLSearchParams(window.location.search);
+  const nilai = parameter.get("callbackUrl") ?? parameter.get("lanjut");
+  return nilai && nilai.startsWith("/") && !nilai.startsWith("//") ? nilai : null;
 }

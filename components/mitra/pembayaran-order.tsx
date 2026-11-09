@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, CreditCard, LoaderCircle, LogOut, QrCode, Receipt } from "lucide-react";
+import { CheckCircle2, CreditCard, LoaderCircle, LogOut, QrCode, Receipt, UserCog } from "lucide-react";
 
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KontenAsync } from "@/components/shared/konten-async";
@@ -254,7 +254,8 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
                   <AlertDescription>
                     Pembayaran telah terkonfirmasi. Paket langganan{" "}
                     <span className="font-medium text-ink">{data.order.plan_name}</span> kini aktif
-                    dan kuota listing Anda sudah diperbarui.
+                    dan kuota listing Anda sudah diperbarui. Lengkapi profil kemitraan Anda agar
+                    listing dapat tayang di katalog.
                   </AlertDescription>
                 </Alert>
 
@@ -276,6 +277,12 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
 
                 <div className="flex flex-wrap gap-2">
                   <Button asChild>
+                    <Link href="/mitra/profil">
+                      <UserCog />
+                      Lengkapi Profil Mitra
+                    </Link>
+                  </Button>
+                  <Button variant="outline" asChild>
                     <Link href={`/mitra/transaksi/${orderCode}`}>
                       <Receipt />
                       Lihat Transaksi

@@ -9,51 +9,30 @@ import { LoaderCircle, UserPlus } from "lucide-react";
 import { z } from "zod";
 
 import { AuthHeader, BrandSeluler, PeringatanFirebase } from "@/components/auth/elemen-auth";
+import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { CheckboxField, PasswordField, TextField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { useSiapkanSesi } from "@/lib/api/use-sesi";
-import { daftarkanMitra } from "@/lib/api/endpoints";
-import { dashboardPeran } from "@/lib/navigation";
+import { tujuanLanjut } from "@/lib/navigation";
 import { toastGagal, toastGagalAuth, toastSukses } from "@/lib/toast";
-import type { RegisterPartnerRequest } from "@/types/api";
 
 /** Batas panjang mengikuti DTO backend agar validasi klien dan server selaras. */
 const skemaDaftar = z.object({
-  picName: z
-    .string()
-    .trim()
-    .min(3, "Nama penanggung jawab minimal 3 karakter")
-    .max(100, "Nama penanggung jawab maksimal 100 karakter"),
+  nama: z.string().trim().min(3, "Nama minimal 3 karakter").max(100, "Nama maksimal 100 karakter"),
   email: z.email("Format email tidak valid"),
   password: z.string().min(8, "Kata sandi minimal 8 karakter"),
-  phone: z
-    .string()
-    .trim()
-    .min(8, "Nomor telepon minimal 8 digit")
-    .max(20, "Nomor telepon maksimal 20 digit"),
-  businessName: z
-    .string()
-    .trim()
-    .min(3, "Nama bisnis minimal 3 karakter")
-    .max(150, "Nama bisnis maksimal 150 karakter"),
-  city: z.string().trim().min(1, "Kota wajib diisi").max(100, "Kota maksimal 100 karakter"),
-  province: z
-    .string()
-    .trim()
-    .min(1, "Provinsi wajib diisi")
-    .max(100, "Provinsi maksimal 100 karakter"),
-  address: z
-    .string()
-    .trim()
-    .min(1, "Alamat wajib diisi")
-    .max(255, "Alamat maksimal 255 karakter"),
-  setuju: z
-    .boolean()
-    .refine((nilai) => nilai, "Anda harus menyetujui syarat dan ketentuan mitra"),
+  setuju: z.boolean().refine((nilai) => nilai, "Anda harus menyetujui syarat dan ketentuan"),
 });
 
 type NilaiDaftar = z.infer<typeof skemaDaftar>;
 
+/**
+ * Formulir pendaftaran akun.
+ *
+ * Hanya membuat akun (nama, email, kata sandi). Data badan usaha tidak diminta di
+ * sini: pengguna dapat mendaftar sebagai mitra, memilih paket, lalu melengkapi
+ * profil kemitraan setelah pembayaran berhasil.
+ */
 export function RegisterForm() {
   const router = useRouter();
   const siapkanSesi = useSiapkanSesi();
@@ -61,30 +40,8 @@ export function RegisterForm() {
 
   const form = useForm<NilaiDaftar>({
     resolver: zodResolver(skemaDaftar),
-    defaultValues: {
-      picName: "",
-      email: "",
-      password: "",
-      phone: "",
-      businessName: "",
-      city: "",
-      province: "",
-      address: "",
-      setuju: false,
-    },
+    defaultValues: { nama: "", email: "", password: "", setuju: false },
   });
-
-  function kePayload(values: NilaiDaftar): RegisterPartnerRequest {
-    return {
-      business_name: values.businessName,
-      pic_name: values.picName,
-      phone: values.phone,
-      email: values.email,
-      address: values.address,
-      city: values.city,
-      province: values.province,
-    };
-  }
 
   async function kirimDaftar(values: NilaiDaftar) {
     setMengirim(true);
@@ -98,9 +55,9 @@ export function RegisterForm() {
       const auth = getFirebaseAuth();
       const kredensial = await createUserWithEmailAndPassword(auth, values.email, values.password);
 
-      // Nama penanggung jawab dipakai sebagai nama pengguna pada klaim token,
-      // sehingga baris pengguna lokal langsung terisi saat `POST /auth/session`.
-      await updateProfile(kredensial.user, { displayName: values.picName });
+      // Nama pengguna dipakai sebagai klaim token sehingga baris pengguna lokal
+      // langsung terisi saat `POST /auth/session`.
+      await updateProfile(kredensial.user, { displayName: values.nama });
       await sendEmailVerification(kredensial.user);
     } catch (error) {
       toastGagalAuth("Gagal mendaftar", error);
@@ -108,20 +65,18 @@ export function RegisterForm() {
       return;
     }
 
-    // Firebase Auth berhasil: selanjutnya sinkronkan sesi lalu daftarkan mitra.
     try {
-      const sesi = await siapkanSesi();
-      await daftarkanMitra(kePayload(values));
+      await siapkanSesi();
       toastSukses(
         "Pendaftaran berhasil",
-        "Akun mitra Anda dibuat. Lanjutkan dengan memilih paket langganan.",
+        "Akun Anda dibuat. Pilih paket langganan untuk mulai memasang properti.",
       );
-      router.replace(dashboardPeran(sesi.role));
+      router.replace(tujuanLanjut() ?? "/paket");
     } catch (error) {
-      toastGagal("Gagal menyelesaikan pendaftaran mitra", error);
-      // Akun Firebase sudah terbentuk; arahkan ke login agar pengguna dapat
-      // melanjutkan pendaftaran mitra tanpa membuat akun baru.
-      router.replace("/login?lanjut=/mitra/langganan");
+      toastGagal("Gagal menyiapkan sesi", error);
+      // Akun Firebase sudah terbentuk; arahkan ke halaman masuk agar pengguna
+      // dapat melanjutkan tanpa membuat akun baru.
+      router.replace("/login?lanjut=/paket");
     } finally {
       setMengirim(false);
     }
@@ -129,24 +84,21 @@ export function RegisterForm() {
 
   return (
     <div className="flex flex-col gap-6">
+      <TombolBeranda />
       <BrandSeluler />
       <PeringatanFirebase />
 
       <AuthHeader
-        judul="Daftar sebagai mitra"
-        deskripsi="Buat akun dan lengkapi data bisnis Anda untuk mulai memasang listing properti."
+        judul="Daftar akun"
+        deskripsi="Buat akun ENM Property. Setelah masuk, Anda dapat mendaftar sebagai mitra dan memilih paket langganan."
       />
 
       <form onSubmit={form.handleSubmit(kirimDaftar)} noValidate className="flex flex-col gap-5">
         <fieldset disabled={mengirim} className="flex flex-col gap-5">
-          <legend className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-subtle">
-            Akun
-          </legend>
-
           <TextField
             control={form.control}
-            name="picName"
-            label="Nama penanggung jawab"
+            name="nama"
+            label="Nama lengkap"
             autoComplete="name"
             placeholder="Nama lengkap"
             wajib
@@ -171,69 +123,17 @@ export function RegisterForm() {
             autoComplete="new-password"
             wajib
           />
-
-          <TextField
-            control={form.control}
-            name="phone"
-            label="Nomor telepon"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            placeholder="0812xxxxxxx"
-            wajib
-          />
-        </fieldset>
-
-        <fieldset disabled={mengirim} className="flex flex-col gap-5">
-          <legend className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-subtle">
-            Data bisnis
-          </legend>
-
-          <TextField
-            control={form.control}
-            name="businessName"
-            label="Nama bisnis / agensi"
-            autoComplete="organization"
-            placeholder="Contoh: Griya Utama Property"
-            wajib
-          />
-
-          <div className="grid gap-5 sm:grid-cols-2">
-            <TextField
-              control={form.control}
-              name="city"
-              label="Kota / kabupaten"
-              autoComplete="address-level2"
-              wajib
-            />
-            <TextField
-              control={form.control}
-              name="province"
-              label="Provinsi"
-              autoComplete="address-level1"
-              wajib
-            />
-          </div>
-
-          <TextField
-            control={form.control}
-            name="address"
-            label="Alamat"
-            autoComplete="street-address"
-            placeholder="Jalan, nomor, kelurahan"
-            wajib
-          />
         </fieldset>
 
         <CheckboxField
           control={form.control}
           name="setuju"
-          label="Saya menyetujui syarat dan ketentuan serta kebijakan privasi mitra ENM Property."
+          label="Saya menyetujui syarat dan ketentuan serta kebijakan privasi ENM Property."
         />
 
         <Button type="submit" size="lg" className="w-full" disabled={mengirim}>
           {mengirim ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <UserPlus />}
-          Buat akun mitra
+          Buat akun
         </Button>
       </form>
 

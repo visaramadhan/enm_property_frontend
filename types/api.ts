@@ -226,8 +226,14 @@ export interface PropertySummary {
   category_name: string;
   /** Jumlah klik WhatsApp/lead yang dipakai algoritma pengurutan. */
   contact_count: number;
+  /** Jumlah lead kanal "klik WhatsApp"; hanya terisi pada tabel properti mitra. */
+  wa_contact_count: number;
+  /** Jumlah lead kanal "isi form"; hanya terisi pada tabel properti mitra. */
+  form_contact_count: number;
   /** Menandakan listing sedang di-boost oleh mitra berpaket. */
   boost_active: boolean;
+  /** Batas waktu boost; boost hanya berlaku sampai waktu ini. */
+  boost_until?: string;
   /** Statistik reputasi untuk pengurutan katalog. */
   rating_count: number;
   rating_avg: number;
@@ -289,6 +295,11 @@ export interface SetAvailabilityRequest {
   units_available: number;
 }
 
+/** Body `PATCH /vendor/properties/{id}/boost`. */
+export interface SetBoostRequest {
+  active: boolean;
+}
+
 export interface AdminPropertyStatusRequest {
   status: PropertyStatus;
   reason?: string;
@@ -318,6 +329,46 @@ export interface PropertyContactResponse {
   whatsapp_url: string;
   message: string;
   is_fallback: boolean;
+}
+
+/** Body `POST /properties/{slug}/contact-form` (form kontak publik). */
+export interface ContactFormRequest {
+  name: string;
+  phone: string;
+  message: string;
+}
+
+/** Respons setelah form kontak publik tersimpan. */
+export interface ContactFormResponse {
+  recorded: boolean;
+}
+
+/** Satu catatan lead properti pada tabel mitra (kanal "whatsapp" atau "form"). */
+export interface LeadView {
+  id: string;
+  channel: "whatsapp" | "form" | string;
+  user_id?: string;
+  user_name?: string;
+  user_email?: string;
+  name?: string;
+  phone?: string;
+  message?: string;
+  created_at: string;
+}
+
+/**
+ * Profil pengelola (mitra) beserta katalog publiknya untuk halaman
+ * `/pengelola/{id}`. Selaras `backend/dto.PartnerPublicView`.
+ */
+export interface PartnerPublicView {
+  id: string;
+  business_name: string;
+  pic_name: string;
+  city: string;
+  province: string;
+  joined_at?: string;
+  total_listings: number;
+  properties: PropertySummary[];
 }
 
 export interface PhotoOrderRequest {
@@ -351,6 +402,8 @@ export interface PlanView {
   level: number;
   /** Boost hanya berlaku bila paket mengizinkan dan listing menyalakannya. */
   boost_enabled: boolean;
+  /** Jumlah listing yang boleh di-boost bersamaan (0 = tanpa boost). */
+  boost_quota: number;
   /** Akses pengaturan keyword di sisi mitra (paket gratis selalu false). */
   keyword_access: boolean;
   /** Akses pengaturan katalog di sisi mitra (paket gratis selalu false). */
@@ -374,6 +427,7 @@ export interface CreatePlanRequest {
   sort_order: number;
   level?: number;
   boost_enabled?: boolean;
+  boost_quota?: number;
   keyword_access?: boolean;
   catalog_access?: boolean;
   whatsapp_access?: boolean;
@@ -391,6 +445,7 @@ export interface UpdatePlanRequest {
   sort_order?: number;
   level?: number;
   boost_enabled?: boolean;
+  boost_quota?: number;
   keyword_access?: boolean;
   catalog_access?: boolean;
   whatsapp_access?: boolean;
@@ -446,6 +501,10 @@ export interface SubscriptionView {
   listings_used: number;
   listing_quota: number;
   listing_remaining: number;
+  /** Kuota boost listing paket aktif (0 = tanpa boost). */
+  boost_quota: number;
+  /** Jumlah listing yang sedang di-boost bersamaan. */
+  boost_used: number;
   updated_at: string;
   last_order_code?: string;
 }
@@ -744,6 +803,18 @@ export interface SiteSettingsView {
   login_image_url: string;
 }
 
+/** Jenis gambar pengaturan yang dapat diunggah (backend mengonversi ke WebP). */
+export type SettingImageKind = "logo" | "login";
+
+/** Hasil unggah gambar pengaturan setelah dikonversi otomatis ke WebP. */
+export interface SettingImageResponse {
+  key: string;
+  url: string;
+  width: number;
+  height: number;
+  size_bytes: number;
+}
+
 /* --------------------------------------------------------------- Audit -- */
 
 export interface AuditView {
@@ -805,4 +876,57 @@ export interface ListQuery {
   search?: string;
   sort_by?: string;
   sort_desc?: boolean;
+}
+
+/* ---------------------------------------------------------------- Landing -- */
+
+/**
+ * Konten landing page siap pakai (CMS editor maupun halaman publik).
+ * Selaras `backend/dto/landing.go`.
+ */
+export interface LandingContentView {
+  hero_title: string;
+  hero_subtitle: string;
+  hero_cta_text: string;
+  hero_image_url: string;
+  meta_title: string;
+  meta_description: string;
+  meta_og_image: string;
+  highlight_areas: string[];
+  cta_title: string;
+  cta_description: string;
+  updated_at: string;
+}
+
+/** Body `PUT /admin/landing`; batas panjang mengikuti aturan SEO. */
+export interface UpdateLandingRequest {
+  hero_title: string;
+  hero_subtitle: string;
+  hero_cta_text: string;
+  hero_image_url: string;
+  meta_title: string;
+  meta_description: string;
+  meta_og_image: string;
+  highlight_areas: string[];
+  cta_title: string;
+  cta_description: string;
+}
+
+/** Jenis gambar landing yang dapat diunggah melalui CMS. */
+export type LandingImageKind = "hero" | "og";
+
+/** Hasil unggah gambar landing setelah dikonversi otomatis ke WebP. */
+export interface LandingImageResponse {
+  url: string;
+  kind: string;
+  mime_type: string;
+  width: number;
+  height: number;
+  size_bytes: number;
+}
+
+/** Hasil tombol "Publish Perubahan Landing Page" (revalidasi ISR). */
+export interface LandingPublishResponse {
+  message: string;
+  revalidated: boolean;
 }

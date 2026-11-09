@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { CheckboxField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
@@ -17,12 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  useCheckout,
-  useDetailPaket,
-  usePerjanjianMitra,
-  useProfilMitra,
-} from "@/lib/api/hooks";
+import { useCheckout, useDetailPaket, usePerjanjianAktif } from "@/lib/api/hooks";
+import { useSiapkanSesi } from "@/lib/api/use-sesi";
 import { formatAngka, formatRupiah } from "@/lib/format";
 import { toastSukses } from "@/lib/toast";
 import type { PlanView } from "@/types/api";
@@ -97,6 +94,8 @@ function KartuRingkasanPaket({ paket }: { paket: PlanView }) {
 
 /** Ajakan masuk/daftar ketika tautan checkout dibuka tanpa sesi aktif. */
 function KartuAjakanMasuk({ lanjut }: { lanjut: string }) {
+  const tujuan = encodeURIComponent(lanjut);
+
   return (
     <Card>
       <CardHeader>
@@ -105,21 +104,21 @@ function KartuAjakanMasuk({ lanjut }: { lanjut: string }) {
           Masuk untuk melanjutkan
         </CardTitle>
         <CardDescription>
-          Anda perlu masuk sebagai mitra untuk menyetujui perjanjian dan melanjutkan pembayaran.
+          Anda perlu masuk untuk menyetujui perjanjian kemitraan dan melanjutkan pembayaran.
         </CardDescription>
       </CardHeader>
 
       <CardContent className="flex flex-wrap gap-3">
         <Button asChild>
-          <Link href={`/login?lanjut=${encodeURIComponent(lanjut)}`}>
+          <Link href={`/login?lanjut=${tujuan}`}>
             <LogIn />
             Masuk
           </Link>
         </Button>
         <Button variant="outline" asChild>
-          <Link href="/register">
+          <Link href={`/register?lanjut=${tujuan}`}>
             <UserPlus />
-            Daftar mitra
+            Daftar akun
           </Link>
         </Button>
       </CardContent>
@@ -127,14 +126,14 @@ function KartuAjakanMasuk({ lanjut }: { lanjut: string }) {
   );
 }
 
-/** Panel konfirmasi: perjanjian, kelengkapan profil, dan tombol lanjut. */
+/** Panel konfirmasi: perjanjian dan tombol lanjut ke pembayaran. */
 function PanelKonfirmasi({ paket }: { paket: PlanView }) {
   const router = useRouter();
   const pathname = usePathname();
   const { pengguna, memuat } = useAuth();
-  const perjanjian = usePerjanjianMitra(Boolean(pengguna));
-  const profil = useProfilMitra(Boolean(pengguna));
+  const perjanjian = usePerjanjianAktif();
   const checkout = useCheckout();
+  const siapkanSesi = useSiapkanSesi();
 
   const form = useForm<NilaiKonfirmasi>({
     resolver: zodResolver(skemaKonfirmasi),
@@ -149,11 +148,11 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
     return <KartuAjakanMasuk lanjut={pathname} />;
   }
 
-  if (perjanjian.isPending || profil.isPending) {
+  if (perjanjian.isPending) {
     return <Skeleton className="h-72 rounded-card" />;
   }
 
-  if (perjanjian.isError || profil.isError || !perjanjian.data || !profil.data) {
+  if (perjanjian.isError || !perjanjian.data) {
     return (
       <Alert variant="danger">
         <AlertTitle>Gagal memuat data konfirmasi</AlertTitle>
@@ -162,15 +161,17 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
     );
   }
 
-  const perluLengkapiProfil = !profil.data.id;
-
   async function kirim(nilai: NilaiKonfirmasi) {
     try {
       const hasil = await checkout.mutateAsync({
         package_slug: paket.slug,
         agree_agreement: nilai.agree_agreement,
-        agreement_id: perjanjian.data?.agreement.id,
+        agreement_id: perjanjian.data?.id,
       });
+
+      // Peran pengguna dinaikkan menjadi mitra saat checkout, jadi sesi disegarkan
+      // agar area /mitra (pembayaran, dashboard) langsung dapat diakses.
+      await siapkanSesi().catch(() => undefined);
 
       if (hasil.free_active) {
         toastSukses("Paket aktif", `Paket ${paket.name} langsung aktif tanpa biaya.`);
@@ -198,52 +199,31 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
       </CardHeader>
 
       <CardContent>
-        {perluLengkapiProfil ? (
+        <form onSubmit={form.handleSubmit(kirim)} noValidate className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
-            <Alert variant="warning">
-              <AlertTitle>Lengkapi profil mitra</AlertTitle>
-              <AlertDescription>
-                Anda perlu melengkapi data badan usaha sebelum berlangganan paket berbayar.
-              </AlertDescription>
-            </Alert>
-            <div>
-              <Button asChild>
-                <Link href="/mitra/profil">Lengkapi profil mitra</Link>
-              </Button>
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="font-medium text-ink">{perjanjian.data.title}</span>
+              <Badge variant="neutral">Versi {perjanjian.data.version}</Badge>
             </div>
+            <p className="max-h-40 overflow-y-auto rounded-field border border-line bg-hover/50 p-4 text-[13px] whitespace-pre-line text-ink-muted">
+              {perjanjian.data.content}
+            </p>
           </div>
-        ) : (
-          <form onSubmit={form.handleSubmit(kirim)} noValidate className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-wrap items-center gap-3 text-sm">
-                <span className="font-medium text-ink">{perjanjian.data.agreement.title}</span>
-                <Badge variant="neutral">Versi {perjanjian.data.agreement.version}</Badge>
-                {perjanjian.data.accepted ? <Badge variant="success">Disetujui</Badge> : null}
-              </div>
-              <p className="max-h-40 overflow-y-auto rounded-field border border-line bg-hover/50 p-4 text-[13px] whitespace-pre-line text-ink-muted">
-                {perjanjian.data.agreement.content}
-              </p>
-            </div>
 
-            <CheckboxField
-              control={form.control}
-              name="agree_agreement"
-              label="Saya menyetujui perjanjian kemitraan ENM Property."
-              deskripsi={
-                perjanjian.data.accepted
-                  ? "Persetujuan Anda sebelumnya tetap berlaku."
-                  : "Perjanjian akan tercatat saat Anda melanjutkan."
-              }
-            />
+          <CheckboxField
+            control={form.control}
+            name="agree_agreement"
+            label="Saya menyetujui perjanjian kemitraan ENM Property."
+            deskripsi="Perjanjian akan tercatat saat Anda melanjutkan."
+          />
 
-            <div className="flex justify-end">
-              <Button type="submit" disabled={checkout.isPending}>
-                {checkout.isPending ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
-                {paket.is_free ? "Aktifkan paket" : "Lanjut ke pembayaran"}
-              </Button>
-            </div>
-          </form>
-        )}
+          <div className="flex justify-end">
+            <Button type="submit" disabled={checkout.isPending}>
+              {checkout.isPending ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
+              {paket.is_free ? "Aktifkan paket" : "Lanjut ke pembayaran"}
+            </Button>
+          </div>
+        </form>
       </CardContent>
     </Card>
   );

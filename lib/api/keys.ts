@@ -36,15 +36,19 @@ export const kunci = {
   perjanjianMitra: () => tunggal("vendor/perjanjian"),
   propertiMitra: (query?: Record<string, unknown>) => daftar("vendor/properti", query),
   detailPropertiMitra: (id: string) => detail("vendor/properti", id),
+  leadProperti: (id: string, channel?: string) =>
+    ["vendor/properti", "lead", id, channel ?? "semua"] as const,
   transaksiMitra: (query?: Record<string, unknown>) => daftar("vendor/transaksi", query),
   favorit: (query?: Record<string, unknown>) => daftar("favorit", query),
 
   /* Publik */
   paketPublik: () => tunggal("paket/publik"),
   detailPaketPublik: (slug: string) => detail("paket/publik", slug),
+  perjanjianAktif: () => tunggal("perjanjian/aktif"),
   kategoriPublik: () => tunggal("kategori/publik"),
   propertiPublik: (query?: Record<string, unknown>) => daftar("properti/publik", query),
   detailPropertiPublik: (slug: string) => detail("properti/publik", slug),
+  pengelolaPublik: (id: string) => detail("pengelola/publik", id),
   pengaturanPublik: () => tunggal("pengaturan/publik"),
 
   /* Owner */
@@ -52,6 +56,11 @@ export const kunci = {
   laporanLanggananOwner: (query?: Record<string, unknown>) =>
     daftar("owner/laporan-langganan", query),
   laporanMitraOwner: (query?: Record<string, unknown>) => daftar("owner/laporan-mitra", query),
+  landingOwner: () => tunggal("owner/landing"),
+
+  /* Landing */
+  landing: () => tunggal("admin/landing"),
+  landingPublik: () => tunggal("landing/publik"),
 
   /* Invoice */
   invoice: (orderCode: string) => detail("invoice", orderCode),
@@ -85,7 +94,12 @@ export const awalan = {
   transaksiMitra: ["vendor/transaksi"],
   favorit: ["favorit"],
   paketPublik: ["paket/publik"],
+  perjanjianAktif: ["perjanjian/aktif"],
   kategoriPublik: ["kategori/publik"],
+  pengelolaPublik: ["pengelola/publik"],
   pengaturanPublik: ["pengaturan/publik"],
   pembayaranOrder: ["order/pembayaran"],
+  landing: ["admin/landing"],
+  landingOwner: ["owner/landing"],
+  landingPublik: ["landing/publik"],
 } as const satisfies Record<string, readonly string[]>;

@@ -305,8 +305,9 @@ export function DashboardShell({
 
         {/* Konten dashboard: maks 1500px (bagian 4/8.3) */}
         <main className="flex-1 px-4 py-[30px] lg:px-8 xl:px-11">
-          <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6">
-            <PageTransition>{children}</PageTransition>
+          <div className="mx-auto w-full max-w-[1500px]">
+            {/* Jarak antar section 48px mengikuti "Margin section" pada design system. */}
+            <PageTransition className="flex flex-col gap-12">{children}</PageTransition>
           </div>
         </main>
       </div>

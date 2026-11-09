@@ -19,6 +19,8 @@ import type {
   ChargeRequest,
   CheckoutRequest,
   CheckoutResponse,
+  ContactFormRequest,
+  ContactFormResponse,
   CreateAgreementRequest,
   CreateCategoryRequest,
   CreatePlanRequest,
@@ -26,15 +28,22 @@ import type {
   FavoriteToggleResponse,
   FavoriteView,
   InvoiceView,
+  LandingContentView,
+  LandingImageKind,
+  LandingImageResponse,
+  LandingPublishResponse,
+  LeadView,
   ListQuery,
   OrderStatusView,
   OrderView,
   OwnerDashboard,
+  PartnerPublicView,
   PartnerReportRow,
   PartnerView,
   PaymentView,
   PhotoView,
   PlanView,
+  PropertyContactResponse,
   PropertyDetail,
   PropertyFilterQuery,
   PropertySummary,
@@ -42,9 +51,12 @@ import type {
   ReportFilterQuery,
   ResetPasswordResponse,
   SetAvailabilityRequest,
+  SetBoostRequest,
   SetPlanStatusRequest,
   SetPropertyStatusRequest,
   SetUserStatusRequest,
+  SettingImageKind,
+  SettingImageResponse,
   SettingView,
   SiteSettingsView,
   SubscriptionReport,
@@ -54,6 +66,7 @@ import type {
   UpdatePartnerRequest,
   UpdatePlanRequest,
   UpdateCategoryRequest,
+  UpdateLandingRequest,
   UpdateSettingsRequest,
   UploadPhotoResponse,
   UserView,
@@ -350,6 +363,16 @@ export function usePerbaruiPengaturan() {
   });
 }
 
+/** Mengunggah berkas logo/gambar login pada halaman pengaturan sistem. */
+export function useUnggahGambarPengaturan() {
+  return useMutasi<SettingImageResponse, { kind: SettingImageKind; file: File }>({
+    mutasi: ({ kind, file }) => api.unggahGambarPengaturan(kind, file),
+    kunciInvalidasi: [awalan.pengaturan, awalan.pengaturanPublik],
+    pesanSukses: "Gambar berhasil diunggah",
+    pesanGagal: "Gagal mengunggah gambar",
+  });
+}
+
 export function useLaporanLangganan(query: ReportFilterQuery = {}) {
   return useQuery<SubscriptionReport>({
     queryKey: kunci.laporanLangganan(kunciDari(query)),
@@ -457,6 +480,25 @@ export function useUbahKetersediaanProperti() {
     kunciInvalidasi: [awalan.propertiMitra],
     pesanSukses: "Ketersediaan unit diperbarui",
     pesanGagal: "Gagal memperbarui ketersediaan",
+  });
+}
+
+/** Mengaktifkan/menonaktifkan boost listing (kuota mengikuti paket mitra). */
+export function useUbahBoostProperti() {
+  return useMutasi<PropertyDetail, { id: string; body: SetBoostRequest }>({
+    mutasi: ({ id, body }) => api.ubahBoostProperti(id, body),
+    kunciInvalidasi: [awalan.propertiMitra, awalan.dashboardMitra],
+    pesanSukses: "Status boost diperbarui",
+    pesanGagal: "Gagal memperbarui boost",
+  });
+}
+
+/** Daftar lead (klik WA / isi form) pada satu properti mitra. */
+export function useLeadProperti(id: string, channel?: string, aktif = true) {
+  return useQuery<LeadView[]>({
+    queryKey: kunci.leadProperti(id, channel),
+    queryFn: () => api.daftarLeadProperti(id, channel),
+    enabled: Boolean(id) && aktif,
   });
 }
 
@@ -610,6 +652,20 @@ export function useDetailPaket(slug: string) {
   });
 }
 
+/**
+ * Perjanjian kemitraan yang sedang aktif.
+ *
+ * Halaman checkout memakai sumber publik ini, bukan `/vendor/agreement`, karena
+ * pengguna baru belum berperan mitra saat menyetujui perjanjian (dan endpoint
+ * vendor mensyaratkan peran tersebut).
+ */
+export function usePerjanjianAktif() {
+  return useQuery<AgreementView>({
+    queryKey: kunci.perjanjianAktif(),
+    queryFn: api.perjanjianAktif,
+  });
+}
+
 /** Pengaturan tampilan publik untuk area masuk (nama situs, logo, gambar). */
 export function usePengaturanPublik() {
   return useQuery<SiteSettingsView>({
@@ -624,6 +680,62 @@ export function usePropertiPublik(query: PropertyFilterQuery = {}) {
     queryKey: kunci.propertiPublik(kunciDari(query)),
     queryFn: () => api.cariProperti(query),
     placeholderData: (sebelumnya) => sebelumnya,
+  });
+}
+
+/** Kategori aktif untuk filter katalog publik. */
+export function useKategoriPublik() {
+  return useQuery<CategoryView[]>({
+    queryKey: kunci.kategoriPublik(),
+    queryFn: api.daftarKategoriPublik,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/** Detail properti publik berdasarkan slug (halaman detail katalog). */
+export function useDetailPropertiPublik(slug: string) {
+  return useQuery<PropertyDetail>({
+    queryKey: kunci.detailPropertiPublik(slug),
+    queryFn: () => api.detailProperti(slug),
+    enabled: Boolean(slug),
+  });
+}
+
+/**
+ * Mengambil nomor WhatsApp mitra untuk sebuah properti.
+ *
+ * Dijalankan sebagai mutasi (bukan query) karena backend mencatat satu lead
+ * pada setiap permintaan; dengan begitu pencatatan hanya terjadi saat pengunjung
+ * benar-benar menekan tombol hubungi.
+ */
+export function useKontakProperti() {
+  return useMutasi<PropertyContactResponse, string>({
+    mutasi: (slug) => api.kontakProperti(slug),
+    pesanSukses: null,
+    pesanGagal: "Gagal menghubungi mitra",
+  });
+}
+
+/**
+ * Mengirim form kontak publik pada detail properti.
+ *
+ * Tercatat sebagai lead kanal "form" di backend, sehingga mitra dapat melihat
+ * daftar pengunjung yang mengisi form.
+ */
+export function useKirimKontakProperti() {
+  return useMutasi<ContactFormResponse, { slug: string; body: ContactFormRequest }>({
+    mutasi: ({ slug, body }) => api.kirimKontakProperti(slug, body),
+    pesanSukses: "Pesan Anda terkirim ke pengelola",
+    pesanGagal: "Gagal mengirim pesan",
+  });
+}
+
+/** Profil pengelola (mitra) beserta katalog publiknya (halaman /pengelola/{id}). */
+export function usePengelolaPublik(id: string) {
+  return useQuery<PartnerPublicView>({
+    queryKey: kunci.pengelolaPublik(id),
+    queryFn: () => api.profilPengelola(id),
+    enabled: Boolean(id),
   });
 }
 
@@ -649,5 +761,58 @@ export function useLaporanLanggananOwner(query: ReportFilterQuery = {}) {
     queryKey: kunci.laporanLanggananOwner(kunciDari(query)),
     queryFn: () => api.laporanLanggananOwner(query),
     placeholderData: (sebelumnya) => sebelumnya,
+  });
+}
+
+/* =============================================================== Landing */
+
+/** Konten landing page untuk editor CMS admin/superadmin. */
+export function useLandingAdmin(): UseQueryResult<LandingContentView> {
+  return useQuery({
+    queryKey: kunci.landing(),
+    queryFn: api.ambilLandingAdmin,
+  });
+}
+
+/** Konten landing page versi baca-saja untuk owner. */
+export function useLandingOwner(): UseQueryResult<LandingContentView> {
+  return useQuery({
+    queryKey: kunci.landingOwner(),
+    queryFn: api.ambilLandingOwner,
+  });
+}
+
+/** Konten landing page publik; dipakai bila antarmuka klien perlu membacanya. */
+export function useLandingPublik(): UseQueryResult<LandingContentView> {
+  return useQuery({
+    queryKey: kunci.landingPublik(),
+    queryFn: api.ambilLandingPublik,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function usePerbaruiLanding() {
+  return useMutasi<LandingContentView, UpdateLandingRequest>({
+    mutasi: api.perbaruiLanding,
+    kunciInvalidasi: [awalan.landing, awalan.landingOwner, awalan.landingPublik],
+    pesanSukses: "Konten landing page disimpan",
+    pesanGagal: "Gagal menyimpan konten landing page",
+  });
+}
+
+export function usePublikasikanLanding() {
+  return useMutasi<LandingPublishResponse, void>({
+    mutasi: () => api.publikasikanLanding(),
+    kunciInvalidasi: [awalan.landingPublik],
+    pesanSukses: (data) => data.message || "Landing page dipublikasikan",
+    pesanGagal: "Gagal mempublikasikan landing page",
+  });
+}
+
+export function useUnggahGambarLanding() {
+  return useMutasi<LandingImageResponse, { kind: LandingImageKind; file: File }>({
+    mutasi: ({ kind, file }) => api.unggahGambarLanding(kind, file),
+    pesanSukses: "Gambar landing berhasil diunggah",
+    pesanGagal: "Gagal mengunggah gambar landing",
   });
 }

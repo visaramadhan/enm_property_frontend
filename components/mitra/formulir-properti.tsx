@@ -1,12 +1,14 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, LoaderCircle, Save } from "lucide-react";
+import { ArrowLeft, Eye, LoaderCircle, Save } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { GaleriFoto } from "@/components/mitra/galeri-foto";
+import { PilihFotoLokal } from "@/components/mitra/pilih-foto-lokal";
 import {
   BidangProperti,
   kePermintaan,
@@ -24,7 +26,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, pesanErrorApi } from "@/lib/api/client";
-import { useBuatProperti, useDetailPropertiMitra, usePerbaruiProperti } from "@/lib/api/hooks";
+import {
+  useBuatProperti,
+  useDetailPropertiMitra,
+  usePerbaruiProperti,
+  useProfilMitra,
+  useUnggahFotoMitra,
+} from "@/lib/api/hooks";
 import { formatAngka, formatRupiah, formatTanggalWib } from "@/lib/format";
 import type { PropertyDetail } from "@/types/api";
 
@@ -35,6 +43,9 @@ import type { PropertyDetail } from "@/types/api";
  * sehingga aturan validasi hanya ditulis sekali (DRY). Penolakan paket dari
  * backend (403/422) ditampilkan sebagai peringatan di atas formulir agar mitra
  * memahami langkah yang dibutuhkan tanpa kehilangan isian yang sudah diketik.
+ *
+ * Pada mode tambah, foto dipilih lebih dulu secara lokal lalu diunggah otomatis
+ * setelah properti tersimpan (endpoint unggah butuh ID properti).
  */
 
 function KerangkaFormulir() {
@@ -59,12 +70,15 @@ function PanelProperti({
   const router = useRouter();
   const buat = useBuatProperti();
   const ubah = usePerbaruiProperti();
+  const unggah = useUnggahFotoMitra();
+  const profil = useProfilMitra(mode === "baru");
+  const [fotoBaru, setFotoBaru] = React.useState<File[]>([]);
   const form = useForm<NilaiProperti>({
     resolver: zodResolver(skemaProperti),
     defaultValues: properti ? nilaiDariProperti(properti) : nilaiAwalProperti,
   });
 
-  const memuat = mode === "baru" ? buat.isPending : ubah.isPending;
+  const memuat = mode === "baru" ? buat.isPending || unggah.isPending : ubah.isPending;
   const galat = mode === "baru" ? buat.error : ubah.error;
 
   /* Backend menolak penyimpanan bila mitra belum memiliki paket aktif (403)
@@ -83,7 +97,12 @@ function PanelProperti({
         form.reset(nilaiDariProperti(hasil));
         return;
       }
-      await buat.mutateAsync(body);
+      const hasil = await buat.mutateAsync(body);
+      // Foto yang dipilih sebelum properti tersimpan diunggah sekarang agar
+      // mitra tidak perlu membuka halaman ubah untuk menambahkan gambar.
+      if (fotoBaru.length > 0) {
+        await unggah.mutateAsync({ propertyId: hasil.id, files: fotoBaru });
+      }
       router.push("/mitra/properti");
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
@@ -100,12 +119,22 @@ function PanelProperti({
             : "Perbarui informasi listing, lalu simpan perubahan."
         }
         aksi={
-          <Button variant="outline" asChild>
-            <Link href="/mitra/properti">
-              <ArrowLeft />
-              Kembali
-            </Link>
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            {mode === "baru" && profil.data ? (
+              <Button variant="outline" asChild>
+                <Link href={`/pengelola/${profil.data.id}?dari=dashboard`}>
+                  <Eye />
+                  Review katalog
+                </Link>
+              </Button>
+            ) : null}
+            <Button variant="outline" asChild>
+              <Link href="/mitra/properti">
+                <ArrowLeft />
+                Kembali
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -125,6 +154,10 @@ function PanelProperti({
               className="flex flex-col gap-6"
             >
               <BidangProperti control={form.control} />
+
+              {mode === "baru" ? (
+                <PilihFotoLokal berkas={fotoBaru} onUbah={setFotoBaru} />
+              ) : null}
 
               <div className="flex flex-wrap justify-end gap-2 border-t border-divider pt-6">
                 <Button type="button" variant="outline" asChild>
@@ -182,7 +215,7 @@ function PanelProperti({
                 <li>Gunakan judul yang menyebut tipe properti dan lokasi.</li>
                 <li>Isi luas tanah, luas bangunan, serta jumlah kamar bila ada.</li>
                 <li>Pisahkan fasilitas dengan koma, contoh: Carport, Taman, Keamanan 24 jam.</li>
-                <li>Foto dapat diunggah setelah properti tersimpan.</li>
+                <li>Pilih foto sebelum menyimpan; foto diunggah otomatis setelah properti tersimpan.</li>
               </ul>
             </CardContent>
           </Card>

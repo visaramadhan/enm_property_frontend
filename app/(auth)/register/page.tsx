@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import { RegisterForm } from "@/components/auth/register-form";
 
 export const metadata: Metadata = {
-  title: "Daftar Mitra",
-  description: "Buat akun mitra ENM Property dan mulai pasang listing properti Anda.",
+  title: "Daftar Akun",
+  description: "Buat akun ENM Property, lalu pilih paket langganan untuk mulai memasang listing.",
 };
 
 export default function RegisterPage() {

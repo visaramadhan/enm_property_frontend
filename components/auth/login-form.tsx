@@ -11,11 +11,12 @@ import { z } from "zod";
 import { AuthHeader, BrandSeluler, PeringatanFirebase } from "@/components/auth/elemen-auth";
 import { GoogleButton } from "@/components/auth/google-button";
 import { PanelAkunDummy } from "@/components/auth/panel-akun-dummy";
+import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { CheckboxField, PasswordField, TextField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useSiapkanSesi } from "@/lib/api/use-sesi";
-import { dashboardPeran } from "@/lib/navigation";
+import { dashboardPeran, tujuanLanjut } from "@/lib/navigation";
 import { toastGagal, toastGagalAuth, toastPeringatan, toastSukses } from "@/lib/toast";
 
 const skemaMasuk = z.object({
@@ -25,13 +26,6 @@ const skemaMasuk = z.object({
 });
 
 type NilaiMasuk = z.infer<typeof skemaMasuk>;
-
-/** Halaman yang diminta sebelum dialihkan ke login (`?lanjut=...`), bila aman. */
-function lanjutSetelahMasuk(): string | null {
-  if (typeof window === "undefined") return null;
-  const nilai = new URLSearchParams(window.location.search).get("lanjut");
-  return nilai && nilai.startsWith("/") ? nilai : null;
-}
 
 export function LoginForm() {
   const router = useRouter();
@@ -45,7 +39,7 @@ export function LoginForm() {
 
   function arahkan(peran: string) {
     toastSukses("Berhasil masuk", "Mengalihkan ke dashboard Anda...");
-    router.replace(lanjutSetelahMasuk() ?? dashboardPeran(peran));
+    router.replace(tujuanLanjut() ?? dashboardPeran(peran));
   }
 
   async function kirimMasuk(values: NilaiMasuk) {
@@ -98,6 +92,7 @@ export function LoginForm() {
 
   return (
     <div className="flex flex-col gap-6">
+      <TombolBeranda />
       <BrandSeluler />
       <PeringatanFirebase />
 
@@ -154,7 +149,7 @@ export function LoginForm() {
       <p className="text-center text-sm text-ink-muted">
         Belum punya akun?{" "}
         <Link href="/register" className="font-medium text-primary hover:underline">
-          Daftar sebagai mitra
+          Daftar akun
         </Link>
       </p>
 

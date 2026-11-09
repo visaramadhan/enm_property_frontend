@@ -29,6 +29,8 @@ import type {
   ChargeRequest,
   CheckoutRequest,
   CheckoutResponse,
+  ContactFormRequest,
+  ContactFormResponse,
   CreateAgreementRequest,
   CreateCategoryRequest,
   CreatePlanRequest,
@@ -36,11 +38,17 @@ import type {
   FavoriteToggleResponse,
   FavoriteView,
   InvoiceView,
+  LandingContentView,
+  LandingImageKind,
+  LandingImageResponse,
+  LandingPublishResponse,
+  LeadView,
   ListQuery,
   OrderStatusView,
   OrderView,
   OwnerDashboard,
   Paginated,
+  PartnerPublicView,
   PartnerReportRow,
   PartnerView,
   PaymentView,
@@ -54,9 +62,12 @@ import type {
   ResetPasswordResponse,
   SessionResponse,
   SetAvailabilityRequest,
+  SetBoostRequest,
   SetPlanStatusRequest,
   SetPropertyStatusRequest,
   SetUserStatusRequest,
+  SettingImageKind,
+  SettingImageResponse,
   SettingView,
   SiteSettingsView,
   SubscriptionReport,
@@ -67,6 +78,7 @@ import type {
   UpdatePartnerRequest,
   UpdatePlanRequest,
   UpdateCategoryRequest,
+  UpdateLandingRequest,
   UpdateSettingsRequest,
   UploadPhotoResponse,
   UserView,
@@ -102,8 +114,24 @@ export function detailProperti(slug: string) {
   return apiGet<PropertyDetail>(`/properties/${slug}`, { publik: true });
 }
 
+/**
+ * Mengambil nomor WhatsApp mitra untuk sebuah properti.
+ *
+ * Endpoint ini mensyaratkan login karena backend mencatat pengguna yang
+ * menghubungi mitra; token dikirim otomatis oleh klien.
+ */
 export function kontakProperti(slug: string) {
-  return apiGet<PropertyContactResponse>(`/properties/${slug}/contact`, { publik: true });
+  return apiGet<PropertyContactResponse>(`/properties/${slug}/contact`);
+}
+
+/** Mengirim form kontak publik pada detail properti (tercatat sebagai lead). */
+export function kirimKontakProperti(slug: string, body: ContactFormRequest) {
+  return apiPost<ContactFormResponse>(`/properties/${slug}/contact-form`, body);
+}
+
+/** Profil pengelola (mitra) beserta katalog publiknya. */
+export function profilPengelola(id: string) {
+  return apiGet<PartnerPublicView>(`/partners/${id}`, { publik: true });
 }
 
 /* ----------------------------------------------------------------- Paket -- */
@@ -284,6 +312,16 @@ export function ubahKetersediaanProperti(id: string, body: SetAvailabilityReques
   return apiPatch<PropertyDetail>(`/vendor/properties/${id}/availability`, body);
 }
 
+/** Mengaktifkan/menonaktifkan boost listing (kuota mengikuti paket mitra). */
+export function ubahBoostProperti(id: string, body: SetBoostRequest) {
+  return apiPatch<PropertyDetail>(`/vendor/properties/${id}/boost`, body);
+}
+
+/** Daftar lead (klik WA / isi form) pada satu properti mitra. */
+export function daftarLeadProperti(id: string, channel?: string) {
+  return apiGet<LeadView[]>(`/vendor/properties/${id}/leads${buatQuery({ channel })}`);
+}
+
 /* ------------------------------------------------------- Media Properti -- */
 
 function formDataFoto(files: File[]) {
@@ -403,6 +441,16 @@ export function ambilPengaturanPublik() {
   return apiGet<SiteSettingsView>("/settings", { publik: true });
 }
 
+/**
+ * Mengunggah berkas gambar pengaturan (logo/gambar login). Backend mengonversi
+ * berkas ke WebP otomatis; pemanggil cukup mengirim satu berkas mentah.
+ */
+export function unggahGambarPengaturan(kind: SettingImageKind, file: File) {
+  const data = new FormData();
+  data.append("files", file);
+  return apiPost<SettingImageResponse>(`/admin/settings/images/${kind}`, data);
+}
+
 /* --------------------------------------------------------------- Audit -- */
 
 export function daftarAudit(query: AuditFilterQuery = {}) {
@@ -425,6 +473,43 @@ export function laporanLanggananOwner(query: ReportFilterQuery = {}) {
 
 export function laporanMitraOwner(query: ReportFilterQuery = {}) {
   return apiGetPaginated<PartnerReportRow>(`/owner/reports/partners${buatQuery(query)}`);
+}
+
+/* ------------------------------------------------------------ Landing -- */
+
+/** Konten landing page publik (dipakai halaman ISR dan pembaruan cache). */
+export function ambilLandingPublik() {
+  return apiGet<LandingContentView>("/landing", { publik: true });
+}
+
+/** Konten landing page untuk editor CMS (admin dan superadmin). */
+export function ambilLandingAdmin() {
+  return apiGet<LandingContentView>("/admin/landing");
+}
+
+/** Konten landing page versi baca-saja untuk owner. */
+export function ambilLandingOwner() {
+  return apiGet<LandingContentView>("/owner/landing");
+}
+
+/** Menyimpan perubahan konten landing page dari CMS. */
+export function perbaruiLanding(body: UpdateLandingRequest) {
+  return apiPut<LandingContentView>("/admin/landing", body);
+}
+
+/** Memicu revalidasi ISR halaman landing page di frontend. */
+export function publikasikanLanding() {
+  return apiPost<LandingPublishResponse>("/admin/landing/publish");
+}
+
+/**
+ * Mengunggah gambar landing (hero/og). Backend mengonversi berkas ke WebP
+ * secara otomatis; pemanggil cukup mengirim satu berkas mentah.
+ */
+export function unggahGambarLanding(kind: LandingImageKind, file: File) {
+  const data = new FormData();
+  data.append("files", file);
+  return apiPost<LandingImageResponse>(`/admin/landing/images/${kind}`, data);
 }
 
 /* -------------------------------------------------------------- Favorit -- */
