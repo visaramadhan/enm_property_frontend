@@ -139,7 +139,7 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
               <div className="flex flex-wrap gap-2">
                 {menunggu ? (
                   <Button asChild>
-                    <Link href={`/mitra/pembayaran/${orderCode}`}>
+                    <Link href={`/pembayaran/${orderCode}`}>
                       <CreditCard />
                       Bayar sekarang
                     </Link>

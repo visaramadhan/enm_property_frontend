@@ -1,11 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 
 import { useProfilSaya } from "@/lib/api/hooks";
-import { hapusAkunDummy } from "@/lib/auth/akun-dummy";
+import { useKeluar } from "@/lib/api/use-sesi";
 import type { UserView } from "@/types/api";
 
 interface KonteksAuth {
@@ -29,23 +27,7 @@ const KonteksAuth = React.createContext<KonteksAuth | null>(null);
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hasil = useProfilSaya();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-
-  const keluar = React.useCallback(async () => {
-    hapusAkunDummy();
-    try {
-      const [{ signOut }, { getFirebaseAuth }] = await Promise.all([
-        import("firebase/auth"),
-        import("@/lib/firebase/client"),
-      ]);
-      await signOut(getFirebaseAuth());
-    } catch {
-      // Firebase belum dikonfigurasi; sesi lokal tetap dibersihkan.
-    }
-    queryClient.clear();
-    router.replace("/login");
-  }, [queryClient, router]);
+  const keluar = useKeluar();
 
   const nilai = React.useMemo<KonteksAuth>(
     () => ({

@@ -48,6 +48,11 @@ const hostGambar = Array.from(
 
 const nextConfig: NextConfig = {
   /* config options here */
+  /**
+   * Indikator dev (ikon Next di pojok kiri + panel compile/status rute) dimatikan
+   * agar tidak menutupi UI saat pengembangan. Error compile tetap dilaporkan.
+   */
+  devIndicators: false,
   experimental: {
     agentFeedback: true,
   },

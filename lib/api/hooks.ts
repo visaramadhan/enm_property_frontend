@@ -3,6 +3,7 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 
 import * as api from "@/lib/api/endpoints";
+import { ApiError } from "@/lib/api/client";
 import { awalan, kunci } from "@/lib/api/keys";
 import { useMutasi } from "@/lib/api/use-mutasi";
 import type { Paginated } from "@/types/api";
@@ -95,6 +96,10 @@ export function useProfilSaya(): UseQueryResult<UserView> {
   return useQuery({
     queryKey: kunci.profilSaya(),
     queryFn: api.ambilProfilSaya,
+    /* Pengunjung anonim memang menerima 401 dari `GET /me`; mencoba ulang
+       hanya menambah permintaan gagal pada setiap kunjungan publik. */
+    retry: (jumlah, error) =>
+      !(error instanceof ApiError && error.status === 401) && jumlah < 1,
   });
 }
 
@@ -540,7 +545,7 @@ export function useDaftarFavorit(query: ListQuery = {}) {
 export function useTambahFavorit() {
   return useMutasi<FavoriteToggleResponse, string>({
     mutasi: api.tambahFavorit,
-    kunciInvalidasi: [awalan.favorit],
+    kunciInvalidasi: [awalan.favorit, awalan.propertiPublik],
     pesanSukses: "Ditambahkan ke favorit",
     pesanGagal: "Gagal menambahkan favorit",
   });
@@ -549,7 +554,7 @@ export function useTambahFavorit() {
 export function useHapusFavorit() {
   return useMutasi<FavoriteToggleResponse, string>({
     mutasi: api.hapusFavorit,
-    kunciInvalidasi: [awalan.favorit],
+    kunciInvalidasi: [awalan.favorit, awalan.propertiPublik],
     pesanSukses: "Dihapus dari favorit",
     pesanGagal: "Gagal menghapus favorit",
   });

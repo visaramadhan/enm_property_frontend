@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { HeaderLanding } from "@/components/landing/header-landing";
+import { MenuAkun } from "@/components/layout/menu-akun";
 import { SkemaItemList } from "@/components/landing/skema-item-list";
 import { TombolLacak } from "@/components/landing/tombol-lacak";
 import { KartuProperti } from "@/components/properti/kartu-properti";
@@ -898,9 +899,7 @@ function FooterLanding() {
                 {item.label}
               </a>
             ))}
-            <Link href="/login" className="transition-colors hover:text-primary">
-              Masuk
-            </Link>
+            <MenuAkun variasi="tautan" className="transition-colors hover:text-primary" />
             <Link href="/katalog" className="transition-colors hover:text-primary">
               Katalog
             </Link>

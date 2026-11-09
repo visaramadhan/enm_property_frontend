@@ -1,0 +1,31 @@
+# Konteks build frontend: kirim sumber saja.
+# Variabel NEXT_PUBLIC_* disuplai lewat build arg (docker-compose.yml),
+# sehingga berkas .env.* tidak perlu ikut dikirim.
+
+node_modules
+.next
+out
+build
+coverage
+
+# Rahasia/konfigurasi lokal: jangan di-bake ke image.
+.env
+.env.*
+!.env.example
+
+.git
+.gitignore
+.vercel
+*.tsbuildinfo
+
+# Dokumentasi (tidak dipakai saat build).
+README.md
+AGENTS.md
+design-system-listing-properti.txt
+ui-guideline.txt
+
+npm-debug.log*
+yarn-error.log*
+*.log
+.idea/
+.vscode/

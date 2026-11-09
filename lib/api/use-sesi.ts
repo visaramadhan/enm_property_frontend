@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ambilProfilSaya, kirimSesi } from "@/lib/api/endpoints";
 import { awalan, kunci } from "@/lib/api/keys";
 import { hapusAkunDummy, simpanAkunDummy } from "@/lib/auth/akun-dummy";
+import { hapusAktivitas } from "@/lib/auth/aktivitas";
 import type { SessionResponse } from "@/types/api";
 
 /**
@@ -74,4 +75,37 @@ export function useMasukAkunDummy() {
     },
     [queryClient],
   );
+}
+
+/**
+ * Mengakhiri sesi aktif lalu kembali ke halaman masuk.
+ *
+ * Dipakai bersama oleh menu akun dan `AuthProvider` supaya langkah keluar
+ * (bersihkan sesi demo, putus Firebase, kosongkan cache) hanya ditulis sekali
+ * (DRY) dan berperilaku sama di seluruh halaman.
+ */
+export function useKeluar() {
+  const queryClient = useQueryClient();
+
+  return React.useCallback(async () => {
+    hapusAkunDummy();
+    /* Hapus penanda aktivitas agar sesi berikutnya memulai hitungan idle dari
+       awal, bukan mewarisi stempel waktu sesi sebelumnya. */
+    hapusAktivitas();
+    try {
+      const [{ signOut }, { getFirebaseAuth }] = await Promise.all([
+        import("firebase/auth"),
+        import("@/lib/firebase/client"),
+      ]);
+      await signOut(getFirebaseAuth());
+    } catch {
+      // Firebase belum dikonfigurasi; sesi lokal tetap dibersihkan.
+    }
+    queryClient.clear();
+    /* Muat ulang dokumen secara penuh menuju halaman masuk. Navigasi klien
+       (`router.replace`) menyisakan instans Firebase dan sisa keadaan di memori
+       sehingga percobaan masuk berikutnya gagal sampai halaman di-refresh
+       manual; memuat ulang dokumen memastikan halaman masuk benar-benar bersih. */
+    window.location.replace("/login");
+  }, [queryClient]);
 }

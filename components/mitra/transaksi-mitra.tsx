@@ -102,7 +102,7 @@ export function TransaksiMitra() {
                   {
                     label: "Bayar sekarang",
                     ikon: CreditCard,
-                    onPilih: () => router.push(`/mitra/pembayaran/${baris.code}`),
+                    onPilih: () => router.push(`/pembayaran/${baris.code}`),
                   },
                 ]
               : []),

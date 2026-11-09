@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle2, CreditCard, LoaderCircle, LogOut, QrCode, Receipt, UserCog } from "lucide-react";
 
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
+import { KodeQr } from "@/components/shared/kode-qr";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
@@ -121,6 +122,13 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
                 src={data.qr_url}
                 alt="Kode QRIS pembayaran"
                 className="size-64 rounded-field border border-line bg-white object-contain p-3"
+              />
+            ) : data.qr_string ? (
+              /* Cadangan: gateway tidak menyediakan URL gambar QR (mis. mode
+                 simulasi) sehingga kode dibangkitkan lokal dari qr_string. */
+              <KodeQr
+                nilai={data.qr_string}
+                kelas="size-64 rounded-field border border-line bg-white object-contain p-3"
               />
             ) : (
               <div className="grid size-64 place-items-center rounded-field border border-dashed border-line bg-hover/40 p-6 text-center">

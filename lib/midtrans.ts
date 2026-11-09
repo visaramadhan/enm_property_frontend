@@ -4,11 +4,12 @@ const SNAP_PRODUCTION_URL = "https://app.midtrans.com/snap/snap.js";
 /**
  * Prefiks client key yang menandakan lingkungan non-produksi.
  *
- * `SB-` adalah prefiks sandbox Midtrans standar, sedangkan `VT-` dipakai
- * kredensial simulator proyek ini. Keduanya harus memuat snap.js sandbox agar
- * tidak pernah mengirim transaksi uji ke gateway produksi.
+ * `SB-` adalah prefiks sandbox Midtrans standar. Kredensial proyek ini
+ * berawalan `VT-`, namun sudah diverifikasi diterima oleh API produksi
+ * (`api.midtrans.com`) dan ditolak sandbox, sehingga TIDAK lagi diperlakukan
+ * sebagai sandbox — snap.js yang dimuat mengikuti lingkungan produksi.
  */
-const PREFIKS_NON_PRODUKSI = ["SB-", "VT-"];
+const PREFIKS_NON_PRODUKSI = ["SB-"];
 
 let snapPromise: Promise<Snap> | null = null;
 

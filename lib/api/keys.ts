@@ -96,6 +96,7 @@ export const awalan = {
   paketPublik: ["paket/publik"],
   perjanjianAktif: ["perjanjian/aktif"],
   kategoriPublik: ["kategori/publik"],
+  propertiPublik: ["properti/publik"],
   pengelolaPublik: ["pengelola/publik"],
   pengaturanPublik: ["pengaturan/publik"],
   pembayaranOrder: ["order/pembayaran"],

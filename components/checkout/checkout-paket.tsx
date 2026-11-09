@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, LoaderCircle, LogIn, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
+import { CheckCircle2, LoaderCircle, LogIn, ShieldCheck, Sparkles, Store, UserPlus } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -126,6 +126,35 @@ function KartuAjakanMasuk({ lanjut }: { lanjut: string }) {
   );
 }
 
+/** Ajakan melengkapi data mitra sebelum checkout (permintaan A & 8). */
+function KartuLengkapiMitra({ lanjut }: { lanjut: string }) {
+  const tujuan = encodeURIComponent(lanjut);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Store className="size-4 text-secondary" aria-hidden="true" />
+          Lengkapi data mitra dulu
+        </CardTitle>
+        <CardDescription>
+          Sebelum berlangganan, Anda perlu mengisi data badan usaha lewat pendaftaran mitra. Setelah
+          itu Anda otomatis kembali ke halaman ini untuk menyelesaikan pembayaran.
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex flex-wrap gap-3">
+        <Button asChild>
+          <Link href={`/daftar-mitra?lanjut=${tujuan}`}>
+            <Store />
+            Daftar Sebagai Mitra
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+
 /** Panel konfirmasi: perjanjian dan tombol lanjut ke pembayaran. */
 function PanelKonfirmasi({ paket }: { paket: PlanView }) {
   const router = useRouter();
@@ -146,6 +175,12 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
 
   if (!pengguna) {
     return <KartuAjakanMasuk lanjut={pathname} />;
+  }
+
+  /* Checkout hanya untuk mitra: pengguna yang belum punya profil mitra wajib
+     mengisi data badan usaha lebih dulu (permintaan A & 8). */
+  if (!pengguna.partner) {
+    return <KartuLengkapiMitra lanjut={pathname} />;
   }
 
   if (perjanjian.isPending) {
@@ -180,7 +215,7 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
       }
 
       toastSukses("Pesanan dibuat", "Lanjutkan pembayaran melalui QRIS atau virtual account.");
-      router.push(`/mitra/pembayaran/${hasil.order.code}`);
+      router.push(`/pembayaran/${hasil.order.code}`);
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
     }
@@ -234,6 +269,7 @@ export function CheckoutPaket({ slug }: { slug: string }) {
 
   return (
     <>
+      <TombolBeranda />
       <PageHeader
         judul="Checkout Paket"
         deskripsi="Tinjau paket yang Anda pilih sebelum melanjutkan pembayaran."

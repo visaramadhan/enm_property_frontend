@@ -10,15 +10,15 @@ export const metadata: Metadata = {
 };
 
 /**
- * Halaman pembayaran satu order.
+ * Halaman pembayaran satu order (item 6).
  *
- * Segmen dinamis tanpa `generateStaticParams` sehingga `params` hanya diketahui
- * saat permintaan berjalan; aksesnya dibungkus `<Suspense>` agar shell statis
- * tetap dapat diprerender.
+ * Diletakkan di luar `/mitra` agar halaman pembayaran/invoice dapat dibuka
+ * tanpa kerangka dashboard, sesuai alur checkout. Segmen dinamis tanpa
+ * `generateStaticParams` sehingga `params` hanya diketahui saat permintaan
+ * berjalan; aksesnya dibungkus `<Suspense>` agar shell statis tetap dapat
+ * diprerender.
  */
-export default function MitraPembayaranOrderPage({
-  params,
-}: PageProps<"/mitra/pembayaran/[orderCode]">) {
+export default function PembayaranOrderPage({ params }: PageProps<"/pembayaran/[orderCode]">) {
   return (
     <Suspense fallback={<KerangkaPembayaran />}>
       {params.then(({ orderCode }) => (

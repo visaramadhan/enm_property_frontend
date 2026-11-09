@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -10,6 +11,7 @@ import { TextField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePerbaruiProfilSaya, useProfilSaya } from "@/lib/api/hooks";
 import { LABEL, LABEL_PERAN } from "@/lib/enum";
-import { formatWib } from "@/lib/format";
+import { formatWib, inisialDari } from "@/lib/format";
 import type { UserView } from "@/types/api";
 
 /**
@@ -40,14 +42,6 @@ const skemaProfil = z.object({
 });
 
 type NilaiProfil = z.infer<typeof skemaProfil>;
-
-/** Membentuk inisial dari nama pengguna, contoh: "Budi Santoso" -> "BS". */
-function inisialDari(nama: string) {
-  const bagian = nama.trim().split(/\s+/).filter(Boolean);
-  if (bagian.length === 0) return "EN";
-  if (bagian.length === 1) return bagian[0].slice(0, 2).toUpperCase();
-  return `${bagian[0][0]}${bagian[bagian.length - 1][0]}`.toUpperCase();
-}
 
 function KartuProfil({ pengguna }: { pengguna: UserView }) {
   const simpan = usePerbaruiProfilSaya();
@@ -155,17 +149,24 @@ export function ProfilAkun({
   judul = "Profil Saya",
   deskripsi = "Kelola informasi akun dan keamanan Anda.",
   tanpaHeader = false,
+  tombolBeranda = false,
+  aksi,
 }: {
   judul?: string;
   deskripsi?: string;
   /** Sembunyikan judul halaman bila komponen ini digabung dengan kartu lain. */
   tanpaHeader?: boolean;
+  /** Tampilkan tombol "Kembali ke beranda" (halaman akun publik). */
+  tombolBeranda?: boolean;
+  /** Tombol tambahan di sisi kanan judul halaman (mis. tautan favorit). */
+  aksi?: React.ReactNode;
 }) {
   const profil = useProfilSaya();
 
   return (
     <>
-      {tanpaHeader ? null : <PageHeader judul={judul} deskripsi={deskripsi} />}
+      {tombolBeranda ? <TombolBeranda selaluTampil /> : null}
+      {tanpaHeader ? null : <PageHeader judul={judul} deskripsi={deskripsi} aksi={aksi} />}
       <KontenAsync
         hasil={profil}
         skeleton={

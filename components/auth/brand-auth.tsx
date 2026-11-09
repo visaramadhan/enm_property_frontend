@@ -1,9 +1,8 @@
 "use client";
 
-import * as React from "react";
 import Link from "next/link";
 
-import { usePengaturanPublik } from "@/lib/api/hooks";
+import { inisialSitus, useIdentitasSitus } from "@/components/shared/logo-situs";
 import { cn } from "@/lib/utils";
 
 /**
@@ -11,15 +10,9 @@ import { cn } from "@/lib/utils";
  * (`site_name`, `site_logo_url`, `login_image_url`), sehingga admin dapat
  * mengganti logo dan gambar panel masuk tanpa mengubah kode.
  *
- * Selama pengaturan belum termuat — atau bila backend belum berjalan — dipakai
- * nilai bawaan di bawah ini agar tampilan tetap utuh (pola fallback).
+ * Logika pembacaan identitas situs dipusatkan pada `shared/logo-situs.tsx`
+ * (dipakai juga header publik, landing, dan dashboard) agar hanya ditulis sekali.
  */
-
-const BAWAAN = {
-  site_name: "ENM Property",
-  logo_url: "",
-  login_image_url: "",
-} as const;
 
 /** Langkah pengenalan mitra pada panel brand area masuk. */
 const LANGKAH = [
@@ -46,17 +39,6 @@ const GAYA = {
   gelap: { nama: "text-secondary-foreground", keterangan: "text-secondary-foreground/60" },
 } as const;
 
-/** Monogram nama situs bila logo belum diatur admin. */
-function inisialSitus(nama: string): string {
-  const kata = nama.trim().split(/\s+/).filter(Boolean);
-  if (kata.length === 0) return "EN";
-  return kata
-    .slice(0, 2)
-    .map((kata1) => kata1.charAt(0))
-    .join("")
-    .toUpperCase();
-}
-
 /** Logo + nama situs yang dapat diubah admin melalui Pengaturan Sistem. */
 export function LogoBrand({
   variasi = "terang",
@@ -65,8 +47,7 @@ export function LogoBrand({
   variasi?: keyof typeof GAYA;
   className?: string;
 }) {
-  const pengaturan = usePengaturanPublik();
-  const situs = pengaturan.data ?? BAWAAN;
+  const situs = useIdentitasSitus();
   const gaya = GAYA[variasi];
 
   return (
@@ -95,8 +76,7 @@ export function LogoBrand({
 
 /** Panel brand area autentikasi untuk layar lebar. */
 export function PanelBrandAuth() {
-  const pengaturan = usePengaturanPublik();
-  const situs = pengaturan.data ?? BAWAAN;
+  const situs = useIdentitasSitus();
 
   return (
     <aside className="relative hidden flex-col justify-between overflow-hidden bg-secondary p-12 text-secondary-foreground lg:flex">

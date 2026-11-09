@@ -61,3 +61,11 @@ export function formatAngka(value: number) {
 export function formatBulanSingkat(date: Date) {
   return format(date, "MMM", { locale: localeId });
 }
+
+/** Membentuk inisial dari nama pengguna, contoh: "Budi Santoso" -> "BS". */
+export function inisialDari(nama: string) {
+  const bagian = nama.trim().split(/\s+/).filter(Boolean);
+  if (bagian.length === 0) return "EN";
+  if (bagian.length === 1) return bagian[0].slice(0, 2).toUpperCase();
+  return `${bagian[0][0]}${bagian[bagian.length - 1][0]}`.toUpperCase();
+}

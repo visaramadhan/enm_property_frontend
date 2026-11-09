@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Boxes,
+  Eye,
   FileText,
   MessageCircle,
   PencilLine,
@@ -38,6 +39,7 @@ import {
   useHapusProperti,
   useLanggananMitra,
   useLeadProperti,
+  useProfilMitra,
   useUbahBoostProperti,
   useUbahKetersediaanProperti,
   useUbahStatusProperti,
@@ -226,6 +228,7 @@ export function PropertiMitra() {
   const tabel = useTabelQuery<FilterProperti>({ perPage: 10 });
   const daftar = useDaftarPropertiMitra(tabel.query);
   const langganan = useLanggananMitra();
+  const profil = useProfilMitra();
   const ubahStatus = useUbahStatusProperti();
   const ubahBoost = useUbahBoostProperti();
   const hapus = useHapusProperti();
@@ -399,6 +402,14 @@ export function PropertiMitra() {
         aksi={
           <div className="flex flex-wrap items-center gap-2">
             <RingkasanBoost kuota={boostQuota} terpakai={langganan.data?.boost_used ?? 0} />
+            {profil.data ? (
+              <Button variant="outline" asChild>
+                <Link href={`/pengelola/${profil.data.id}?dari=dashboard`}>
+                  <Eye />
+                  Review katalog
+                </Link>
+              </Button>
+            ) : null}
             <Button asChild>
               <Link href="/mitra/properti/baru">
                 <Plus />

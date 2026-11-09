@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bath, Bed, MapPin, Ruler, Sparkles } from "lucide-react";
 
+import { TombolFavorit } from "@/components/properti/tombol-favorit";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,8 +13,8 @@ import type { PropertySummary } from "@/types/api";
  *
  * Memakai rasio media 16:9 dan menampilkan penanda boost agar listing unggulan
  * mudah dikenali, sesuai panduan design system bagian kartu properti. Seluruh
- * kartu dapat diklik; tombol "Lihat detail" berada di atas tautan kartu
- * (`z-10`) sehingga tetap dapat ditekan.
+ * kartu dapat diklik; tombol "Lihat detail" dan tombol favorit berada di atas
+ * tautan kartu (`z-10`) sehingga tetap dapat ditekan.
  */
 export function KartuProperti({ properti }: { properti: PropertySummary }) {
   const tujuan = `/katalog/${properti.slug}`;
@@ -48,6 +49,10 @@ export function KartuProperti({ properti }: { properti: PropertySummary }) {
               Unggulan
             </Badge>
           ) : null}
+        </div>
+
+        <div className="absolute top-3 right-3 z-10">
+          <TombolFavorit properti={properti} />
         </div>
       </div>
 

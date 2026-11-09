@@ -5,12 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, Store } from "lucide-react";
 import { z } from "zod";
 
 import { AuthHeader, BrandSeluler, PeringatanFirebase } from "@/components/auth/elemen-auth";
 import { GoogleButton } from "@/components/auth/google-button";
-import { PanelAkunDummy } from "@/components/auth/panel-akun-dummy";
 import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { CheckboxField, PasswordField, TextField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
@@ -153,7 +152,19 @@ export function LoginForm() {
         </Link>
       </p>
 
-      <PanelAkunDummy />
+      <section className="flex flex-col gap-3 rounded-panel border border-line bg-hover/40 p-4 text-center">
+        <p className="flex items-center justify-center gap-2 text-[13px] font-semibold text-ink">
+          <Store className="size-4 text-secondary" aria-hidden="true" />
+          Ingin memasarkan properti?
+        </p>
+        <p className="text-xs text-ink-muted">
+          Daftar sebagai mitra untuk mengisi data badan usaha, memilih paket, dan mulai memasang
+          listing di katalog.
+        </p>
+        <Button variant="outline" asChild>
+          <Link href="/daftar-mitra">Daftar Sebagai Mitra</Link>
+        </Button>
+      </section>
     </div>
   );
 }

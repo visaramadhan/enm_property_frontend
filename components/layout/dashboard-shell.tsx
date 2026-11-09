@@ -7,6 +7,7 @@ import { Bell, ChevronDown, LogOut, Menu, Search, Settings, UserCog } from "luci
 
 import { PageTransition } from "@/components/layout/page-transition";
 import { useAuth } from "@/components/providers/auth-provider";
+import { LogoMark } from "@/components/shared/logo-situs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { LABEL_PERAN } from "@/lib/enum";
-import { formatTanggalWib } from "@/lib/format";
+import { formatTanggalWib, inisialDari } from "@/lib/format";
 import {
   cariJudulHalaman,
   dashboardMeta,
@@ -43,14 +44,6 @@ function useTanggalWib() {
     () => `${formatTanggalWib(new Date())} WIB`,
     () => "",
   );
-}
-
-/** Membentuk inisial dari nama pengguna, contoh: "Budi Santoso" -> "BS". */
-function inisialDari(nama: string) {
-  const bagian = nama.trim().split(/\s+/).filter(Boolean);
-  if (bagian.length === 0) return "EN";
-  if (bagian.length === 1) return bagian[0].slice(0, 2).toUpperCase();
-  return `${bagian[0][0]}${bagian[bagian.length - 1][0]}`.toUpperCase();
 }
 
 type Identitas = {
@@ -86,9 +79,7 @@ function SidebarContent({
         onClick={onNavigate}
         className="flex items-center gap-3 border-b border-line px-5 py-[18px]"
       >
-        <span className="grid size-9 shrink-0 place-items-center rounded-md bg-secondary text-[12px] font-extrabold text-secondary-foreground">
-          ENM
-        </span>
+        <LogoMark className="size-9 rounded-md bg-secondary text-[12px] font-extrabold text-secondary-foreground" />
         <span className="flex min-w-0 flex-col">
           <span className="truncate text-sm font-extrabold tracking-tight text-ink">
             {meta.brand}

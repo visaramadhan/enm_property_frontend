@@ -4,7 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
+import { MenuAkun } from "@/components/layout/menu-akun";
+import { LogoHeader } from "@/components/shared/logo-situs";
 import { Button } from "@/components/ui/button";
+import { useProfilSaya } from "@/lib/api/hooks";
+import { useSudahTerpasang } from "@/lib/hooks/use-sudah-terpasang";
 import { cn } from "@/lib/utils";
 
 /** Tautan menu utama; `id` dipakai penanda bagian yang sedang dilihat. */
@@ -35,6 +39,15 @@ const PETA_BAGIAN: Record<string, string> = {
 export function HeaderLanding() {
   const [terbuka, setTerbuka] = React.useState(false);
   const [bagianAktif, setBagianAktif] = React.useState("");
+  const profil = useProfilSaya();
+  const sudahTerpasang = useSudahTerpasang();
+
+  /* Tautan pendaftaran mitra hanya relevan bagi pengunjung yang belum terdaftar
+     sebagai mitra. Sesi baru dibaca setelah komponen terpasang sehingga render
+     pertama klien tetap sama dengan HTML hasil prerender. */
+  const terdaftarMitra = Boolean(
+    sudahTerpasang && (profil.data?.partner || profil.data?.role === "mitra"),
+  );
 
   React.useEffect(() => {
     function periksa() {
@@ -59,12 +72,12 @@ export function HeaderLanding() {
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-canvas/97 backdrop-blur">
       <div className="mx-auto flex h-[72px] w-full max-w-7xl items-center gap-7 px-4 lg:px-8">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="ENM Property beranda">
-          <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary text-[12px] font-bold text-primary-foreground">
-            EN
-          </span>
-          <span className="text-base font-bold tracking-tight text-ink">ENM PROPERTY</span>
-        </Link>
+        <LogoHeader
+          label="Beranda"
+          className="gap-2.5"
+          kelasMark="size-[30px] rounded-lg bg-primary text-[12px] font-bold text-primary-foreground"
+          kelasNama="text-base font-bold"
+        />
 
         <nav className="ml-auto hidden gap-7 lg:flex" aria-label="Navigasi utama">
           {MENU.map((item) => (
@@ -82,12 +95,12 @@ export function HeaderLanding() {
         </nav>
 
         <div className="ml-auto hidden gap-2.5 lg:flex">
-          <Button asChild size="sm">
-            <Link href="/register?role=mitra">Pasang Properti</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline">
-            <Link href="/login">Masuk</Link>
-          </Button>
+          {!terdaftarMitra ? (
+            <Button asChild size="sm">
+              <Link href="/daftar-mitra">Daftar Sebagai Mitra</Link>
+            </Button>
+          ) : null}
+          <MenuAkun />
         </div>
 
         <button
@@ -117,16 +130,14 @@ export function HeaderLanding() {
             ))}
           </nav>
           <div className="mt-4 flex gap-2.5">
-            <Button asChild size="sm" className="flex-1">
-              <Link href="/register?role=mitra" onClick={tutupMenu}>
-                Pasang Properti
-              </Link>
-            </Button>
-            <Button asChild size="sm" variant="outline" className="flex-1">
-              <Link href="/login" onClick={tutupMenu}>
-                Masuk
-              </Link>
-            </Button>
+            {!terdaftarMitra ? (
+              <Button asChild size="sm" className="flex-1">
+                <Link href="/daftar-mitra" onClick={tutupMenu}>
+                  Daftar Sebagai Mitra
+                </Link>
+              </Button>
+            ) : null}
+            <MenuAkun className="flex-1" />
           </div>
         </div>
       ) : null}

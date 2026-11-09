@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import { TombolFavorit } from "@/components/properti/tombol-favorit";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { TextField, TextareaField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
@@ -159,6 +160,8 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
           {kontak.isPending ? <LoaderCircle className="animate-spin" /> : <MessageCircle />}
           Hubungi via WhatsApp
         </Button>
+
+        <TombolFavorit properti={properti} variasi="tombol" />
 
         {properti.partner ? (
           <div className="flex flex-col gap-1 rounded-field border border-line bg-hover/40 p-4">

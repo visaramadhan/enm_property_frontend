@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 
+import { IndikatorNavigasi } from "@/components/layout/indikator-navigasi";
+import { PenjagaIdle } from "@/components/layout/penjaga-idle";
 import { AppProviders } from "@/components/providers/app-providers";
 
 import "./globals.css";
@@ -39,7 +42,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-canvas font-sans text-ink">
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          {/* `IndikatorNavigasi` membaca `usePathname()` (data URL hanya tersedia
+              saat runtime) sehingga wajib dibungkus `<Suspense>` agar shell statis
+              tetap dapat diprerender (panduan Cache Components). */}
+          <Suspense fallback={null}>
+            <IndikatorNavigasi />
+          </Suspense>
+          <PenjagaIdle />
+          {children}
+        </AppProviders>
         {GA_ID ? <GoogleAnalytics gaId={GA_ID} /> : null}
       </body>
     </html>
