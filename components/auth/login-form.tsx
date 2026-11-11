@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useSiapkanSesi } from "@/lib/api/use-sesi";
 import { dashboardPeran, tujuanLanjut } from "@/lib/navigation";
-import { toastGagal, toastGagalAuth, toastPeringatan, toastSukses } from "@/lib/toast";
+import { toastGagal, toastGagalAuth, toastSukses } from "@/lib/toast";
 
 const skemaMasuk = z.object({
   email: z.email("Format email tidak valid"),
@@ -54,13 +54,7 @@ export function LoginForm() {
         values.ingatSaya ? browserLocalPersistence : browserSessionPersistence,
       );
 
-      const kredensial = await signInWithEmailAndPassword(auth, values.email, values.password);
-      if (!kredensial.user.emailVerified) {
-        toastPeringatan(
-          "Email belum diverifikasi",
-          "Sebagian fitur dibatasi sampai email Anda diverifikasi.",
-        );
-      }
+      await signInWithEmailAndPassword(auth, values.email, values.password);
     } catch (error) {
       toastGagalAuth("Gagal masuk", error);
       setMengirim(false);

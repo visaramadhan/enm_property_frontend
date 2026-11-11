@@ -99,7 +99,7 @@ export function AdminRingkasan() {
                 label="Mitra Aktif"
                 value={formatAngka(data.partners.active)}
                 icon={Users}
-                keterangan={`${formatAngka(data.partners.pending)} menunggu verifikasi`}
+                keterangan={`${formatAngka(data.partners.suspended)} ditangguhkan`}
               />
               <StatCard
                 label="Langganan Berjalan"

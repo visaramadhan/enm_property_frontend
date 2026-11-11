@@ -80,13 +80,11 @@ export function MitraRingkasan() {
               }
             />
 
-            {data.partner_status !== "active" ? (
-              <Alert variant={data.partner_status === "suspended" ? "danger" : "warning"}>
+            {data.partner_status === "suspended" ? (
+              <Alert variant="danger">
                 <AlertTitle>{LABEL.statusMitra[data.partner_status]}</AlertTitle>
                 <AlertDescription>
-                  {data.partner_status === "suspended"
-                    ? "Akun mitra Anda sedang ditangguhkan. Hubungi admin untuk informasi lebih lanjut."
-                    : "Akun mitra Anda belum diverifikasi. Listing dapat ditambahkan namun menunggu persetujuan admin."}
+                  Akun mitra Anda sedang ditangguhkan. Hubungi admin untuk informasi lebih lanjut.
                 </AlertDescription>
               </Alert>
             ) : null}

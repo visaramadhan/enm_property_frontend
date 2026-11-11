@@ -23,10 +23,16 @@ interface FilterMitra {
 }
 
 /**
- * Status `pending` hanya ditetapkan sistem saat pendaftaran, sehingga tidak
- * ditawarkan sebagai pilihan pada dialog ubah status (sesuai `SuspendPartnerRequest`).
+ * Mitra mendaftar dengan status aktif tanpa proses verifikasi, sehingga admin
+ * hanya perlu menangguhkan atau mengaktifkan kembali mitra. Status `pending`
+ * dan `expired` tidak lagi ditawarkan.
  */
-const OPSI_UBAH_STATUS = OPSI_STATUS_MITRA.filter((opsi) => opsi.nilai !== "pending");
+const OPSI_UBAH_STATUS = OPSI_STATUS_MITRA.filter(
+  (opsi) => opsi.nilai === "active" || opsi.nilai === "suspended",
+);
+
+/** Status `pending` tidak pernah terjadi lagi, jadi tidak perlu difilter. */
+const OPSI_FILTER_STATUS = OPSI_STATUS_MITRA.filter((opsi) => opsi.nilai !== "pending");
 
 /** Rincian identitas mitra pada modal detail. */
 function RincianMitra({ mitra }: { mitra: PartnerView }) {
@@ -149,7 +155,7 @@ export function ManajemenMitra() {
     <>
       <PageHeader
         judul="Manajemen Mitra"
-        deskripsi="Verifikasi, tangguhkan, atau tinjau data mitra yang terdaftar."
+        deskripsi="Tangguhkan, aktifkan kembali, atau tinjau data mitra yang terdaftar."
       />
 
       <TabelData
@@ -170,14 +176,14 @@ export function ManajemenMitra() {
             kunci: "status",
             label: "Status",
             nilai: tabel.filter.status,
-            opsi: OPSI_STATUS_MITRA,
+            opsi: OPSI_FILTER_STATUS,
             onUbah: (nilai) => tabel.ubahFilter("status", nilai as PartnerStatus | undefined),
           },
         ]}
         kosong={
           <EmptyState
             judul="Belum ada mitra"
-            deskripsi="Mitra yang mendaftar akan tampil di sini untuk diverifikasi."
+            deskripsi="Mitra yang mendaftar akan tampil di sini."
           />
         }
       />
@@ -206,9 +212,9 @@ export function ManajemenMitra() {
           judul="Ubah status mitra"
           deskripsi={target.business_name}
           opsi={OPSI_UBAH_STATUS}
-          nilaiAwal={target.status === "pending" ? "active" : target.status}
+          nilaiAwal={target.status === "suspended" ? "suspended" : "active"}
           denganAlasan
-          labelAlasan="Catatan (alasan penangguhan/verifikasi)"
+          labelAlasan="Catatan (alasan penangguhan)"
           memuat={mutasi.isPending}
           onKirim={kirimStatus}
         />

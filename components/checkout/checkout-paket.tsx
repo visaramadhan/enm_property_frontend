@@ -164,9 +164,11 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
   const checkout = useCheckout();
   const siapkanSesi = useSiapkanSesi();
 
+  const gratis = paket.is_free;
+
   const form = useForm<NilaiKonfirmasi>({
     resolver: zodResolver(skemaKonfirmasi),
-    defaultValues: { agree_agreement: false },
+    defaultValues: { agree_agreement: gratis },
   });
 
   if (memuat) {
@@ -183,25 +185,29 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
     return <KartuLengkapiMitra lanjut={pathname} />;
   }
 
-  if (perjanjian.isPending) {
-    return <Skeleton className="h-72 rounded-card" />;
-  }
+  /* Paket Gratis langsung aktif tanpa perjanjian, sehingga data perjanjian
+     tidak diperlukan dan tidak boleh menahan tombol aktivasi. */
+  if (!gratis) {
+    if (perjanjian.isPending) {
+      return <Skeleton className="h-72 rounded-card" />;
+    }
 
-  if (perjanjian.isError || !perjanjian.data) {
-    return (
-      <Alert variant="danger">
-        <AlertTitle>Gagal memuat data konfirmasi</AlertTitle>
-        <AlertDescription>Muat ulang halaman untuk mencoba lagi.</AlertDescription>
-      </Alert>
-    );
+    if (perjanjian.isError || !perjanjian.data) {
+      return (
+        <Alert variant="danger">
+          <AlertTitle>Gagal memuat data konfirmasi</AlertTitle>
+          <AlertDescription>Muat ulang halaman untuk mencoba lagi.</AlertDescription>
+        </Alert>
+      );
+    }
   }
 
   async function kirim(nilai: NilaiKonfirmasi) {
     try {
       const hasil = await checkout.mutateAsync({
         package_slug: paket.slug,
-        agree_agreement: nilai.agree_agreement,
-        agreement_id: perjanjian.data?.id,
+        agree_agreement: gratis ? true : nilai.agree_agreement,
+        agreement_id: gratis ? undefined : perjanjian.data?.id,
       });
 
       // Peran pengguna dinaikkan menjadi mitra saat checkout, jadi sesi disegarkan
@@ -221,6 +227,42 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
     }
   }
 
+  if (gratis) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Sparkles className="size-4 text-secondary" aria-hidden="true" />
+            Aktifkan Paket Gratis
+          </CardTitle>
+          <CardDescription>
+            Paket Gratis langsung aktif tanpa biaya dan tanpa perjanjian. Setelah aktif Anda dapat
+            langsung memasang listing.
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent>
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              disabled={checkout.isPending}
+              onClick={() => void kirim({ agree_agreement: true })}
+            >
+              {checkout.isPending ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
+              Aktifkan paket
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  /* Setelah guard di atas, `perjanjian.data` dijamin ada untuk paket berbayar. */
+  const detail = perjanjian.data;
+  if (!detail) {
+    return null;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -237,11 +279,11 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
         <form onSubmit={form.handleSubmit(kirim)} noValidate className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-3 text-sm">
-              <span className="font-medium text-ink">{perjanjian.data.title}</span>
-              <Badge variant="neutral">Versi {perjanjian.data.version}</Badge>
+              <span className="font-medium text-ink">{detail.title}</span>
+              <Badge variant="neutral">Versi {detail.version}</Badge>
             </div>
             <p className="max-h-40 overflow-y-auto rounded-field border border-line bg-hover/50 p-4 text-[13px] whitespace-pre-line text-ink-muted">
-              {perjanjian.data.content}
+              {detail.content}
             </p>
           </div>
 

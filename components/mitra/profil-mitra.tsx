@@ -65,7 +65,7 @@ function KartuStatusMitra({ mitra }: { mitra: PartnerView }) {
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <CardTitle>Status Kemitraan</CardTitle>
-          <CardDescription>Status verifikasi akun mitra Anda.</CardDescription>
+          <CardDescription>Status akun mitra Anda.</CardDescription>
         </div>
         <StatusBadge jenis="mitra" status={mitra.status} label={mitra.status_label} />
       </CardHeader>
