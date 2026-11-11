@@ -153,7 +153,7 @@ function PanelProperti({
               onSubmit={form.handleSubmit(kirim)}
               className="flex flex-col gap-6"
             >
-              <BidangProperti control={form.control} />
+              <BidangProperti control={form.control} setValue={form.setValue} />
 
               {mode === "baru" ? (
                 <PilihFotoLokal berkas={fotoBaru} onUbah={setFotoBaru} />

@@ -1,9 +1,10 @@
 "use client";
 
-import type { Control } from "react-hook-form";
+import type { Control, UseFormSetValue } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 import { z } from "zod";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   KelompokField,
   SelectField,
@@ -11,6 +12,7 @@ import {
   TextareaField,
   type OpsiSelect,
 } from "@/components/shared/form-field";
+import { useFasilitasPublik } from "@/lib/api/hooks";
 import { OPSI_PERIODE_HARGA, OPSI_TIPE_PENAWARAN, OPSI_TIPE_PROPERTI } from "@/lib/enum";
 import type {
   CreatePropertyRequest,
@@ -192,9 +194,36 @@ export function kePermintaan(nilai: NilaiProperti): CreatePropertyRequest {
   };
 }
 
-/** Seluruh bidang formulir properti; hanya butuh `control` dari `useForm`. */
-export function BidangProperti({ control }: { control: Control<NilaiProperti> }) {
+/** Seluruh bidang formulir properti; hanya butuh `control` dan `setValue` dari `useForm`. */
+export function BidangProperti({
+  control,
+  setValue,
+}: {
+  control: Control<NilaiProperti>;
+  setValue: UseFormSetValue<NilaiProperti>;
+}) {
   const tipePenawaran = useWatch({ control, name: "listing_type" });
+  const fasilitasAktif = useWatch({ control, name: "facilities" });
+  const fasilitasMaster = useFasilitasPublik();
+
+  // Daftar fasilitas yang sudah tercentang (dari master maupun kustom).
+  const terpilih = new Set(
+    (fasilitasAktif || "")
+      .split(/[,\n]/)
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
+
+  function toggleFasilitas(nama: string, checked: boolean) {
+    const daftar = Array.from(terpilih);
+    if (checked) {
+      if (!daftar.includes(nama)) daftar.push(nama);
+    } else {
+      const idx = daftar.indexOf(nama);
+      if (idx >= 0) daftar.splice(idx, 1);
+    }
+    setValue("facilities", daftar.join(", "), { shouldDirty: true });
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -295,13 +324,33 @@ export function BidangProperti({ control }: { control: Control<NilaiProperti> })
         />
       </KelompokField>
 
-      <KelompokField judul="Fasilitas" deskripsi="Pisahkan tiap fasilitas dengan koma.">
+      <KelompokField
+        judul="Fasilitas"
+        deskripsi="Pilih fasilitas dari daftar atau tambahkan fasilitas kustom dipisah koma."
+      >
+        {fasilitasMaster.data && fasilitasMaster.data.length > 0 ? (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {fasilitasMaster.data.map((fasilitas) => (
+              <label
+                key={fasilitas.id}
+                className="flex items-center gap-2 rounded-field border border-line bg-hover/30 px-3 py-2 text-[13px] text-ink"
+              >
+                <Checkbox
+                  checked={terpilih.has(fasilitas.name)}
+                  onCheckedChange={(nilai) => toggleFasilitas(fasilitas.name, nilai === true)}
+                />
+                <span className="truncate">{fasilitas.name}</span>
+              </label>
+            ))}
+          </div>
+        ) : null}
         <TextareaField
           control={control}
           name="facilities"
-          label="Fasilitas"
-          rows={3}
-          placeholder="Carport, Taman, Keamanan 24 jam"
+          label="Fasilitas kustom (opsional)"
+          rows={2}
+          placeholder="Contoh: Smart Lock, Lift Barang"
+          deskripsi="Fasilitas yang dipilih dari daftar di atas otomatis masuk ke sini."
         />
       </KelompokField>
     </div>

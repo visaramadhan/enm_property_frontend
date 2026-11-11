@@ -24,10 +24,12 @@ import type {
   ContactFormResponse,
   CreateAgreementRequest,
   CreateCategoryRequest,
+  CreateFacilityRequest,
   CreatePlanRequest,
   CreatePropertyRequest,
   FavoriteToggleResponse,
   FavoriteView,
+  FacilityView,
   InvoiceView,
   LandingContentView,
   LandingImageKind,
@@ -67,6 +69,7 @@ import type {
   UpdatePartnerRequest,
   UpdatePlanRequest,
   UpdateCategoryRequest,
+  UpdateFacilityRequest,
   UpdateLandingRequest,
   UpdateSettingsRequest,
   UploadPhotoResponse,
@@ -271,6 +274,60 @@ export function useHapusKategori() {
     kunciInvalidasi: [awalan.kategoriAdmin, awalan.kategoriPublik],
     pesanSukses: "Kategori dihapus",
     pesanGagal: "Gagal menghapus kategori",
+  });
+}
+
+/* ------------------------------------------------------------ Fasilitas */
+
+export function useDaftarFasilitasAdmin(query: ListQuery = {}) {
+  return useQuery<Paginated<FacilityView>>({
+    queryKey: kunci.fasilitasAdmin(kunciDari(query)),
+    queryFn: () => api.daftarFasilitasAdmin(query),
+    placeholderData: (sebelumnya) => sebelumnya,
+  });
+}
+
+export function useBuatFasilitas() {
+  return useMutasi<FacilityView, CreateFacilityRequest>({
+    mutasi: api.buatFasilitas,
+    kunciInvalidasi: [awalan.fasilitasAdmin, awalan.fasilitasPublik],
+    pesanSukses: "Fasilitas berhasil dibuat",
+    pesanGagal: "Gagal membuat fasilitas",
+  });
+}
+
+export function usePerbaruiFasilitas() {
+  return useMutasi<FacilityView, { id: string; body: UpdateFacilityRequest }>({
+    mutasi: ({ id, body }) => api.perbaruiFasilitas(id, body),
+    kunciInvalidasi: [awalan.fasilitasAdmin, awalan.fasilitasPublik],
+    pesanSukses: "Fasilitas berhasil diperbarui",
+    pesanGagal: "Gagal memperbarui fasilitas",
+  });
+}
+
+export function useUbahStatusFasilitas() {
+  return useMutasi<FacilityView, { id: string; body: SetPlanStatusRequest }>({
+    mutasi: ({ id, body }) => api.ubahStatusFasilitas(id, body),
+    kunciInvalidasi: [awalan.fasilitasAdmin, awalan.fasilitasPublik],
+    pesanSukses: "Status fasilitas diperbarui",
+    pesanGagal: "Gagal mengubah status fasilitas",
+  });
+}
+
+export function useHapusFasilitas() {
+  return useMutasi<void, string>({
+    mutasi: api.hapusFasilitas,
+    kunciInvalidasi: [awalan.fasilitasAdmin, awalan.fasilitasPublik],
+    pesanSukses: "Fasilitas dihapus",
+    pesanGagal: "Gagal menghapus fasilitas",
+  });
+}
+
+/** Fasilitas aktif untuk pilihan mitra saat mengunggah listing. */
+export function useFasilitasPublik() {
+  return useQuery<FacilityView[]>({
+    queryKey: kunci.fasilitasPublik(),
+    queryFn: api.daftarFasilitasPublik,
   });
 }
 

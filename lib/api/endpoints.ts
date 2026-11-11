@@ -33,10 +33,12 @@ import type {
   ContactFormResponse,
   CreateAgreementRequest,
   CreateCategoryRequest,
+  CreateFacilityRequest,
   CreatePlanRequest,
   CreatePropertyRequest,
   FavoriteToggleResponse,
   FavoriteView,
+  FacilityView,
   InvoiceView,
   LandingContentView,
   LandingImageKind,
@@ -78,6 +80,7 @@ import type {
   UpdatePartnerRequest,
   UpdatePlanRequest,
   UpdateCategoryRequest,
+  UpdateFacilityRequest,
   UpdateLandingRequest,
   UpdateSettingsRequest,
   UploadPhotoResponse,
@@ -189,6 +192,33 @@ export function ubahStatusKategori(id: string, body: SetPlanStatusRequest) {
 
 export function hapusKategori(id: string) {
   return apiDelete(`/admin/categories/${id}`);
+}
+
+/* ------------------------------------------------------------- Fasilitas -- */
+
+/** Fasilitas aktif untuk pilihan mitra saat mengunggah listing. */
+export function daftarFasilitasPublik() {
+  return apiGet<FacilityView[]>("/facilities", { publik: true });
+}
+
+export function daftarFasilitasAdmin(query: ListQuery = {}) {
+  return apiGetPaginated<FacilityView>(`/admin/facilities${buatQuery(query)}`);
+}
+
+export function buatFasilitas(body: CreateFacilityRequest) {
+  return apiPost<FacilityView>("/admin/facilities", body);
+}
+
+export function perbaruiFasilitas(id: string, body: UpdateFacilityRequest) {
+  return apiPut<FacilityView>(`/admin/facilities/${id}`, body);
+}
+
+export function ubahStatusFasilitas(id: string, body: SetPlanStatusRequest) {
+  return apiPatch<FacilityView>(`/admin/facilities/${id}/status`, body);
+}
+
+export function hapusFasilitas(id: string) {
+  return apiDelete(`/admin/facilities/${id}`);
 }
 
 /* ------------------------------------------------------------- Perjanjian -- */

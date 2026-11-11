@@ -479,6 +479,35 @@ export interface UpdateCategoryRequest {
   is_active?: boolean;
 }
 
+export interface FacilityView {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateFacilityRequest {
+  slug?: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  sort_order?: number;
+  is_active: boolean;
+}
+
+export interface UpdateFacilityRequest {
+  name?: string;
+  description?: string;
+  icon?: string;
+  sort_order?: number;
+  is_active?: boolean;
+}
+
 export interface SetPlanStatusRequest {
   active: boolean;
 }

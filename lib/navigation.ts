@@ -11,6 +11,7 @@ import {
   ScrollText,
   Settings,
   ShieldCheck,
+  Sparkles,
   Tags,
   UserCog,
   Users,
@@ -81,6 +82,12 @@ export const dashboardMeta: Record<DashboardRole, DashboardMeta> = {
             label: "Master Kategori",
             href: "/admin/kategori",
             icon: Tags,
+            peran: ["superadmin"],
+          },
+          {
+            label: "Master Fasilitas",
+            href: "/admin/fasilitas",
+            icon: Sparkles,
             peran: ["superadmin"],
           },
           {
