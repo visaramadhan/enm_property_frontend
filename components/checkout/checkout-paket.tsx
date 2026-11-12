@@ -236,8 +236,8 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
             Aktifkan Paket Gratis
           </CardTitle>
           <CardDescription>
-            Paket Gratis langsung aktif tanpa biaya dan tanpa perjanjian. Setelah aktif Anda dapat
-            langsung memasang listing.
+            Paket Gratis langsung aktif tanpa biaya. Perjanjian kemitraan akan diminta saat Anda
+            pertama kali masuk dashboard mitra.
           </CardDescription>
         </CardHeader>
 

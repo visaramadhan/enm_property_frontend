@@ -534,6 +534,8 @@ export interface SubscriptionView {
   boost_quota: number;
   /** Jumlah listing yang sedang di-boost bersamaan. */
   boost_used: number;
+  /** Mitra boleh mengisi nomor WhatsApp sendiri (paket Gratis selalu false). */
+  whatsapp_access: boolean;
   updated_at: string;
   last_order_code?: string;
 }
@@ -772,6 +774,7 @@ export interface AgreementView {
   version: string;
   title: string;
   content: string;
+  checklist: string[];
   is_active: boolean;
   effective_at: string;
   created_by: string;
@@ -782,8 +785,14 @@ export interface CreateAgreementRequest {
   version: string;
   title: string;
   content: string;
+  checklist?: string[];
   effective_at?: string;
   activate: boolean;
+}
+
+/** Body POST /vendor/agreement. */
+export interface AcceptAgreementRequest {
+  agreement_id?: string;
 }
 
 export interface AgreementAcceptanceView {
@@ -807,6 +816,7 @@ export interface VendorAgreementResponse {
 
 export interface SettingView {
   key: string;
+  label: string;
   value: string;
   description: string;
   is_secret: boolean;
@@ -828,8 +838,12 @@ export interface UpdateSettingsRequest {
  */
 export interface SiteSettingsView {
   site_name: string;
+  nav_title: string;
   logo_url: string;
+  brand_color: string;
   login_image_url: string;
+  /** Nomor kontak cadangan sistem saat mitra tidak mengisi nomor WhatsApp. */
+  contact_whatsapp: string;
 }
 
 /** Jenis gambar pengaturan yang dapat diunggah (backend mengonversi ke WebP). */
@@ -924,6 +938,16 @@ export interface LandingContentView {
   highlight_areas: string[];
   cta_title: string;
   cta_description: string;
+  keunggulan_title: string;
+  keunggulan_subtitle: string;
+  properti_title: string;
+  properti_subtitle: string;
+  paket_title: string;
+  paket_subtitle: string;
+  panduan_title: string;
+  panduan_subtitle: string;
+  faq_title: string;
+  faq_subtitle: string;
   updated_at: string;
 }
 
@@ -939,6 +963,16 @@ export interface UpdateLandingRequest {
   highlight_areas: string[];
   cta_title: string;
   cta_description: string;
+  keunggulan_title: string;
+  keunggulan_subtitle: string;
+  properti_title: string;
+  properti_subtitle: string;
+  paket_title: string;
+  paket_subtitle: string;
+  panduan_title: string;
+  panduan_subtitle: string;
+  faq_title: string;
+  faq_subtitle: string;
 }
 
 /** Jenis gambar landing yang dapat diunggah melalui CMS. */

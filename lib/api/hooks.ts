@@ -8,11 +8,13 @@ import { awalan, kunci } from "@/lib/api/keys";
 import { useMutasi } from "@/lib/api/use-mutasi";
 import type { Paginated } from "@/types/api";
 import type {
+  AcceptAgreementRequest,
   AdminCreateUserRequest,
   AdminDashboard,
   AdminPropertyStatusRequest,
   AdminUpdatePropertyRequest,
   AdminUpdateUserRequest,
+  AgreementAcceptanceView,
   AgreementView,
   AuditFilterQuery,
   AuditView,
@@ -481,6 +483,15 @@ export function usePerjanjianMitra(aktif = true): UseQueryResult<VendorAgreement
     queryKey: kunci.perjanjianMitra(),
     queryFn: api.perjanjianMitra,
     enabled: aktif,
+  });
+}
+
+export function useSetujuiPerjanjianMitra() {
+  return useMutasi<AgreementAcceptanceView, AcceptAgreementRequest>({
+    mutasi: api.setujuiPerjanjianMitra,
+    kunciInvalidasi: [awalan.perjanjianMitra, awalan.profilMitra, awalan.dashboardMitra],
+    pesanSukses: "Perjanjian kemitraan disetujui",
+    pesanGagal: "Gagal menyetujui perjanjian",
   });
 }
 

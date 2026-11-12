@@ -78,8 +78,23 @@ export function keRegisterPartner(nilai: NilaiMitra): RegisterPartnerRequest {
   };
 }
 
-/** Seluruh bidang data mitra; hanya butuh `control` dari `useForm`. */
-export function BidangMitra({ control }: { control: Control<NilaiMitra> }) {
+/**
+ * Seluruh bidang data mitra; hanya butuh `control` dari `useForm`.
+ *
+ * Bila paket mitra tidak memberi akses nomor WhatsApp (mis. paket Gratis),
+ * bidang nomor dikunci dan diisi nomor sistem supaya lead tetap terarah.
+ */
+export function BidangMitra({
+  control,
+  whatsappAktif = true,
+  nomorSistem = "",
+}: {
+  control: Control<NilaiMitra>;
+  whatsappAktif?: boolean;
+  nomorSistem?: string;
+}) {
+  const dibatasi = !whatsappAktif && nomorSistem.trim() !== "";
+
   return (
     <KelompokField judul="Data badan usaha" kolom={2}>
       <TextField
@@ -94,11 +109,17 @@ export function BidangMitra({ control }: { control: Control<NilaiMitra> }) {
       <TextField
         control={control}
         name="phone"
-        label="Nomor telepon"
+        label="Nomor WhatsApp"
         type="tel"
         inputMode="tel"
-        wajib
-        placeholder="0812xxxxxxx"
+        wajib={!dibatasi}
+        disabled={dibatasi}
+        placeholder={dibatasi ? undefined : "0812xxxxxxx"}
+        deskripsi={
+          dibatasi
+            ? "Dikelola sistem. Calon penyewa/pembeli diarahkan ke nomor ini karena paket Anda belum mendukung nomor WhatsApp sendiri."
+            : undefined
+        }
       />
       <TextField
         control={control}

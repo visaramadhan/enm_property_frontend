@@ -12,6 +12,7 @@ import type { KolomTabel } from "@/components/shared/data-table";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
+  CeklisField,
   CheckboxField,
   KelompokField,
   TextField,
@@ -31,6 +32,7 @@ const skemaPerjanjian = z.object({
   version: z.string().trim().min(1, "Versi wajib diisi").max(30, "Versi maksimal 30 karakter"),
   title: z.string().trim().min(5, "Judul minimal 5 karakter").max(150, "Judul maksimal 150 karakter"),
   content: z.string().trim().min(20, "Isi perjanjian minimal 20 karakter"),
+  checklist: z.array(z.string()),
   effective_at: z
     .string()
     .trim()
@@ -44,6 +46,7 @@ const nilaiAwalPerjanjian: NilaiPerjanjian = {
   version: "",
   title: "",
   content: "",
+  checklist: [],
   effective_at: "",
   activate: true,
 };
@@ -53,6 +56,7 @@ function kePerjanjian(nilai: NilaiPerjanjian): CreateAgreementRequest {
     version: nilai.version.trim(),
     title: nilai.title.trim(),
     content: nilai.content.trim(),
+    checklist: nilai.checklist.map((poin) => poin.trim()).filter(Boolean),
     effective_at: nilai.effective_at ? new Date(nilai.effective_at).toISOString() : undefined,
     activate: nilai.activate,
   };
@@ -115,6 +119,15 @@ function FormPerjanjian({ onTutup }: { onTutup: () => void }) {
             wajib
             rows={12}
             deskripsi="Minimal 20 karakter."
+          />
+        </KelompokField>
+
+        <KelompokField judul="Poin ceklis persetujuan">
+          <CeklisField
+            control={form.control}
+            name="checklist"
+            label="Poin yang harus dicentang mitra"
+            deskripsi="Kosongkan bila mitra cukup menyetujui perjanjian secara umum."
           />
         </KelompokField>
 
@@ -246,8 +259,21 @@ export function VersiPerjanjian() {
           judul={baca.title}
           deskripsi={`Versi ${baca.version}`}
         >
-          <div className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-field bg-hover/50 p-4 text-sm text-ink">
-            {baca.content}
+          <div className="flex max-h-[60vh] flex-col gap-5 overflow-y-auto">
+            <div className="whitespace-pre-wrap rounded-field bg-hover/50 p-4 text-sm text-ink">
+              {baca.content}
+            </div>
+
+            {baca.checklist.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-ink">Poin ceklis persetujuan</span>
+                <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-[13px] text-ink-muted">
+                  {baca.checklist.map((poin, indeks) => (
+                    <li key={indeks}>{poin}</li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
           </div>
         </DetailDialog>
       ) : null}

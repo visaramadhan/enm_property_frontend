@@ -78,6 +78,18 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
   cta_title: "Punya Properti untuk Dititipkan?",
   cta_description:
     "Daftarkan properti Anda dan jangkau ribuan calon penyewa serta pembeli yang aktif mencari setiap hari.",
+  keunggulan_title: "",
+  keunggulan_subtitle: "",
+  properti_title: "Temukan properti untuk disewa dan dibeli.",
+  properti_subtitle:
+    "Jelajahi listing yang tersedia dan buka detailnya untuk informasi lebih lanjut.",
+  paket_title: "Pilih Paket Kemitraan",
+  paket_subtitle:
+    "Temukan informasi paket dan ketentuan yang sesuai dengan kebutuhan listing propertimu.",
+  panduan_title: "Empat langkah menjadi mitra ENM",
+  panduan_subtitle: "Mulai dari menentukan paket hingga mengelola listing melalui akun mitra.",
+  faq_title: "Informasi sebelum bergabung",
+  faq_subtitle: "Ringkasan alur pendaftaran dan pengelolaan listing mitra.",
   updated_at: "",
 };
 
@@ -102,7 +114,11 @@ export async function kontenLanding(): Promise<LandingContentView> {
  */
 export async function propertiUnggulan(jumlah: number): Promise<PropertySummary[]> {
   "use cache";
-  cacheLife({ stale: 1800, revalidate: 21600, expire: 172800 });
+  // Cache singkat: perubahan listing mitra (tayang/nonaktif) harus cepat
+  // tercermin di halaman utama tanpa menunggu tombol publish landing. Tag
+  // `TAG_PROPERTI` tetap dipakai agar `/api/revalidate` bisa menyegarkan
+  // seketika saat diperlukan.
+  cacheLife({ stale: 30, revalidate: 60, expire: 3600 });
   cacheTag(TAG_PROPERTI);
 
   return ambilDataPublik<PropertySummary[]>(`/properties?page=1&per_page=${jumlah}`);

@@ -17,11 +17,13 @@ import {
   buatQuery,
 } from "@/lib/api/client";
 import type {
+  AcceptAgreementRequest,
   AdminCreateUserRequest,
   AdminDashboard,
   AdminPropertyStatusRequest,
   AdminUpdatePropertyRequest,
   AdminUpdateUserRequest,
+  AgreementAcceptanceView,
   AgreementView,
   AuditFilterQuery,
   AuditView,
@@ -229,6 +231,10 @@ export function perjanjianAktif() {
 
 export function perjanjianMitra() {
   return apiGet<VendorAgreementResponse>("/vendor/agreement");
+}
+
+export function setujuiPerjanjianMitra(body: AcceptAgreementRequest) {
+  return apiPost<AgreementAcceptanceView>("/vendor/agreement", body);
 }
 
 export function daftarPerjanjian(query: ListQuery = {}) {

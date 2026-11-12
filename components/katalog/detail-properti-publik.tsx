@@ -351,9 +351,7 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
 
                   <p className="flex items-center gap-1.5 text-sm text-ink-muted">
                     <MapPin className="size-4 shrink-0" aria-hidden="true" />
-                    {[data.address, data.district, data.city, data.province]
-                      .filter(Boolean)
-                      .join(", ")}
+                    {[data.district, data.city, data.province].filter(Boolean).join(", ")}
                   </p>
                 </CardHeader>
 

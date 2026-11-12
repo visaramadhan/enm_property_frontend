@@ -5,6 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 
 import { IndikatorNavigasi } from "@/components/layout/indikator-navigasi";
 import { PenjagaIdle } from "@/components/layout/penjaga-idle";
+import { WarnaSistem } from "@/components/layout/warna-sistem";
 import { AppProviders } from "@/components/providers/app-providers";
 
 import "./globals.css";
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <IndikatorNavigasi />
           </Suspense>
           <PenjagaIdle />
+          <WarnaSistem />
           {children}
         </AppProviders>
         {GA_ID ? <GoogleAnalytics gaId={GA_ID} /> : null}

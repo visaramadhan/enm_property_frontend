@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Save, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -13,7 +14,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePerbaruiProfilMitra, useProfilMitra } from "@/lib/api/hooks";
+import { useLanggananMitra, usePerbaruiProfilMitra, usePengaturanPublik, useProfilMitra } from "@/lib/api/hooks";
 import { formatTanggalWib } from "@/lib/format";
 import type { PartnerView } from "@/types/api";
 
@@ -27,6 +28,14 @@ import type { PartnerView } from "@/types/api";
  */
 export function ProfilMitra() {
   const profil = useProfilMitra();
+  const langganan = useLanggananMitra();
+  const pengaturan = usePengaturanPublik();
+
+  // Nomor WhatsApp hanya dapat diisi bila paket mitra mengizinkannya. Paket
+  // Gratis memakai nomor sistem; bila nomor sistem belum diatur, bidang
+  // dibiarkan dapat disunting agar mitra tidak kehilangan kontaknya.
+  const whatsappAktif = langganan.data?.whatsapp_access ?? true;
+  const nomorSistem = pengaturan.data?.contact_whatsapp ?? "";
 
   return (
     <>
@@ -48,7 +57,7 @@ export function ProfilMitra() {
         {(mitra) => (
           <div className="flex flex-col gap-6">
             <KartuStatusMitra mitra={mitra} />
-            <FormulirMitra mitra={mitra} />
+            <FormulirMitra mitra={mitra} whatsappAktif={whatsappAktif} nomorSistem={nomorSistem} />
           </div>
         )}
       </KontenAsync>
@@ -104,17 +113,38 @@ function KartuStatusMitra({ mitra }: { mitra: PartnerView }) {
 }
 
 /** Formulir penyuntingan data badan usaha mitra. */
-function FormulirMitra({ mitra }: { mitra: PartnerView }) {
+function FormulirMitra({
+  mitra,
+  whatsappAktif,
+  nomorSistem,
+}: {
+  mitra: PartnerView;
+  whatsappAktif: boolean;
+  nomorSistem: string;
+}) {
   const simpan = usePerbaruiProfilMitra();
+
+  // Saat nomor WhatsApp dikelola sistem, bidang nomor diisi nomor sistem agar
+  // tampil transparan kepada mitra (sendiri, tanpa bisa disunting).
+  const dibatasi = !whatsappAktif && nomorSistem.trim() !== "";
+  const nilaiAwal = React.useMemo(
+    () => (dibatasi ? { ...nilaiDariMitra(mitra), phone: nomorSistem } : nilaiDariMitra(mitra)),
+    [mitra, dibatasi, nomorSistem],
+  );
+
   const form = useForm<NilaiMitra>({
     resolver: zodResolver(skemaMitra),
-    defaultValues: nilaiDariMitra(mitra),
+    defaultValues: nilaiAwal,
   });
+
+  React.useEffect(() => {
+    form.reset(nilaiAwal);
+  }, [form, nilaiAwal]);
 
   async function kirim(nilai: NilaiMitra) {
     try {
       const hasil = await simpan.mutateAsync(keRegisterPartner(nilai));
-      form.reset(nilaiDariMitra(hasil));
+      form.reset(dibatasi ? { ...nilaiDariMitra(hasil), phone: nomorSistem } : nilaiDariMitra(hasil));
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
     }
@@ -130,7 +160,7 @@ function FormulirMitra({ mitra }: { mitra: PartnerView }) {
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(kirim)} noValidate className="flex flex-col gap-6">
-          <BidangMitra control={form.control} />
+          <BidangMitra control={form.control} whatsappAktif={whatsappAktif} nomorSistem={nomorSistem} />
           <div className="flex justify-end">
             <Button type="submit" disabled={simpan.isPending}>
               {simpan.isPending ? (

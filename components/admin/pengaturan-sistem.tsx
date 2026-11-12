@@ -27,6 +27,59 @@ const GAMBAR_PENGATURAN: Record<string, { kind: SettingImageKind; judul: string 
   login_image_url: { kind: "login", judul: "Pratinjau gambar panel area masuk" },
 };
 
+/** Kunci pengaturan warna aksen sistem (dirender memakai pemilih warna). */
+const KUNCI_WARNA = "brand_color";
+
+/**
+ * Editor warna aksen sistem: pemilih warna (color picker) yang disinkronkan
+ * dengan nilai HEX yang dapat diketik langsung.
+ */
+function FieldWarna({
+  form,
+  name,
+  label,
+  deskripsi,
+}: {
+  form: UseFormReturn<NilaiPengaturan>;
+  name: Path<NilaiPengaturan>;
+  label: string;
+  deskripsi?: string;
+}) {
+  const nilai = useWatch({ control: form.control, name }) ?? "";
+  const nilaiPratinjau = /^#[0-9a-fA-F]{6}$/.test(nilai) ? nilai : "#1f6f4a";
+
+  return (
+    <div className="flex flex-col gap-2">
+      <span className="text-sm font-semibold text-ink">{label}</span>
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="color"
+          aria-label={`Pilih ${label}`}
+          value={nilaiPratinjau}
+          onChange={(event) => form.setValue(name, event.target.value, { shouldDirty: true })}
+          className="h-10 w-14 shrink-0 cursor-pointer rounded-sm border border-line bg-canvas"
+        />
+        <input
+          type="text"
+          value={nilai}
+          placeholder="#1f6f4a"
+          onChange={(event) => form.setValue(name, event.target.value, { shouldDirty: true })}
+          className="h-10 flex-1 rounded-sm border border-line bg-surface px-3 text-sm text-ink"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => form.setValue(name, "", { shouldDirty: true })}
+        >
+          Bawaan
+        </Button>
+      </div>
+      {deskripsi ? <span className="text-xs text-ink-muted">{deskripsi}</span> : null}
+    </div>
+  );
+}
+
 /**
  * Pengunggah gambar pengaturan: memilih berkas, mengunggahnya, lalu mengisi
  * nilai pengaturan dengan URL hasil konversi WebP dari backend.
@@ -137,6 +190,7 @@ function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
       <CardContent>
         <form onSubmit={form.handleSubmit(kirim)} noValidate className="flex flex-col gap-5">
           {pengaturan.map((item) => {
+            const label = item.label || item.key;
             const gambar = GAMBAR_PENGATURAN[item.key];
             if (gambar) {
               return (
@@ -145,8 +199,19 @@ function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
                   form={form}
                   name={item.key as Path<NilaiPengaturan>}
                   kind={gambar.kind}
-                  label={item.key}
+                  label={label}
                   judul={gambar.judul}
+                />
+              );
+            }
+            if (item.key === KUNCI_WARNA) {
+              return (
+                <FieldWarna
+                  key={item.key}
+                  form={form}
+                  name={item.key as Path<NilaiPengaturan>}
+                  label={label}
+                  deskripsi={item.description}
                 />
               );
             }
@@ -155,7 +220,7 @@ function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
                 key={item.key}
                 control={form.control}
                 name={item.key as Path<NilaiPengaturan>}
-                label={item.key}
+                label={label}
                 deskripsi={item.description}
                 autoComplete="new-password"
               />
@@ -164,7 +229,7 @@ function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
                 key={item.key}
                 control={form.control}
                 name={item.key as Path<NilaiPengaturan>}
-                label={item.key}
+                label={label}
                 deskripsi={item.description}
               />
             );

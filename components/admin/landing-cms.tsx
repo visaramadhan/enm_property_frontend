@@ -52,9 +52,31 @@ const skemaLanding = z.object({
     .max(AREA_MAKSIMAL, "Maksimal 6 area prioritas"),
   cta_title: z.string().trim().max(70, "Maksimal 70 karakter"),
   cta_description: z.string().trim().max(200, "Maksimal 200 karakter"),
+  keunggulan_title: z.string().trim().max(70, "Maksimal 70 karakter"),
+  keunggulan_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
+  properti_title: z.string().trim().max(70, "Maksimal 70 karakter"),
+  properti_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
+  paket_title: z.string().trim().max(70, "Maksimal 70 karakter"),
+  paket_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
+  panduan_title: z.string().trim().max(70, "Maksimal 70 karakter"),
+  panduan_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
+  faq_title: z.string().trim().max(70, "Maksimal 70 karakter"),
+  faq_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
 });
 
 type NilaiLanding = z.infer<typeof skemaLanding>;
+
+/**
+ * Bagian landing page yang judul dan deskripsinya dapat disesuaikan.
+ * Nilai kosong berarti halaman memakai teks bawaan komponen.
+ */
+const BAGIAN_LANDING = [
+  { kunci: "keunggulan", label: "Keunggulan" },
+  { kunci: "properti", label: "Properti Pilihan" },
+  { kunci: "paket", label: "Paket Kemitraan" },
+  { kunci: "panduan", label: "Panduan Mitra" },
+  { kunci: "faq", label: "FAQ" },
+] as const;
 
 /** Dua jenis gambar landing yang didukung backend (konversi WebP otomatis). */
 const OPSI_GAMBAR = [
@@ -91,6 +113,16 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
       konten.highlight_areas.length >= AREA_MINIMAL ? konten.highlight_areas : ["", "", "", ""],
     cta_title: konten.cta_title,
     cta_description: konten.cta_description,
+    keunggulan_title: konten.keunggulan_title,
+    keunggulan_subtitle: konten.keunggulan_subtitle,
+    properti_title: konten.properti_title,
+    properti_subtitle: konten.properti_subtitle,
+    paket_title: konten.paket_title,
+    paket_subtitle: konten.paket_subtitle,
+    panduan_title: konten.panduan_title,
+    panduan_subtitle: konten.panduan_subtitle,
+    faq_title: konten.faq_title,
+    faq_subtitle: konten.faq_subtitle,
   };
 }
 
@@ -353,6 +385,34 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
+          <CardTitle>Judul &amp; Deskripsi Bagian</CardTitle>
+          <CardDescription>
+            Judul dan deskripsi tiap bagian halaman utama. Kosongkan untuk memakai teks bawaan.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          {BAGIAN_LANDING.map((bagian) => (
+            <div key={bagian.kunci} className="flex flex-col gap-5">
+              <TextField
+                control={form.control}
+                name={`${bagian.kunci}_title`}
+                label={`Judul bagian ${bagian.label}`}
+                deskripsi="Maksimal 70 karakter."
+              />
+              <TextareaField
+                control={form.control}
+                name={`${bagian.kunci}_subtitle`}
+                label={`Deskripsi bagian ${bagian.label}`}
+                rows={2}
+                deskripsi="Maksimal 200 karakter."
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>CTA Mitra “Titip Properti”</CardTitle>
           <CardDescription>
             Ajakan kemitraan yang mengarahkan pengunjung ke halaman pendaftaran mitra.
@@ -465,6 +525,24 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
           ) : (
             <p className="text-sm text-ink-muted">Belum ada area prioritas.</p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Judul &amp; Deskripsi Bagian</CardTitle>
+          <CardDescription>Judul dan deskripsi tiap bagian halaman utama.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {BAGIAN_LANDING.map((bagian) => (
+            <div key={bagian.kunci} className="flex flex-col gap-4">
+              <BarisNilai label={`Judul bagian ${bagian.label}`} nilai={konten[`${bagian.kunci}_title`]} />
+              <BarisNilai
+                label={`Deskripsi bagian ${bagian.label}`}
+                nilai={konten[`${bagian.kunci}_subtitle`]}
+              />
+            </div>
+          ))}
         </CardContent>
       </Card>
 

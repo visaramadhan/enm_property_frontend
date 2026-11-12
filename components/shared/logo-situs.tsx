@@ -18,7 +18,9 @@ import { cn } from "@/lib/utils";
 /** Nilai bawaan ketika pengaturan belum termuat atau backend belum berjalan. */
 export const BAWAAN_SITUS = {
   site_name: "ENM Property",
+  nav_title: "ENM Property",
   logo_url: "",
+  brand_color: "",
   login_image_url: "",
 } as const;
 
@@ -97,7 +99,7 @@ export function LogoHeader({
       <LogoMark className={kelasMark} />
       <span className="flex min-w-0 flex-col">
         <span className={cn("truncate text-sm font-extrabold tracking-tight text-ink", kelasNama)}>
-          {situs.site_name}
+          {situs.nav_title || situs.site_name}
         </span>
         {tagline ? (
           <span

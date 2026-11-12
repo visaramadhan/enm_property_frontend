@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -326,6 +327,106 @@ export function CheckboxField<T extends FieldValues>({
           ) : null}
         </div>
       )}
+    />
+  );
+}
+
+/**
+ * Editor daftar poin ceklis perjanjian (nilai `string[]`).
+ *
+ * Admin menulis satu poin per baris; poin kosong dibuang backend sebelum
+ * disimpan sehingga tidak perlu validasi tambahan di sini.
+ */
+export function CeklisField<T extends FieldValues>({
+  control,
+  name,
+  label,
+  deskripsi,
+  className,
+  placeholder = "Tulis satu poin perjanjian...",
+  maksimal = 20,
+}: PropsDasar<T> & { placeholder?: string; maksimal?: number }) {
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => {
+        const nilai: string[] = Array.isArray(field.value) ? field.value : [];
+
+        function ubahPoin(indeks: number, teks: string) {
+          field.onChange(nilai.map((item, posisi) => (posisi === indeks ? teks : item)));
+        }
+
+        function tambahPoin() {
+          if (nilai.length >= maksimal) return;
+          field.onChange([...nilai, ""]);
+        }
+
+        function hapusPoin(indeks: number) {
+          field.onChange(nilai.filter((_, posisi) => posisi !== indeks));
+        }
+
+        return (
+          <div className={cn("flex flex-col gap-3", className)}>
+            <Label>
+              {label}
+              {deskripsi ? <span className="font-normal text-ink-muted"> — {deskripsi}</span> : null}
+            </Label>
+
+            {nilai.length === 0 ? (
+              <p className="rounded-field border border-dashed border-divider px-4 py-3 text-xs text-ink-muted">
+                Belum ada poin ceklis. Mitra hanya menyetujui perjanjian secara umum.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {nilai.map((teks, indeks) => (
+                  <li key={indeks} className="flex items-center gap-2">
+                    <span
+                      data-numeric
+                      className="w-5 shrink-0 text-center text-xs text-ink-subtle"
+                      aria-hidden="true"
+                    >
+                      {indeks + 1}
+                    </span>
+                    <Input
+                      value={teks}
+                      onChange={(event) => ubahPoin(indeks, event.target.value)}
+                      placeholder={placeholder}
+                      aria-label={`Poin ${indeks + 1}`}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => hapusPoin(indeks)}
+                      aria-label={`Hapus poin ${indeks + 1}`}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={tambahPoin}
+                disabled={nilai.length >= maksimal}
+              >
+                <Plus />
+                Tambah poin
+              </Button>
+            </div>
+
+            {fieldState.error ? (
+              <p className="text-xs text-danger">{fieldState.error.message}</p>
+            ) : null}
+          </div>
+        );
+      }}
     />
   );
 }

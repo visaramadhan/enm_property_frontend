@@ -93,6 +93,7 @@ export const awalan = {
   dashboardMitra: ["vendor/dashboard"],
   langgananMitra: ["vendor/langganan"],
   profilMitra: ["vendor/profil"],
+  perjanjianMitra: ["vendor/perjanjian"],
   propertiMitra: ["vendor/properti"],
   transaksiMitra: ["vendor/transaksi"],
   favorit: ["favorit"],

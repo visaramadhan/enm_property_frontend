@@ -183,6 +183,18 @@ const BAWAAN = {
   judulCta: "Siap memasarkan properti melalui ENM?",
   deskripsiCta:
     "Bandingkan paket, siapkan informasi mitra, lalu ikuti proses pendaftaran untuk mulai mengelola listing.",
+  judulKeunggulan: "",
+  deskripsiKeunggulan: "",
+  judulProperti: "Temukan properti untuk disewa dan dibeli.",
+  deskripsiProperti:
+    "Jelajahi listing yang tersedia dan buka detailnya untuk informasi lebih lanjut.",
+  judulPaket: "Pilih Paket Kemitraan",
+  deskripsiPaket:
+    "Temukan informasi paket dan ketentuan yang sesuai dengan kebutuhan listing propertimu.",
+  judulPanduan: "Empat langkah menjadi mitra ENM",
+  deskripsiPanduan: "Mulai dari menentukan paket hingga mengelola listing melalui akun mitra.",
+  judulFaq: "Informasi sebelum bergabung",
+  deskripsiFaq: "Ringkasan alur pendaftaran dan pengelolaan listing mitra.",
 };
 
 /* --------------------------------------------------------------- Metadata -- */
@@ -252,11 +264,11 @@ export default async function Home() {
       <PenandaAsalBeranda />
       <main className="flex flex-1 flex-col">
         <Hero konten={konten} properti={properti} area={area} areaUtama={areaUtama} />
-        <Keunggulan />
-        <PropertiPilihan daftar={properti} />
-        <PaketMitra daftar={paket} />
-        <PanduanMitra />
-        <Faq />
+        <Keunggulan konten={konten} />
+        <PropertiPilihan daftar={properti} konten={konten} />
+        <PaketMitra daftar={paket} konten={konten} />
+        <PanduanMitra konten={konten} />
+        <Faq konten={konten} />
         <CtaMitra konten={konten} />
       </main>
 
@@ -437,26 +449,41 @@ function Hero({
 }
 
 /** Tiga keunggulan utama platform. */
-function Keunggulan() {
+function Keunggulan({ konten }: { konten: LandingContentView }) {
+  const judul = konten.keunggulan_title || BAWAAN.judulKeunggulan;
+  const deskripsi = konten.keunggulan_subtitle || BAWAAN.deskripsiKeunggulan;
+
   return (
     <section className="border-y border-line bg-surface">
-      <div className={cn(KONTAINER, "grid py-9 md:grid-cols-3 md:divide-x md:divide-line")}>
-        {KEUNGGULAN.map((item) => {
-          const Ikon = item.ikon;
-          return (
-            <article key={item.judul} className="flex gap-4 px-1 py-3 md:px-6 md:first:pl-0">
-              <div
-                className={cn("grid size-11 shrink-0 place-items-center rounded-card", item.kelasIkon)}
-              >
-                <Ikon className="size-5" aria-hidden="true" />
-              </div>
-              <div>
-                <h3 className="mb-1.5 text-base font-semibold text-ink">{item.judul}</h3>
-                <p className="text-sm leading-[1.55] text-ink-muted">{item.deskripsi}</p>
-              </div>
-            </article>
-          );
-        })}
+      <div className={cn(KONTAINER, "py-9")}>
+        {judul ? (
+          <KepalaBagian>
+            <Eyebrow center>Keunggulan</Eyebrow>
+            <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink">
+              {judul}
+            </h2>
+            {deskripsi ? <p className="text-sm text-ink-muted">{deskripsi}</p> : null}
+          </KepalaBagian>
+        ) : null}
+
+        <div className="grid md:grid-cols-3 md:divide-x md:divide-line">
+          {KEUNGGULAN.map((item) => {
+            const Ikon = item.ikon;
+            return (
+              <article key={item.judul} className="flex gap-4 px-1 py-3 md:px-6 md:first:pl-0">
+                <div
+                  className={cn("grid size-11 shrink-0 place-items-center rounded-card", item.kelasIkon)}
+                >
+                  <Ikon className="size-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 className="mb-1.5 text-base font-semibold text-ink">{item.judul}</h3>
+                  <p className="text-sm leading-[1.55] text-ink-muted">{item.deskripsi}</p>
+                </div>
+              </article>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
@@ -469,19 +496,24 @@ function Keunggulan() {
  * dipakai pada skema JSON-LD `ItemList` agar sinyal ke Googlebot konsisten
  * dengan peringkat internal platform.
  */
-function PropertiPilihan({ daftar }: { daftar: PropertySummary[] }) {
+function PropertiPilihan({
+  daftar,
+  konten,
+}: {
+  daftar: PropertySummary[];
+  konten: LandingContentView;
+}) {
+  const judul = konten.properti_title || BAWAAN.judulProperti;
+  const deskripsi = konten.properti_subtitle || BAWAAN.deskripsiProperti;
+
   return (
     <section id="properti" className={cn(JANGKAR, "py-14 lg:py-16")}>
       <div className={KONTAINER}>
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
             <Eyebrow>Properti pilihan</Eyebrow>
-            <h2 className="my-2 text-2xl font-semibold tracking-[-0.025em] text-ink">
-              Temukan properti untuk disewa dan dibeli.
-            </h2>
-            <p className="text-sm text-ink-muted">
-              Jelajahi listing yang tersedia dan buka detailnya untuk informasi lebih lanjut.
-            </p>
+            <h2 className="my-2 text-2xl font-semibold tracking-[-0.025em] text-ink">{judul}</h2>
+            <p className="text-sm text-ink-muted">{deskripsi}</p>
           </div>
           <Link
             href="/katalog"
@@ -557,7 +589,9 @@ const BARIS_PERBANDINGAN: Array<{ label: string; nilai: (paket: PlanView) => Rea
  * sehingga kartu dan tabel perbandingan di bawahnya selalu seragam
  * (`standar_cms.txt` bagian 1 — satu sumber data).
  */
-function PaketMitra({ daftar }: { daftar: PlanView[] }) {
+function PaketMitra({ daftar, konten }: { daftar: PlanView[]; konten: LandingContentView }) {
+  const judul = konten.paket_title || BAWAAN.judulPaket;
+  const deskripsi = konten.paket_subtitle || BAWAAN.deskripsiPaket;
   const unggulanId = daftar
     .filter((paket) => !paket.is_free)
     .reduce<PlanView | null>((terbaik, paket) => (!terbaik || paket.level > terbaik.level ? paket : terbaik), null)
@@ -571,11 +605,9 @@ function PaketMitra({ daftar }: { daftar: PlanView[] }) {
             Untuk agen dan pemilik properti
           </Eyebrow>
           <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-white">
-            Pilih Paket Kemitraan
+            {judul}
           </h2>
-          <p className="text-sm text-white/80">
-            Temukan informasi paket dan ketentuan yang sesuai dengan kebutuhan listing propertimu.
-          </p>
+          <p className="text-sm text-white/80">{deskripsi}</p>
         </KepalaBagian>
 
         {daftar.length > 0 ? (
@@ -690,18 +722,19 @@ function PaketMitra({ daftar }: { daftar: PlanView[] }) {
 }
 
 /** Panduan kemitraan: empat langkah, daftar persiapan, dan alur setelah mendaftar. */
-function PanduanMitra() {
+function PanduanMitra({ konten }: { konten: LandingContentView }) {
+  const judul = konten.panduan_title || BAWAAN.judulPanduan;
+  const deskripsi = konten.panduan_subtitle || BAWAAN.deskripsiPanduan;
+
   return (
     <section id="panduan" className={cn(JANGKAR, "bg-canvas py-16")}>
       <div className={KONTAINER}>
         <KepalaBagian>
           <Eyebrow center>Panduan kemitraan</Eyebrow>
           <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink">
-            Empat langkah menjadi mitra ENM
+            {judul}
           </h2>
-          <p className="text-sm text-ink-muted">
-            Mulai dari menentukan paket hingga mengelola listing melalui akun mitra.
-          </p>
+          <p className="text-sm text-ink-muted">{deskripsi}</p>
         </KepalaBagian>
 
         <div className="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
@@ -787,16 +820,19 @@ function PanduanMitra() {
  * Memakai elemen bawaan `<details>`/`<summary>` sehingga jawaban tetap ada di
  * HTML awal (terbaca mesin pencari) meski tanpa JavaScript.
  */
-function Faq() {
+function Faq({ konten }: { konten: LandingContentView }) {
+  const judul = konten.faq_title || BAWAAN.judulFaq;
+  const deskripsi = konten.faq_subtitle || BAWAAN.deskripsiFaq;
+
   return (
     <section id="faq" className={cn(JANGKAR, "border-t border-line bg-surface py-16")}>
       <div className={KONTAINER}>
         <KepalaBagian>
           <Eyebrow center>Pertanyaan umum</Eyebrow>
           <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink">
-            Informasi sebelum bergabung
+            {judul}
           </h2>
-          <p className="text-sm text-ink-muted">Ringkasan alur pendaftaran dan pengelolaan listing mitra.</p>
+          <p className="text-sm text-ink-muted">{deskripsi}</p>
         </KepalaBagian>
 
         <div className="mx-auto flex max-w-[850px] flex-col gap-3">

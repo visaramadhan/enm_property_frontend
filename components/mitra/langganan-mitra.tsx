@@ -179,8 +179,26 @@ export function LanggananMitra() {
                 <p className="max-h-40 overflow-y-auto rounded-field border border-line bg-hover/50 p-4 text-[13px] whitespace-pre-line text-ink-muted">
                   {data.agreement.content}
                 </p>
+                {data.agreement.checklist.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[13px] font-semibold text-ink">Poin yang disetujui</span>
+                    <ul className="flex flex-col gap-1.5 text-[13px] text-ink-muted">
+                      {data.agreement.checklist.map((poin, indeks) => (
+                        <li key={indeks} className="flex items-start gap-2">
+                          <CheckCircle2
+                            className="mt-0.5 size-4 shrink-0 text-success"
+                            aria-hidden="true"
+                          />
+                          {poin}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
                 <p className="text-xs text-ink-muted">
-                  Disetujui pada saat Anda menyelesaikan pemilihan paket.
+                  {data.accepted && data.acceptance
+                    ? `Disetujui pada ${formatTanggalWib(data.acceptance.accepted_at)} WIB.`
+                    : "Perjanjian akan diminta saat Anda pertama kali masuk dashboard mitra."}
                 </p>
               </div>
             )}
@@ -346,7 +364,9 @@ function DialogCheckout({
   const checkout = useCheckout();
   const form = useForm<NilaiCheckout>({
     resolver: zodResolver(skemaCheckout),
-    defaultValues: { agree_agreement: sudahDisetujui },
+    /* Paket Gratis aktif otomatis; perjanjian ditandatangani lewat modal saat
+       mitra pertama kali masuk dashboard, bukan di dialog ini. */
+    defaultValues: { agree_agreement: paket.is_free ? true : sudahDisetujui },
   });
 
   async function kirim(nilai: NilaiCheckout) {
@@ -398,16 +418,22 @@ function DialogCheckout({
           ]}
         />
 
-        <CheckboxField
-          control={form.control}
-          name="agree_agreement"
-          label="Saya menyetujui perjanjian kemitraan ENM Property."
-          deskripsi={
-            sudahDisetujui
-              ? "Persetujuan Anda sebelumnya tetap berlaku."
-              : "Perjanjian akan tercatat saat Anda melanjutkan."
-          }
-        />
+        {paket.is_free ? (
+          <p className="text-xs text-ink-muted">
+            Perjanjian kemitraan akan diminta saat Anda pertama kali masuk dashboard mitra.
+          </p>
+        ) : (
+          <CheckboxField
+            control={form.control}
+            name="agree_agreement"
+            label="Saya menyetujui perjanjian kemitraan ENM Property."
+            deskripsi={
+              sudahDisetujui
+                ? "Persetujuan Anda sebelumnya tetap berlaku."
+                : "Perjanjian akan tercatat saat Anda melanjutkan."
+            }
+          />
+        )}
       </div>
     </FormDialog>
   );
