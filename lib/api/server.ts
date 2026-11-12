@@ -116,6 +116,32 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
 };
 
 /**
+ * Melengkapi konten CMS dengan nilai bawaan.
+ *
+ * Backend dapat mengembalikan JSON tanpa sebagian kolom — misalnya saat image
+ * backend di server belum ikut diperbarui sehingga kolom baru seperti
+ * `hero_images` atau `faq_items_en` belum ada. Tanpa pelengkapan ini kolom
+ * tersebut menjadi `undefined` dan menggagalkan prerender halaman landing.
+ * Kolom yang hilang diisi dari `KONTEN_LANDING_CADANGAN`, dan kolom larik
+ * dipaksa menjadi larik agar `.length`/`.map` aman dipanggil.
+ */
+function lengkapiKonten(konten: Partial<LandingContentView> | null): LandingContentView {
+  const terisi = Object.fromEntries(
+    Object.entries(konten ?? {}).filter(([, nilai]) => nilai !== undefined && nilai !== null),
+  ) as Partial<LandingContentView>;
+
+  const gabung: LandingContentView = { ...KONTEN_LANDING_CADANGAN, ...terisi };
+
+  return {
+    ...gabung,
+    hero_images: Array.isArray(gabung.hero_images) ? gabung.hero_images : [],
+    highlight_areas: Array.isArray(gabung.highlight_areas) ? gabung.highlight_areas : [],
+    faq_items: Array.isArray(gabung.faq_items) ? gabung.faq_items : [],
+    faq_items_en: Array.isArray(gabung.faq_items_en) ? gabung.faq_items_en : [],
+  };
+}
+
+/**
  * Konten landing page dari CMS.
  *
  * Hasilnya dicache sebagai HTML statis (ISR) selama 24 jam dan dibuang lebih
@@ -127,7 +153,7 @@ export async function kontenLanding(): Promise<LandingContentView> {
   cacheLife({ stale: 3600, revalidate: 86400, expire: 604800 });
   cacheTag(TAG_LANDING);
 
-  return ambilDataPublik<LandingContentView>("/landing");
+  return lengkapiKonten(await ambilDataPublik<LandingContentView>("/landing"));
 }
 
 /**
