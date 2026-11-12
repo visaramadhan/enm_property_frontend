@@ -6,13 +6,15 @@ import { ImageUp, LoaderCircle, Plus, Rocket, Save, Trash2 } from "lucide-react"
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
-import { KelompokField, TextareaField, TextField } from "@/components/shared/form-field";
+import { FormField, KelompokField, TextareaField, TextField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import {
   useLandingAdmin,
   useLandingOwner,
@@ -21,11 +23,14 @@ import {
   useUnggahGambarLanding,
 } from "@/lib/api/hooks";
 import { formatWib } from "@/lib/format";
-import type { LandingContentView, LandingImageKind } from "@/types/api";
+import type { LandingContentView, LandingFAQItem, LandingImageKind } from "@/types/api";
 
 /** Jumlah area prioritas yang diwajibkan skema: minimal 4, maksimal 6. */
 const AREA_MINIMAL = 4;
 const AREA_MAKSIMAL = 6;
+/** Batas gambar kolase hero dan jumlah pertanyaan FAQ (selaras `backend/dto`). */
+const KOLASE_MAKSIMAL = 4;
+const FAQ_MAKSIMAL = 12;
 
 /**
  * Batas panjang mengikuti `backend/dto/landing.go` sekaligus aturan SEO pada
@@ -37,6 +42,9 @@ const skemaLanding = z.object({
   hero_subtitle: z.string().trim().max(150, "Maksimal 150 karakter"),
   hero_cta_text: z.string().trim().max(40, "Maksimal 40 karakter"),
   hero_image_url: z.string().trim().max(500, "Maksimal 500 karakter"),
+  hero_images: z
+    .array(z.string().trim().max(500, "Maksimal 500 karakter"))
+    .max(KOLASE_MAKSIMAL, `Maksimal ${KOLASE_MAKSIMAL} gambar kolase`),
   meta_title: z.string().trim().min(50, "Minimal 50 karakter").max(60, "Maksimal 60 karakter"),
   meta_description: z
     .string()
@@ -62,6 +70,16 @@ const skemaLanding = z.object({
   panduan_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
   faq_title: z.string().trim().max(70, "Maksimal 70 karakter"),
   faq_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
+  // Daftar pertanyaan-jawaban. Baris yang tidak lengkap dibuang backend, jadi
+  // di sini cukup dibatasi panjang dan jumlahnya saja.
+  faq_items: z
+    .array(
+      z.object({
+        tanya: z.string().trim().max(200, "Maksimal 200 karakter"),
+        jawab: z.string().trim().max(1000, "Maksimal 1000 karakter"),
+      }),
+    )
+    .max(FAQ_MAKSIMAL, `Maksimal ${FAQ_MAKSIMAL} pertanyaan`),
   // Varian bahasa Inggris (khusus halaman `/en`). Semua opsional: bila
   // dikosongkan, halaman Inggris memakai teks bawaan komponen.
   hero_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
@@ -81,6 +99,14 @@ const skemaLanding = z.object({
   panduan_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
   faq_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
   faq_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
+  faq_items_en: z
+    .array(
+      z.object({
+        tanya: z.string().trim().max(200, "Maksimal 200 karakter"),
+        jawab: z.string().trim().max(1000, "Maksimal 1000 karakter"),
+      }),
+    )
+    .max(FAQ_MAKSIMAL, `Maksimal ${FAQ_MAKSIMAL} pertanyaan`),
 });
 
 type NilaiLanding = z.infer<typeof skemaLanding>;
@@ -125,6 +151,7 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
     hero_subtitle: konten.hero_subtitle,
     hero_cta_text: konten.hero_cta_text,
     hero_image_url: konten.hero_image_url,
+    hero_images: konten.hero_images ?? [],
     meta_title: konten.meta_title,
     meta_description: konten.meta_description,
     meta_og_image: konten.meta_og_image,
@@ -142,6 +169,7 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
     panduan_subtitle: konten.panduan_subtitle,
     faq_title: konten.faq_title,
     faq_subtitle: konten.faq_subtitle,
+    faq_items: konten.faq_items ?? [],
     hero_title_en: konten.hero_title_en,
     hero_subtitle_en: konten.hero_subtitle_en,
     hero_cta_text_en: konten.hero_cta_text_en,
@@ -159,6 +187,7 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
     panduan_subtitle_en: konten.panduan_subtitle_en,
     faq_title_en: konten.faq_title_en,
     faq_subtitle_en: konten.faq_subtitle_en,
+    faq_items_en: konten.faq_items_en ?? [],
   };
 }
 
@@ -311,6 +340,199 @@ function FieldArea({ form }: { form: UseFormReturn<NilaiLanding> }) {
   );
 }
 
+/**
+ * Pengunggah kolase hero.
+ *
+ * Marketing dapat mengunggah 3-4 gambar yang tersusun pada bagian hero.
+ * Setiap berkas dikonversi backend ke WebP lalu URL-nya ditambahkan ke
+ * `hero_images`. Bila kosong, halaman memakai `hero_image_url` lalu foto
+ * properti teratas sehingga kolase tetap terisi.
+ */
+function FieldKolase({ form }: { form: UseFormReturn<NilaiLanding> }) {
+  const unggah = useUnggahGambarLanding();
+  const berkasRef = React.useRef<HTMLInputElement>(null);
+  const daftar = useWatch({ control: form.control, name: "hero_images" }) ?? [];
+
+  async function tambah(berkas: File) {
+    try {
+      const hasil = await unggah.mutateAsync({ kind: "hero", file: berkas });
+      form.setValue("hero_images", [...daftar, hasil.url].slice(0, KOLASE_MAKSIMAL), {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    } catch {
+      // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
+    }
+  }
+
+  function hapus(index: number) {
+    form.setValue(
+      "hero_images",
+      daftar.filter((_, i) => i !== index),
+      { shouldDirty: true, shouldValidate: true },
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <span className="text-sm font-semibold text-ink">Gambar kolase hero</span>
+      <p className="text-xs text-ink-muted">
+        Unggah 3-4 gambar. Gambar pertama tampil paling besar dan sisanya mengisi kolase. Bila
+        kosong, halaman memakai foto properti teratas.
+      </p>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {daftar.map((url, index) => (
+          <div
+            key={`${url}-${index}`}
+            className="relative overflow-hidden rounded-sm border border-line bg-canvas"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt="" className="h-24 w-full object-cover" />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={`Hapus gambar ${index + 1}`}
+              className="absolute top-1 right-1 size-7 bg-surface/80"
+              onClick={() => hapus(index)}
+            >
+              <Trash2 aria-hidden="true" />
+            </Button>
+          </div>
+        ))}
+
+        {daftar.length < KOLASE_MAKSIMAL ? (
+          <button
+            type="button"
+            className="grid h-24 place-items-center rounded-sm border border-dashed border-line text-xs text-ink-subtle transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+            disabled={unggah.isPending}
+            onClick={() => berkasRef.current?.click()}
+          >
+            {unggah.isPending ? (
+              <LoaderCircle className="animate-spin" aria-hidden="true" />
+            ) : (
+              <span className="flex flex-col items-center gap-1">
+                <ImageUp aria-hidden="true" />
+                Tambah gambar
+              </span>
+            )}
+          </button>
+        ) : null}
+      </div>
+
+      <input
+        ref={berkasRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="hidden"
+        onChange={(event) => {
+          const berkas = event.target.files?.[0];
+          if (berkas) void tambah(berkas);
+          event.target.value = "";
+        }}
+      />
+    </div>
+  );
+}
+
+/**
+ * Editor daftar pertanyaan-jawaban (FAQ).
+ *
+ * Dikelola lewat `useWatch` + `setValue` karena larik objek di sini lebih
+ * sederhana ditangani manual daripada `useFieldArray` dengan nama dinamis.
+ * Baris yang tidak lengkap akan dibuang backend saat disimpan.
+ */
+function FieldFaq({
+  form,
+  nama,
+  judul,
+  deskripsi,
+}: {
+  form: UseFormReturn<NilaiLanding>;
+  nama: "faq_items" | "faq_items_en";
+  judul: string;
+  deskripsi: string;
+}) {
+  const tersimpan = useWatch({ control: form.control, name: nama });
+  const daftar = (tersimpan ?? []) as LandingFAQItem[];
+
+  function simpan(berikut: LandingFAQItem[]) {
+    form.setValue(nama, berikut, { shouldDirty: true, shouldValidate: true });
+  }
+
+  return (
+    <KelompokField judul={judul} deskripsi={deskripsi}>
+      {daftar.map((item, index) => (
+        <div
+          key={index}
+          className="flex flex-col gap-4 rounded-card border border-line bg-canvas/40 p-4"
+        >
+          <FormField label={`Pertanyaan ${index + 1}`}>
+            <Input
+              value={item.tanya}
+              maxLength={200}
+              placeholder="Tulis pertanyaan"
+              onChange={(event) =>
+                simpan(
+                  daftar.map((isi, i) =>
+                    i === index ? { ...isi, tanya: event.target.value } : isi,
+                  ),
+                )
+              }
+            />
+          </FormField>
+          <FormField label={`Jawaban ${index + 1}`}>
+            <Textarea
+              value={item.jawab}
+              rows={3}
+              maxLength={1000}
+              placeholder="Tulis jawaban"
+              onChange={(event) =>
+                simpan(
+                  daftar.map((isi, i) =>
+                    i === index ? { ...isi, jawab: event.target.value } : isi,
+                  ),
+                )
+              }
+            />
+          </FormField>
+          <div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => simpan(daftar.filter((_, i) => i !== index))}
+            >
+              <Trash2 aria-hidden="true" />
+              Hapus pertanyaan
+            </Button>
+          </div>
+        </div>
+      ))}
+
+      <div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={daftar.length >= FAQ_MAKSIMAL}
+          onClick={() => simpan([...daftar, { tanya: "", jawab: "" }])}
+        >
+          <Plus aria-hidden="true" />
+          Tambah pertanyaan
+        </Button>
+      </div>
+
+      {daftar.length === 0 ? (
+        <p className="text-xs text-ink-muted">
+          Belum ada pertanyaan khusus. Halaman memakai pertanyaan bawaan hingga daftar ini diisi.
+        </p>
+      ) : null}
+    </KelompokField>
+  );
+}
+
 /** Formulir CMS lengkap untuk admin dan superadmin. */
 function FormLanding({ konten }: { konten: LandingContentView }) {
   const simpan = usePerbaruiLanding();
@@ -377,6 +599,7 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             deskripsi="Maksimal 40 karakter, mis. “Jelajahi Katalog”."
           />
           <FieldGambar form={form} {...OPSI_GAMBAR[0]} />
+          <FieldKolase form={form} />
         </CardContent>
       </Card>
 
@@ -444,6 +667,24 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
               />
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Pertanyaan (FAQ)</CardTitle>
+          <CardDescription>
+            Pertanyaan dan jawaban yang tampil pada bagian FAQ. Kosongkan untuk memakai daftar
+            bawaan; baris yang tidak lengkap otomatis diabaikan.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <FieldFaq
+            form={form}
+            nama="faq_items"
+            judul="Pertanyaan umum (Indonesia)"
+            deskripsi="Tampil pada halaman utama berbahasa Indonesia."
+          />
         </CardContent>
       </Card>
 
@@ -551,6 +792,13 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
               deskripsi="Maksimal 200 karakter."
             />
           </div>
+
+          <FieldFaq
+            form={form}
+            nama="faq_items_en"
+            judul="FAQ items (EN)"
+            deskripsi="Tampil pada halaman landing berbahasa Inggris (/en). Kosongkan untuk memakai daftar bawaan."
+          />
         </CardContent>
       </Card>
 
@@ -612,6 +860,24 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
               className="h-40 w-full rounded-sm border border-line bg-canvas object-cover"
             />
           ) : null}
+          {konten.hero_images.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
+                Gambar kolase
+              </span>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {konten.hero_images.map((url, index) => (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    key={`${url}-${index}`}
+                    src={url}
+                    alt=""
+                    className="h-24 w-full rounded-sm border border-line bg-canvas object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -667,6 +933,25 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
+          <CardTitle>Daftar Pertanyaan (FAQ)</CardTitle>
+          <CardDescription>Pertanyaan dan jawaban pada bagian FAQ halaman utama.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          {konten.faq_items.length > 0 ? (
+            konten.faq_items.map((item, index) => (
+              <div key={index} className="flex flex-col gap-4">
+                <BarisNilai label={`Pertanyaan ${index + 1}`} nilai={item.tanya} />
+                <BarisNilai label={`Jawaban ${index + 1}`} nilai={item.jawab} />
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-ink-muted">Memakai daftar pertanyaan bawaan.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>CTA Mitra “Titip Properti”</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -702,6 +987,16 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
           ))}
           <BarisNilai label="CTA title (EN)" nilai={konten.cta_title_en} />
           <BarisNilai label="CTA description (EN)" nilai={konten.cta_description_en} />
+          {konten.faq_items_en.length > 0 ? (
+            konten.faq_items_en.map((item, index) => (
+              <div key={index} className="flex flex-col gap-4">
+                <BarisNilai label={`FAQ ${index + 1} — pertanyaan (EN)`} nilai={item.tanya} />
+                <BarisNilai label={`FAQ ${index + 1} — jawaban (EN)`} nilai={item.jawab} />
+              </div>
+            ))
+          ) : (
+            <BarisNilai label="FAQ items (EN)" nilai="" />
+          )}
         </CardContent>
       </Card>
 

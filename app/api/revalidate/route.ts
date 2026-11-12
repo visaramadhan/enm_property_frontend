@@ -14,10 +14,14 @@ import { TAG_LANDING, TAG_PAKET, TAG_PROPERTI } from "@/lib/api/server";
  * Parameter: `?secret=<REVALIDATION_TOKEN>&path=/`
  */
 export async function GET(request: NextRequest) {
-  const rahasia = request.nextUrl.searchParams.get("secret");
+  // Kedua sisi (pengirim di Go dan pemeriksa di sini) dipangkas spasi sebelum
+  // dibandingkan. Tanpa pemangkasan, spasi/akhiran baris (CRLF) pada berkas
+  // .env membuat nilainya dianggap berbeda walau isinya sama — penyebab utama
+  // respons 401 padahal token sebenarnya sudah cocok.
+  const rahasia = (request.nextUrl.searchParams.get("secret") ?? "").trim();
   // Di Docker, nilai berasal dari backend/.env (env_file) sebagai satu-satunya
   // sumber; pada pengembangan lokal diambil dari frontend/.env.local.
-  const token = process.env.APP_REVALIDATION_TOKEN || process.env.REVALIDATION_TOKEN;
+  const token = (process.env.APP_REVALIDATION_TOKEN || process.env.REVALIDATION_TOKEN || "").trim();
 
   if (!token || rahasia !== token) {
     return Response.json(

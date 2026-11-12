@@ -924,6 +924,15 @@ export interface ListQuery {
 /* ---------------------------------------------------------------- Landing -- */
 
 /**
+ * Satu pasangan pertanyaan-jawaban pada bagian FAQ landing page.
+ * Selaras `backend/dto/landing.go` (`LandingFAQItem`).
+ */
+export interface LandingFAQItem {
+  tanya: string;
+  jawab: string;
+}
+
+/**
  * Konten landing page siap pakai (CMS editor maupun halaman publik).
  * Selaras `backend/dto/landing.go`.
  */
@@ -932,6 +941,8 @@ export interface LandingContentView {
   hero_subtitle: string;
   hero_cta_text: string;
   hero_image_url: string;
+  /** Daftar URL gambar kolase hero (maksimal 4); kosong memakai gambar properti. */
+  hero_images: string[];
   meta_title: string;
   meta_description: string;
   meta_og_image: string;
@@ -948,6 +959,8 @@ export interface LandingContentView {
   panduan_subtitle: string;
   faq_title: string;
   faq_subtitle: string;
+  /** Daftar pertanyaan umum; kosong memakai teks bawaan komponen. */
+  faq_items: LandingFAQItem[];
   /** Varian bahasa Inggris (khusus halaman landing `/en`). */
   hero_title_en: string;
   hero_subtitle_en: string;
@@ -966,6 +979,7 @@ export interface LandingContentView {
   panduan_subtitle_en: string;
   faq_title_en: string;
   faq_subtitle_en: string;
+  faq_items_en: LandingFAQItem[];
   updated_at: string;
 }
 
@@ -975,6 +989,7 @@ export interface UpdateLandingRequest {
   hero_subtitle: string;
   hero_cta_text: string;
   hero_image_url: string;
+  hero_images: string[];
   meta_title: string;
   meta_description: string;
   meta_og_image: string;
@@ -991,6 +1006,7 @@ export interface UpdateLandingRequest {
   panduan_subtitle: string;
   faq_title: string;
   faq_subtitle: string;
+  faq_items: LandingFAQItem[];
   /** Varian bahasa Inggris; opsional (boleh kosong). */
   hero_title_en: string;
   hero_subtitle_en: string;
@@ -1009,6 +1025,7 @@ export interface UpdateLandingRequest {
   panduan_subtitle_en: string;
   faq_title_en: string;
   faq_subtitle_en: string;
+  faq_items_en: LandingFAQItem[];
 }
 
 /** Jenis gambar landing yang dapat diunggah melalui CMS. */

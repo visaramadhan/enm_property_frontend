@@ -26,7 +26,7 @@ import { formatAngka, formatRupiah } from "@/lib/format";
 import { kamus, type Bahasa, type Kamus } from "@/lib/landing-i18n";
 import { NAMA_SITUS, SITE_URL } from "@/lib/seo";
 import { cn } from "@/lib/utils";
-import type { LandingContentView, PlanView, PropertySummary } from "@/types/api";
+import type { LandingContentView, LandingFAQItem, PlanView, PropertySummary } from "@/types/api";
 
 /** Kelas pembungkus konten agar lebar maksimum dan padding seragam (DRY). */
 const KONTAINER = "mx-auto w-full max-w-7xl px-4 lg:px-8";
@@ -73,13 +73,17 @@ interface KontenTerpilih {
   panduanSubtitle: string;
   faqTitle: string;
   faqSubtitle: string;
+  /** Daftar tanya-jawab; memakai CMS bila terisi, selain itu teks bawaan kamus. */
+  faqItems: LandingFAQItem[];
 }
 
 /** Memilih kolom konten CMS sesuai bahasa lalu mengisi nilai kosong dari kamus. */
 function pilihKonten(konten: LandingContentView, bahasa: Bahasa): KontenTerpilih {
-  const bawa = kamus(bahasa).bawaan;
+  const kam = kamus(bahasa);
+  const bawa = kam.bawaan;
   const inggris = bahasa === "en";
   const pilih = (id: string, en: string) => (inggris ? en : id) || "";
+  const faqDariCms = inggris ? konten.faq_items_en : konten.faq_items;
 
   return {
     heroTitle: pilih(konten.hero_title, konten.hero_title_en) || bawa.judulHero,
@@ -102,6 +106,7 @@ function pilihKonten(konten: LandingContentView, bahasa: Bahasa): KontenTerpilih
       pilih(konten.panduan_subtitle, konten.panduan_subtitle_en) || bawa.deskripsiPanduan,
     faqTitle: pilih(konten.faq_title, konten.faq_title_en) || bawa.judulFaq,
     faqSubtitle: pilih(konten.faq_subtitle, konten.faq_subtitle_en) || bawa.deskripsiFaq,
+    faqItems: faqDariCms.length > 0 ? faqDariCms : kam.faq.item,
   };
 }
 
@@ -231,14 +236,17 @@ function KepalaBagian({ children }: { children: ReactNode }) {
 /**
  * Menyusun sumber gambar kolase hero.
  *
- * Gambar utama diambil dari CMS (`hero_image_url`) lalu dilengkapi foto
- * properti teratas agar kolase tetap terisi sebelum tim marketing mengunggah
- * foto banner.
+ * Urutan prioritas: daftar gambar kolase dari CMS (`hero_images`), lalu gambar
+ * hero tunggal (`hero_image_url`), dan terakhir foto properti teratas. Dengan
+ * begitu kolase tetap terisi walau tim marketing baru mengunggah sebagian.
  */
-function gambarKolase(hero: string, daftar: PropertySummary[]): string[] {
-  return [hero, ...daftar.map((item) => item.cover_url)]
-    .filter((url) => url.length > 0)
-    .slice(0, 4);
+function gambarKolase(
+  daftarCms: string[],
+  hero: string,
+  daftar: PropertySummary[],
+): string[] {
+  const dariProperti = daftar.map((item) => item.cover_url);
+  return [...daftarCms, hero, ...dariProperti].filter((url) => url.length > 0).slice(0, 4);
 }
 
 /** Satu slot kolase hero; menampilkan blok netral bila gambar belum tersedia. */
@@ -286,7 +294,7 @@ function Hero({
   area: string[];
   areaUtama: string;
 }) {
-  const gambar = gambarKolase(konten.hero_image_url, properti);
+  const gambar = gambarKolase(konten.hero_images, konten.hero_image_url, properti);
   const altKolase = k.hero.altKolase(areaUtama, t.heroTitle);
 
   return (
@@ -558,11 +566,14 @@ function PaketMitra({ daftar, t, k }: { daftar: PlanView[]; t: KontenTerpilih; k
                 <article
                   key={paket.id}
                   className={cn(
-                    "flex flex-col rounded-panel border bg-surface p-6",
+                    "flex flex-col rounded-panel border bg-surface p-6 text-center",
                     paket.id === unggulanId ? "border-2 border-accent" : "border-line",
                   )}
                 >
-                  <Badge variant={paket.is_free ? "success" : "primary"} className="self-start">
+                  <Badge
+                    variant={paket.is_free ? "success" : "primary"}
+                    className="self-center"
+                  >
                     {paket.is_free ? k.paket.badgeGratis : k.paket.badgeMitra}
                   </Badge>
 
@@ -762,7 +773,7 @@ function Faq({ t, k }: { t: KontenTerpilih; k: Kamus }) {
         </KepalaBagian>
 
         <div className="mx-auto flex max-w-[850px] flex-col gap-3">
-          {k.faq.item.map((item, indeks) => (
+          {t.faqItems.map((item, indeks) => (
             <details
               key={item.tanya}
               open={indeks === 0}

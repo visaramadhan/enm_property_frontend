@@ -70,6 +70,7 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
     "Jelajahi villa, rumah, dan apartemen pilihan dari mitra terverifikasi di seluruh Bali.",
   hero_cta_text: "Jelajahi Katalog",
   hero_image_url: "",
+  hero_images: [],
   meta_title: "ENM Property - Sewa & Jual Properti Terbaik di Bali",
   meta_description:
     "Cari villa, rumah, ruko, dan apartemen di Bali dengan mudah. Bandingkan lokasi, harga, dan fasilitas, lalu hubungi mitra terverifikasi di ENM Property.",
@@ -90,6 +91,7 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
   panduan_subtitle: "Mulai dari menentukan paket hingga mengelola listing melalui akun mitra.",
   faq_title: "Informasi sebelum bergabung",
   faq_subtitle: "Ringkasan alur pendaftaran dan pengelolaan listing mitra.",
+  faq_items: [],
   // Varian Inggris dibiarkan kosong: halaman `/en` akan memakai teks bawaan
   // kamus Inggris sehingga tetap tampil utuh saat backend belum tersedia.
   hero_title_en: "",
@@ -109,6 +111,7 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
   panduan_subtitle_en: "",
   faq_title_en: "",
   faq_subtitle_en: "",
+  faq_items_en: [],
   updated_at: "",
 };
 
