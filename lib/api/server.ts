@@ -90,6 +90,25 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
   panduan_subtitle: "Mulai dari menentukan paket hingga mengelola listing melalui akun mitra.",
   faq_title: "Informasi sebelum bergabung",
   faq_subtitle: "Ringkasan alur pendaftaran dan pengelolaan listing mitra.",
+  // Varian Inggris dibiarkan kosong: halaman `/en` akan memakai teks bawaan
+  // kamus Inggris sehingga tetap tampil utuh saat backend belum tersedia.
+  hero_title_en: "",
+  hero_subtitle_en: "",
+  hero_cta_text_en: "",
+  meta_title_en: "",
+  meta_description_en: "",
+  cta_title_en: "",
+  cta_description_en: "",
+  keunggulan_title_en: "",
+  keunggulan_subtitle_en: "",
+  properti_title_en: "",
+  properti_subtitle_en: "",
+  paket_title_en: "",
+  paket_subtitle_en: "",
+  panduan_title_en: "",
+  panduan_subtitle_en: "",
+  faq_title_en: "",
+  faq_subtitle_en: "",
   updated_at: "",
 };
 

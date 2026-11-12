@@ -9,14 +9,8 @@ import { LogoHeader } from "@/components/shared/logo-situs";
 import { Button } from "@/components/ui/button";
 import { useProfilSaya } from "@/lib/api/hooks";
 import { useSudahTerpasang } from "@/lib/hooks/use-sudah-terpasang";
+import { COOKIE_BAHASA, kamus, RUTE, type Bahasa } from "@/lib/landing-i18n";
 import { cn } from "@/lib/utils";
-
-/** Tautan menu utama; `id` dipakai penanda bagian yang sedang dilihat. */
-const MENU = [
-  { id: "properti", href: "#properti", label: "Properti" },
-  { id: "paket", href: "#paket", label: "Paket Mitra" },
-  { id: "panduan", href: "#panduan", label: "Panduan Kemitraan" },
-] as const;
 
 /** Urutan bagian halaman untuk penanda menu aktif. */
 const URUTAN_BAGIAN = ["beranda", "properti", "paket", "panduan", "faq", "kemitraan"] as const;
@@ -33,14 +27,57 @@ const PETA_BAGIAN: Record<string, string> = {
 };
 
 /**
- * Kepala halaman landing: identitas brand, menu jangkar antar-bagian, dan aksi
- * utama (pasang properti / masuk) berikut menu ringkas untuk layar kecil.
+ * Menyimpan pilihan bahasa pengunjung pada cookie.
+ *
+ * Rute tiap bahasa sudah eksplisit (`/` dan `/en`), cookie ini hanya mengingat
+ * preferensi agar pengunjung yang kembali ke akar situs tetap mendapat versi
+ * bahasa pilihannya pada kunjungan berikutnya.
  */
-export function HeaderLanding() {
+function simpanBahasa(bahasa: Bahasa) {
+  document.cookie = `${COOKIE_BAHASA}=${bahasa}; path=/; max-age=31536000; samesite=lax`;
+}
+
+/** Sakelar bahasa ID/EN berbentuk tautan agar tetap dapat dirayapi mesin pencari. */
+function ToggleBahasa({ bahasa, className }: { bahasa: Bahasa; className?: string }) {
+  const k = kamus(bahasa);
+
+  return (
+    <div
+      className={cn("inline-flex items-center rounded-full border border-line p-0.5", className)}
+      role="group"
+      aria-label={k.header.gantiBahasa}
+    >
+      {(["id", "en"] as const).map((target) => (
+        <Link
+          key={target}
+          href={RUTE[target]}
+          aria-current={bahasa === target ? "true" : undefined}
+          onClick={() => simpanBahasa(target)}
+          className={cn(
+            "rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors",
+            bahasa === target
+              ? "bg-primary text-primary-foreground"
+              : "text-secondary hover:text-primary",
+          )}
+        >
+          {k.header.labelBahasa[target]}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Kepala halaman landing: identitas brand, menu jangkar antar-bagian, sakelar
+ * bahasa, dan aksi utama (pasang properti / masuk) berikut menu ringkas untuk
+ * layar kecil.
+ */
+export function HeaderLanding({ bahasa = "id" }: { bahasa?: Bahasa }) {
   const [terbuka, setTerbuka] = React.useState(false);
   const [bagianAktif, setBagianAktif] = React.useState("");
   const profil = useProfilSaya();
   const sudahTerpasang = useSudahTerpasang();
+  const k = kamus(bahasa);
 
   /* Tautan pendaftaran mitra hanya relevan bagi pengunjung yang belum terdaftar
      sebagai mitra. Sesi baru dibaca setelah komponen terpasang sehingga render
@@ -73,14 +110,14 @@ export function HeaderLanding() {
     <header className="sticky top-0 z-50 border-b border-line bg-canvas/97 backdrop-blur">
       <div className="mx-auto flex h-[72px] w-full max-w-7xl items-center gap-7 px-4 lg:px-8">
         <LogoHeader
-          label="Beranda"
+          label={k.footer.ariaBrand}
           className="gap-2.5"
           kelasMark="size-[30px] rounded-lg bg-primary text-[12px] font-bold text-primary-foreground"
           kelasNama="text-base font-bold"
         />
 
-        <nav className="ml-auto hidden gap-7 lg:flex" aria-label="Navigasi utama">
-          {MENU.map((item) => (
+        <nav className="ml-auto hidden gap-7 lg:flex" aria-label={k.header.navigasiUtama}>
+          {k.header.menu.map((item) => (
             <a
               key={item.id}
               href={item.href}
@@ -94,10 +131,11 @@ export function HeaderLanding() {
           ))}
         </nav>
 
-        <div className="ml-auto hidden gap-2.5 lg:flex">
+        <div className="ml-auto hidden items-center gap-2.5 lg:flex">
+          <ToggleBahasa bahasa={bahasa} />
           {!terdaftarMitra ? (
             <Button asChild size="sm">
-              <Link href="/daftar-mitra">Daftar Sebagai Mitra</Link>
+              <Link href="/daftar-mitra">{k.header.daftarMitra}</Link>
             </Button>
           ) : null}
           <MenuAkun />
@@ -106,7 +144,7 @@ export function HeaderLanding() {
         <button
           type="button"
           className="ml-auto grid size-11 place-items-center rounded-lg border border-line text-secondary lg:hidden"
-          aria-label={terbuka ? "Tutup menu" : "Buka menu"}
+          aria-label={terbuka ? k.header.tutupMenu : k.header.bukaMenu}
           aria-expanded={terbuka}
           aria-controls="menu-landing"
           onClick={() => setTerbuka((sebelumnya) => !sebelumnya)}
@@ -117,8 +155,8 @@ export function HeaderLanding() {
 
       {terbuka ? (
         <div id="menu-landing" className="border-t border-line px-4 pt-3 pb-4 lg:hidden">
-          <nav className="flex flex-col gap-3.5" aria-label="Navigasi utama layar kecil">
-            {MENU.map((item) => (
+          <nav className="flex flex-col gap-3.5" aria-label={k.header.navigasiUtamaKecil}>
+            {k.header.menu.map((item) => (
               <a
                 key={item.id}
                 href={item.href}
@@ -129,11 +167,12 @@ export function HeaderLanding() {
               </a>
             ))}
           </nav>
-          <div className="mt-4 flex gap-2.5">
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <ToggleBahasa bahasa={bahasa} />
             {!terdaftarMitra ? (
               <Button asChild size="sm" className="flex-1">
                 <Link href="/daftar-mitra" onClick={tutupMenu}>
-                  Daftar Sebagai Mitra
+                  {k.header.daftarMitra}
                 </Link>
               </Button>
             ) : null}

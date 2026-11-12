@@ -948,6 +948,24 @@ export interface LandingContentView {
   panduan_subtitle: string;
   faq_title: string;
   faq_subtitle: string;
+  /** Varian bahasa Inggris (khusus halaman landing `/en`). */
+  hero_title_en: string;
+  hero_subtitle_en: string;
+  hero_cta_text_en: string;
+  meta_title_en: string;
+  meta_description_en: string;
+  cta_title_en: string;
+  cta_description_en: string;
+  keunggulan_title_en: string;
+  keunggulan_subtitle_en: string;
+  properti_title_en: string;
+  properti_subtitle_en: string;
+  paket_title_en: string;
+  paket_subtitle_en: string;
+  panduan_title_en: string;
+  panduan_subtitle_en: string;
+  faq_title_en: string;
+  faq_subtitle_en: string;
   updated_at: string;
 }
 
@@ -973,6 +991,24 @@ export interface UpdateLandingRequest {
   panduan_subtitle: string;
   faq_title: string;
   faq_subtitle: string;
+  /** Varian bahasa Inggris; opsional (boleh kosong). */
+  hero_title_en: string;
+  hero_subtitle_en: string;
+  hero_cta_text_en: string;
+  meta_title_en: string;
+  meta_description_en: string;
+  cta_title_en: string;
+  cta_description_en: string;
+  keunggulan_title_en: string;
+  keunggulan_subtitle_en: string;
+  properti_title_en: string;
+  properti_subtitle_en: string;
+  paket_title_en: string;
+  paket_subtitle_en: string;
+  panduan_title_en: string;
+  panduan_subtitle_en: string;
+  faq_title_en: string;
+  faq_subtitle_en: string;
 }
 
 /** Jenis gambar landing yang dapat diunggah melalui CMS. */

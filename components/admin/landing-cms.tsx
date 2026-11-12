@@ -62,6 +62,25 @@ const skemaLanding = z.object({
   panduan_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
   faq_title: z.string().trim().max(70, "Maksimal 70 karakter"),
   faq_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
+  // Varian bahasa Inggris (khusus halaman `/en`). Semua opsional: bila
+  // dikosongkan, halaman Inggris memakai teks bawaan komponen.
+  hero_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
+  hero_subtitle_en: z.string().trim().max(150, "Maksimal 150 karakter"),
+  hero_cta_text_en: z.string().trim().max(40, "Maksimal 40 karakter"),
+  meta_title_en: z.string().trim().max(60, "Maksimal 60 karakter"),
+  meta_description_en: z.string().trim().max(160, "Maksimal 160 karakter"),
+  cta_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
+  cta_description_en: z.string().trim().max(200, "Maksimal 200 karakter"),
+  keunggulan_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
+  keunggulan_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
+  properti_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
+  properti_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
+  paket_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
+  paket_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
+  panduan_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
+  panduan_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
+  faq_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
+  faq_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
 });
 
 type NilaiLanding = z.infer<typeof skemaLanding>;
@@ -123,6 +142,23 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
     panduan_subtitle: konten.panduan_subtitle,
     faq_title: konten.faq_title,
     faq_subtitle: konten.faq_subtitle,
+    hero_title_en: konten.hero_title_en,
+    hero_subtitle_en: konten.hero_subtitle_en,
+    hero_cta_text_en: konten.hero_cta_text_en,
+    meta_title_en: konten.meta_title_en,
+    meta_description_en: konten.meta_description_en,
+    cta_title_en: konten.cta_title_en,
+    cta_description_en: konten.cta_description_en,
+    keunggulan_title_en: konten.keunggulan_title_en,
+    keunggulan_subtitle_en: konten.keunggulan_subtitle_en,
+    properti_title_en: konten.properti_title_en,
+    properti_subtitle_en: konten.properti_subtitle_en,
+    paket_title_en: konten.paket_title_en,
+    paket_subtitle_en: konten.paket_subtitle_en,
+    panduan_title_en: konten.panduan_title_en,
+    panduan_subtitle_en: konten.panduan_subtitle_en,
+    faq_title_en: konten.faq_title_en,
+    faq_subtitle_en: konten.faq_subtitle_en,
   };
 }
 
@@ -435,6 +471,89 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Bahasa Inggris (English)</CardTitle>
+          <CardDescription>
+            Teks untuk halaman <code>/en</code>. Kosongkan bila terjemahan belum tersedia; halaman
+            Inggris akan memakai teks bawaan sehingga tidak pernah tampil kosong.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5">
+            <TextField
+              control={form.control}
+              name="hero_title_en"
+              label="Hero title (EN)"
+              deskripsi="Maksimal 70 karakter."
+            />
+            <TextareaField
+              control={form.control}
+              name="hero_subtitle_en"
+              label="Hero subtitle (EN)"
+              rows={3}
+              deskripsi="Maksimal 150 karakter."
+            />
+            <TextField
+              control={form.control}
+              name="hero_cta_text_en"
+              label="Hero CTA text (EN)"
+              deskripsi="Maksimal 40 karakter."
+            />
+          </div>
+
+          <div className="flex flex-col gap-5">
+            <TextField
+              control={form.control}
+              name="meta_title_en"
+              label="Meta title (EN)"
+              deskripsi="Maksimal 60 karakter."
+            />
+            <TextareaField
+              control={form.control}
+              name="meta_description_en"
+              label="Meta description (EN)"
+              rows={3}
+              deskripsi="Maksimal 160 karakter."
+            />
+          </div>
+
+          {BAGIAN_LANDING.map((bagian) => (
+            <div key={bagian.kunci} className="flex flex-col gap-5">
+              <TextField
+                control={form.control}
+                name={`${bagian.kunci}_title_en`}
+                label={`Bagian ${bagian.label} — judul (EN)`}
+                deskripsi="Maksimal 70 karakter."
+              />
+              <TextareaField
+                control={form.control}
+                name={`${bagian.kunci}_subtitle_en`}
+                label={`Bagian ${bagian.label} — deskripsi (EN)`}
+                rows={2}
+                deskripsi="Maksimal 200 karakter."
+              />
+            </div>
+          ))}
+
+          <div className="flex flex-col gap-5">
+            <TextField
+              control={form.control}
+              name="cta_title_en"
+              label="CTA title (EN)"
+              deskripsi="Maksimal 70 karakter."
+            />
+            <TextareaField
+              control={form.control}
+              name="cta_description_en"
+              label="CTA description (EN)"
+              rows={3}
+              deskripsi="Maksimal 200 karakter."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-ink-subtle">
           Terakhir diperbarui {formatWib(konten.updated_at)}
@@ -553,6 +672,36 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
         <CardContent className="flex flex-col gap-4">
           <BarisNilai label="Judul CTA" nilai={konten.cta_title} />
           <BarisNilai label="Deskripsi CTA" nilai={konten.cta_description} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Bahasa Inggris (English)</CardTitle>
+          <CardDescription>
+            Versi teks untuk halaman <code>/en</code>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <BarisNilai label="Hero title (EN)" nilai={konten.hero_title_en} />
+          <BarisNilai label="Hero subtitle (EN)" nilai={konten.hero_subtitle_en} />
+          <BarisNilai label="Hero CTA text (EN)" nilai={konten.hero_cta_text_en} />
+          <BarisNilai label="Meta title (EN)" nilai={konten.meta_title_en} />
+          <BarisNilai label="Meta description (EN)" nilai={konten.meta_description_en} />
+          {BAGIAN_LANDING.map((bagian) => (
+            <div key={bagian.kunci} className="flex flex-col gap-4">
+              <BarisNilai
+                label={`Bagian ${bagian.label} — judul (EN)`}
+                nilai={konten[`${bagian.kunci}_title_en`]}
+              />
+              <BarisNilai
+                label={`Bagian ${bagian.label} — deskripsi (EN)`}
+                nilai={konten[`${bagian.kunci}_subtitle_en`]}
+              />
+            </div>
+          ))}
+          <BarisNilai label="CTA title (EN)" nilai={konten.cta_title_en} />
+          <BarisNilai label="CTA description (EN)" nilai={konten.cta_description_en} />
         </CardContent>
       </Card>
 

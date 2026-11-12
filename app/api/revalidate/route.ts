@@ -15,7 +15,9 @@ import { TAG_LANDING, TAG_PAKET, TAG_PROPERTI } from "@/lib/api/server";
  */
 export async function GET(request: NextRequest) {
   const rahasia = request.nextUrl.searchParams.get("secret");
-  const token = process.env.REVALIDATION_TOKEN;
+  // Di Docker, nilai berasal dari backend/.env (env_file) sebagai satu-satunya
+  // sumber; pada pengembangan lokal diambil dari frontend/.env.local.
+  const token = process.env.APP_REVALIDATION_TOKEN || process.env.REVALIDATION_TOKEN;
 
   if (!token || rahasia !== token) {
     return Response.json(
