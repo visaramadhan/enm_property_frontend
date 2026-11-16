@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { KolomTabel } from "@/components/shared/data-table";
@@ -34,26 +35,32 @@ import type { CategoryView, CreateCategoryRequest, UpdateCategoryRequest } from 
  * dikonversi pada `keCreateKategori`/`keUpdateKategori` (pola sama dengan
  * formulir paket, DRY).
  */
-const skemaKategori = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Nama kategori minimal 2 karakter")
-    .max(80, "Nama kategori maksimal 80 karakter"),
-  slug: z
-    .string()
-    .trim()
-    .max(60, "Slug maksimal 60 karakter")
-    .refine((nilai) => nilai === "" || /^[a-z0-9-]+$/.test(nilai), "Slug hanya huruf kecil, angka, dan tanda hubung"),
-  description: z.string().trim().max(300, "Deskripsi maksimal 300 karakter"),
-  sort_order: z
-    .string()
-    .trim()
-    .refine((nilai) => /^\d+$/.test(nilai), "Urutan harus berupa angka"),
-  is_active: z.boolean(),
-});
 
-type NilaiKategori = z.infer<typeof skemaKategori>;
+/** Penerjemah teks dari konteks bahasa. */
+type Terjemah = (teks: string) => string;
+
+function buatSkemaKategori(t: Terjemah) {
+  return z.object({
+    name: z
+      .string()
+      .trim()
+      .min(2, t("Nama kategori minimal 2 karakter"))
+      .max(80, t("Nama kategori maksimal 80 karakter")),
+    slug: z
+      .string()
+      .trim()
+      .max(60, t("Slug maksimal 60 karakter"))
+      .refine((nilai) => nilai === "" || /^[a-z0-9-]+$/.test(nilai), t("Slug hanya huruf kecil, angka, dan tanda hubung")),
+    description: z.string().trim().max(300, t("Deskripsi maksimal 300 karakter")),
+    sort_order: z
+      .string()
+      .trim()
+      .refine((nilai) => /^\d+$/.test(nilai), t("Urutan harus berupa angka")),
+    is_active: z.boolean(),
+  });
+}
+
+type NilaiKategori = z.infer<ReturnType<typeof buatSkemaKategori>>;
 
 function nilaiDariKategori(kategori: CategoryView): NilaiKategori {
   return {
@@ -86,10 +93,12 @@ function keUpdateKategori(nilai: NilaiKategori): UpdateCategoryRequest {
 
 /** Dialog buat/ubah kategori; `kategori` kosong berarti mode pembuatan. */
 function FormKategori({ kategori, onTutup }: { kategori?: CategoryView; onTutup: () => void }) {
+  const { t } = useBahasa();
   const buat = useBuatKategori();
   const ubah = usePerbaruiKategori();
+  const skema = React.useMemo(() => buatSkemaKategori(t), [t]);
   const form = useForm<NilaiKategori>({
-    resolver: zodResolver(skemaKategori),
+    resolver: zodResolver(skema),
     defaultValues: kategori
       ? nilaiDariKategori(kategori)
       : { name: "", slug: "", description: "", sort_order: "0", is_active: true },
@@ -111,32 +120,32 @@ function FormKategori({ kategori, onTutup }: { kategori?: CategoryView; onTutup:
       onUbahTerbuka={(nilai) => {
         if (!nilai) onTutup();
       }}
-      judul={kategori ? "Ubah kategori" : "Kategori baru"}
-      deskripsi="Kategori dipakai untuk mengelompokkan properti pada katalog publik."
+      judul={kategori ? t("Ubah kategori") : t("Kategori baru")}
+      deskripsi={t("Kategori dipakai untuk mengelompokkan properti pada katalog publik.")}
       memuat={buat.isPending || ubah.isPending}
-      labelKirim={kategori ? "Simpan perubahan" : "Buat kategori"}
+      labelKirim={kategori ? t("Simpan perubahan") : t("Buat kategori")}
       onSubmit={form.handleSubmit(kirim)}
     >
-      <KelompokField judul="Identitas kategori">
-        <TextField control={form.control} name="name" label="Nama kategori" wajib placeholder="Contoh: Rumah" />
+      <KelompokField judul={t("Identitas kategori")}>
+        <TextField control={form.control} name="name" label={t("Nama kategori")} wajib placeholder={t("Contoh: Rumah")} />
         {kategori ? null : (
           <TextField
             control={form.control}
             name="slug"
-            label="Slug"
-            placeholder="opsional, dibuat otomatis bila kosong"
+            label={t("Slug")}
+            placeholder={t("opsional, dibuat otomatis bila kosong")}
           />
         )}
-        <TextareaField control={form.control} name="description" label="Deskripsi" rows={3} />
+        <TextareaField control={form.control} name="description" label={t("Deskripsi")} rows={3} />
       </KelompokField>
 
-      <KelompokField judul="Pengurutan & status" kolom={2}>
-        <TextField control={form.control} name="sort_order" label="Urutan tampil" inputMode="numeric" />
+      <KelompokField judul={t("Pengurutan & status")} kolom={2}>
+        <TextField control={form.control} name="sort_order" label={t("Urutan tampil")} inputMode="numeric" />
         <CheckboxField
           control={form.control}
           name="is_active"
-          label="Aktifkan kategori"
-          deskripsi="Kategori aktif tampil pada filter katalog publik."
+          label={t("Aktifkan kategori")}
+          deskripsi={t("Kategori aktif tampil pada filter katalog publik.")}
         />
       </KelompokField>
     </FormDialog>
@@ -144,6 +153,7 @@ function FormKategori({ kategori, onTutup }: { kategori?: CategoryView; onTutup:
 }
 
 export function KatalogKategori() {
+  const { t } = useBahasa();
   const { pengguna } = useAuth();
   const bolehKelola = pengguna?.role === "superadmin";
 
@@ -182,7 +192,7 @@ export function KatalogKategori() {
   const kolom: KolomTabel<CategoryView>[] = [
     {
       kunci: "kategori",
-      judul: "Kategori",
+      judul: t("Kategori"),
       render: (baris) => (
         <span className="flex flex-col">
           <span className="font-medium text-ink">{baris.name}</span>
@@ -192,23 +202,23 @@ export function KatalogKategori() {
     },
     {
       kunci: "deskripsi",
-      judul: "Deskripsi",
+      judul: t("Deskripsi"),
       selClassName: "text-ink-muted",
       render: (baris) => baris.description || "—",
     },
     {
       kunci: "urutan",
-      judul: "Urutan",
+      judul: t("Urutan"),
       kepalaClassName: "text-right",
       selClassName: "text-right text-ink-muted",
       render: (baris) => <span data-numeric>{baris.sort_order}</span>,
     },
     {
       kunci: "status",
-      judul: "Status",
+      judul: t("Status"),
       render: (baris) => (
         <Badge variant={baris.is_active ? "success" : "neutral"}>
-          {baris.is_active ? "Aktif" : "Nonaktif"}
+          {baris.is_active ? t("Aktif") : t("Nonaktif")}
         </Badge>
       ),
     },
@@ -221,14 +231,14 @@ export function KatalogKategori() {
         bolehKelola ? (
           <AksiBaris
             aksi={[
-              { label: "Ubah kategori", ikon: PencilLine, onPilih: () => setEditor({ terbuka: true, kategori: baris }) },
+              { label: t("Ubah kategori"), ikon: PencilLine, onPilih: () => setEditor({ terbuka: true, kategori: baris }) },
               {
-                label: baris.is_active ? "Nonaktifkan" : "Aktifkan",
+                label: baris.is_active ? t("Nonaktifkan") : t("Aktifkan"),
                 ikon: Power,
                 onPilih: () => setTargetStatus(baris),
               },
               {
-                label: "Hapus kategori",
+                label: t("Hapus kategori"),
                 ikon: Trash2,
                 variant: "danger",
                 onPilih: () => setTargetHapus(baris),
@@ -242,13 +252,13 @@ export function KatalogKategori() {
   return (
     <>
       <PageHeader
-        judul="Master Kategori"
-        deskripsi="Kelola kategori properti yang dipakai pada filter katalog publik."
+        judul={t("Master Kategori")}
+        deskripsi={t("Kelola kategori properti yang dipakai pada filter katalog publik.")}
         aksi={
           bolehKelola ? (
             <Button onClick={() => setEditor({ terbuka: true })}>
               <Plus />
-              Tambah Kategori
+              {t("Tambah Kategori")}
             </Button>
           ) : null
         }
@@ -265,12 +275,12 @@ export function KatalogKategori() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari nama atau deskripsi kategori..."
-        satuan="kategori"
+        placeholderCari={t("Cari nama atau deskripsi kategori...")}
+        satuan={t("kategori")}
         kosong={
           <EmptyState
-            judul="Belum ada kategori"
-            deskripsi="Tambahkan kategori agar properti dapat dikelompokkan pada katalog."
+            judul={t("Belum ada kategori")}
+            deskripsi={t("Tambahkan kategori agar properti dapat dikelompokkan pada katalog.")}
           />
         }
       />
@@ -290,13 +300,13 @@ export function KatalogKategori() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetStatus(null);
           }}
-          judul={targetStatus.is_active ? "Nonaktifkan kategori" : "Aktifkan kategori"}
+          judul={targetStatus.is_active ? t("Nonaktifkan kategori") : t("Aktifkan kategori")}
           deskripsi={
             targetStatus.is_active
-              ? `Kategori "${targetStatus.name}" tidak akan tampil pada filter katalog publik.`
-              : `Kategori "${targetStatus.name}" akan tampil pada filter katalog publik.`
+              ? t('Kategori "{nama}" tidak akan tampil pada filter katalog publik.', { nama: targetStatus.name })
+              : t('Kategori "{nama}" akan tampil pada filter katalog publik.', { nama: targetStatus.name })
           }
-          labelKonfirmasi={targetStatus.is_active ? "Nonaktifkan" : "Aktifkan"}
+          labelKonfirmasi={targetStatus.is_active ? t("Nonaktifkan") : t("Aktifkan")}
           variant={targetStatus.is_active ? "danger" : "primary"}
           memuat={ubahStatus.isPending}
           onKonfirmasi={() => void konfirmasiStatus()}
@@ -310,9 +320,11 @@ export function KatalogKategori() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetHapus(null);
           }}
-          judul="Hapus kategori"
-          deskripsi={`Kategori "${targetHapus.name}" akan dihapus dari master data. Tindakan ini tidak dapat dibatalkan.`}
-          labelKonfirmasi="Hapus"
+          judul={t("Hapus kategori")}
+          deskripsi={t('Kategori "{nama}" akan dihapus dari master data. Tindakan ini tidak dapat dibatalkan.', {
+            nama: targetHapus.name,
+          })}
+          labelKonfirmasi={t("Hapus")}
           variant="danger"
           memuat={hapus.isPending}
           onKonfirmasi={() => void konfirmasiHapus()}

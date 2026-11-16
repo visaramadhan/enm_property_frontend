@@ -1,5 +1,6 @@
 import { HeaderPublik } from "@/components/layout/header-publik";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { MetadataDinamis } from "@/components/shared/metadata-dinamis";
 
 /**
  * Tata letak halaman pendaftaran mitra (permintaan A).
@@ -12,6 +13,7 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 export default function DaftarMitraLayout(props: LayoutProps<"/daftar-mitra">) {
   return (
     <AuthProvider>
+      <MetadataDinamis />
       <div className="flex min-h-screen flex-col bg-canvas">
         <HeaderPublik tagline="Pendaftaran Mitra" />
 

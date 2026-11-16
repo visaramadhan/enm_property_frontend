@@ -3,11 +3,14 @@ import type { Metadata } from "next";
 
 import { DetailPropertiPublik } from "@/components/katalog/detail-properti-publik";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Detail Properti",
-  description: "Lihat detail properti beserta spesifikasi, fasilitas, dan kontak mitra.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Detail Properti",
+    "Lihat detail properti beserta spesifikasi, fasilitas, dan kontak mitra.",
+  );
+}
 
 /**
  * Halaman detail properti publik.
@@ -18,11 +21,13 @@ export const metadata: Metadata = {
  */
 export default function DetailPropertiPage({ params }: PageProps<"/katalog/[slug]">) {
   return (
-    <Suspense fallback={<KerangkaDetail />}>
-      {params.then(({ slug }) => (
-        <DetailPropertiPublik slug={slug} />
-      ))}
-    </Suspense>
+    <>
+      <Suspense fallback={<KerangkaDetail />}>
+        {params.then(({ slug }) => (
+          <DetailPropertiPublik slug={slug} />
+        ))}
+      </Suspense>
+    </>
   );
 }
 

@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 
 import { AdminRingkasan } from "@/components/dashboard/admin-ringkasan";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Ringkasan Admin",
-  description: "Monitoring katalog properti, mitra, langganan, dan pembayaran platform.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Ringkasan Admin",
+    "Monitoring katalog properti, mitra, langganan, dan pembayaran platform.",
+  );
+}
 
 export default function AdminRingkasanPage() {
-  return <AdminRingkasan />;
+  return (
+    <>
+      <AdminRingkasan />
+    </>
+  );
 }

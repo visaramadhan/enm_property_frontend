@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { KolomTabel } from "@/components/shared/data-table";
@@ -28,19 +29,24 @@ import { formatWib } from "@/lib/format";
 import { useTabelQuery } from "@/lib/hooks/use-tabel-query";
 import type { AgreementView, CreateAgreementRequest } from "@/types/api";
 
-const skemaPerjanjian = z.object({
-  version: z.string().trim().min(1, "Versi wajib diisi").max(30, "Versi maksimal 30 karakter"),
-  title: z.string().trim().min(5, "Judul minimal 5 karakter").max(150, "Judul maksimal 150 karakter"),
-  content: z.string().trim().min(20, "Isi perjanjian minimal 20 karakter"),
-  checklist: z.array(z.string()),
-  effective_at: z
-    .string()
-    .trim()
-    .refine((nilai) => nilai === "" || !Number.isNaN(Date.parse(nilai)), "Tanggal tidak valid"),
-  activate: z.boolean(),
-});
+/** Penerjemah teks dari konteks bahasa. */
+type Terjemah = (teks: string) => string;
 
-type NilaiPerjanjian = z.infer<typeof skemaPerjanjian>;
+function buatSkemaPerjanjian(t: Terjemah) {
+  return z.object({
+    version: z.string().trim().min(1, t("Versi wajib diisi")).max(30, t("Versi maksimal 30 karakter")),
+    title: z.string().trim().min(5, t("Judul minimal 5 karakter")).max(150, t("Judul maksimal 150 karakter")),
+    content: z.string().trim().min(20, t("Isi perjanjian minimal 20 karakter")),
+    checklist: z.array(z.string()),
+    effective_at: z
+      .string()
+      .trim()
+      .refine((nilai) => nilai === "" || !Number.isNaN(Date.parse(nilai)), t("Tanggal tidak valid")),
+    activate: z.boolean(),
+  });
+}
+
+type NilaiPerjanjian = z.infer<ReturnType<typeof buatSkemaPerjanjian>>;
 
 const nilaiAwalPerjanjian: NilaiPerjanjian = {
   version: "",
@@ -63,9 +69,11 @@ function kePerjanjian(nilai: NilaiPerjanjian): CreateAgreementRequest {
 }
 
 function FormPerjanjian({ onTutup }: { onTutup: () => void }) {
+  const { t } = useBahasa();
   const buat = useBuatPerjanjian();
+  const skema = React.useMemo(() => buatSkemaPerjanjian(t), [t]);
   const form = useForm<NilaiPerjanjian>({
-    resolver: zodResolver(skemaPerjanjian),
+    resolver: zodResolver(skema),
     defaultValues: nilaiAwalPerjanjian,
   });
 
@@ -84,59 +92,59 @@ function FormPerjanjian({ onTutup }: { onTutup: () => void }) {
       onUbahTerbuka={(nilai) => {
         if (!nilai) onTutup();
       }}
-      judul="Versi perjanjian baru"
-      deskripsi="Versi perjanjian yang aktif akan diminta persetujuannya saat mitra berlangganan."
+      judul={t("Versi perjanjian baru")}
+      deskripsi={t("Versi perjanjian yang aktif akan diminta persetujuannya saat mitra berlangganan.")}
       ukuran="max-w-2xl"
       memuat={buat.isPending}
-      labelKirim="Simpan versi"
+      labelKirim={t("Simpan versi")}
       onSubmit={form.handleSubmit(kirim)}
     >
       <div className="flex max-h-[62vh] flex-col gap-6 overflow-y-auto pr-1">
-        <KelompokField judul="Identitas versi" kolom={2}>
-          <TextField control={form.control} name="version" label="Versi" wajib placeholder="v1.0" />
+        <KelompokField judul={t("Identitas versi")} kolom={2}>
+          <TextField control={form.control} name="version" label={t("Versi")} wajib placeholder="v1.0" />
           <TextField
             control={form.control}
             name="effective_at"
-            label="Berlaku sejak"
+            label={t("Berlaku sejak")}
             type="datetime-local"
-            deskripsi="Opsional."
+            deskripsi={t("Opsional.")}
           />
           <TextField
             control={form.control}
             name="title"
-            label="Judul"
+            label={t("Judul")}
             wajib
             className="sm:col-span-2"
-            placeholder="Perjanjian Kerja Sama Mitra"
+            placeholder={t("Perjanjian Kerja Sama Mitra")}
           />
         </KelompokField>
 
-        <KelompokField judul="Isi perjanjian">
+        <KelompokField judul={t("Isi perjanjian")}>
           <TextareaField
             control={form.control}
             name="content"
-            label="Isi"
+            label={t("Isi")}
             wajib
             rows={12}
-            deskripsi="Minimal 20 karakter."
+            deskripsi={t("Minimal 20 karakter.")}
           />
         </KelompokField>
 
-        <KelompokField judul="Poin ceklis persetujuan">
+        <KelompokField judul={t("Poin ceklis persetujuan")}>
           <CeklisField
             control={form.control}
             name="checklist"
-            label="Poin yang harus dicentang mitra"
-            deskripsi="Kosongkan bila mitra cukup menyetujui perjanjian secara umum."
+            label={t("Poin yang harus dicentang mitra")}
+            deskripsi={t("Kosongkan bila mitra cukup menyetujui perjanjian secara umum.")}
           />
         </KelompokField>
 
-        <KelompokField judul="Status">
+        <KelompokField judul={t("Status")}>
           <CheckboxField
             control={form.control}
             name="activate"
-            label="Jadikan versi aktif"
-            deskripsi="Versi sebelumnya otomatis dinonaktifkan."
+            label={t("Jadikan versi aktif")}
+            deskripsi={t("Versi sebelumnya otomatis dinonaktifkan.")}
           />
         </KelompokField>
       </div>
@@ -145,6 +153,7 @@ function FormPerjanjian({ onTutup }: { onTutup: () => void }) {
 }
 
 export function VersiPerjanjian() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery({ perPage: 10 });
   const daftar = useDaftarPerjanjian(tabel.query);
   const aktifkan = useAktifkanPerjanjian();
@@ -166,29 +175,29 @@ export function VersiPerjanjian() {
   const kolom: KolomTabel<AgreementView>[] = [
     {
       kunci: "versi",
-      judul: "Versi",
+      judul: t("Versi"),
       selClassName: "whitespace-nowrap font-medium",
       render: (baris) => <span data-numeric>{baris.version}</span>,
     },
-    { kunci: "judul", judul: "Judul", render: (baris) => baris.title },
+    { kunci: "judul", judul: t("Judul"), render: (baris) => baris.title },
     {
       kunci: "status",
-      judul: "Status",
+      judul: t("Status"),
       render: (baris) => (
         <Badge variant={baris.is_active ? "success" : "neutral"}>
-          {baris.is_active ? "Aktif" : "Arsip"}
+          {baris.is_active ? t("Aktif") : t("Arsip")}
         </Badge>
       ),
     },
     {
       kunci: "efektif",
-      judul: "Berlaku sejak",
+      judul: t("Berlaku sejak"),
       selClassName: "whitespace-nowrap text-ink-muted",
       render: (baris) => formatWib(baris.effective_at),
     },
     {
       kunci: "dibuat",
-      judul: "Dibuat",
+      judul: t("Dibuat"),
       selClassName: "whitespace-nowrap text-ink-muted",
       render: (baris) => formatWib(baris.created_at),
     },
@@ -200,9 +209,9 @@ export function VersiPerjanjian() {
       render: (baris) => (
         <AksiBaris
           aksi={[
-            { label: "Lihat isi", ikon: Eye, onPilih: () => setBaca(baris) },
+            { label: t("Lihat isi"), ikon: Eye, onPilih: () => setBaca(baris) },
             {
-              label: "Jadikan aktif",
+              label: t("Jadikan aktif"),
               ikon: BadgeCheck,
               disabled: baris.is_active,
               onPilih: () => setTarget(baris),
@@ -216,12 +225,12 @@ export function VersiPerjanjian() {
   return (
     <>
       <PageHeader
-        judul="Versi Perjanjian"
-        deskripsi="Kelola versi perjanjian kerja sama yang harus disetujui mitra."
+        judul={t("Versi Perjanjian")}
+        deskripsi={t("Kelola versi perjanjian kerja sama yang harus disetujui mitra.")}
         aksi={
           <Button onClick={() => setBuatTerbuka(true)}>
             <Plus />
-            Versi Baru
+            {t("Versi Baru")}
           </Button>
         }
       />
@@ -237,12 +246,12 @@ export function VersiPerjanjian() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari versi atau judul..."
-        satuan="versi"
+        placeholderCari={t("Cari versi atau judul...")}
+        satuan={t("versi")}
         kosong={
           <EmptyState
-            judul="Belum ada perjanjian"
-            deskripsi="Buat versi perjanjian pertama sebelum mitra dapat berlangganan."
+            judul={t("Belum ada perjanjian")}
+            deskripsi={t("Buat versi perjanjian pertama sebelum mitra dapat berlangganan.")}
           />
         }
       />
@@ -257,7 +266,7 @@ export function VersiPerjanjian() {
             if (!nilai) setBaca(null);
           }}
           judul={baca.title}
-          deskripsi={`Versi ${baca.version}`}
+          deskripsi={t("Versi {versi}", { versi: baca.version })}
         >
           <div className="flex max-h-[60vh] flex-col gap-5 overflow-y-auto">
             <div className="whitespace-pre-wrap rounded-field bg-hover/50 p-4 text-sm text-ink">
@@ -266,7 +275,7 @@ export function VersiPerjanjian() {
 
             {baca.checklist.length > 0 ? (
               <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-ink">Poin ceklis persetujuan</span>
+                <span className="text-sm font-semibold text-ink">{t("Poin ceklis persetujuan")}</span>
                 <ol className="flex list-decimal flex-col gap-1.5 pl-5 text-[13px] text-ink-muted">
                   {baca.checklist.map((poin, indeks) => (
                     <li key={indeks}>{poin}</li>
@@ -285,9 +294,11 @@ export function VersiPerjanjian() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTarget(null);
           }}
-          judul="Jadikan versi aktif"
-          deskripsi={`Versi ${target.version} akan menjadi perjanjian aktif dan versi sebelumnya dinonaktifkan.`}
-          labelKonfirmasi="Jadikan aktif"
+          judul={t("Jadikan versi aktif")}
+          deskripsi={t("Versi {versi} akan menjadi perjanjian aktif dan versi sebelumnya dinonaktifkan.", {
+            versi: target.version,
+          })}
+          labelKonfirmasi={t("Jadikan aktif")}
           memuat={aktifkan.isPending}
           onKonfirmasi={() => void konfirmasiAktifkan()}
         />

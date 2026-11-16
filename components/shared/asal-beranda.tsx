@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { cn } from "@/lib/utils";
 
 /**
@@ -71,6 +72,7 @@ export function TombolBeranda({
   className?: string;
 }) {
   const berasalDariBeranda = useDariBeranda();
+  const { t } = useBahasa();
 
   if (!selaluTampil && !berasalDariBeranda) return null;
 
@@ -78,7 +80,7 @@ export function TombolBeranda({
     <Button variant="ghost" size="sm" asChild className={cn("self-start", className)}>
       <Link href="/">
         <ArrowLeft />
-        Kembali ke beranda
+        {t("Kembali ke beranda")}
       </Link>
     </Button>
   );

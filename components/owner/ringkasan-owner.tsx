@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Building, Eye, Package, Receipt, Users, Wallet } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarMetrik } from "@/components/dashboard/daftar-metrik";
 import { DistribusiStatusProperti } from "@/components/dashboard/distribusi-status";
 import { SkeletonRingkasan } from "@/components/dashboard/skeleton-ringkasan";
@@ -23,23 +24,24 @@ import { formatAngka } from "@/lib/format";
  * laporan langganan terbaru, tanpa endpoint tambahan di luar kontrak owner.
  */
 export function RingkasanOwner() {
+  const { t } = useBahasa();
   const ringkasan = useDashboardOwner();
   const langganan = useLaporanLanggananOwner({ per_page: 5 });
 
   return (
     <>
       <PageHeader
-        judul="Pemantauan Owner"
-        deskripsi="Ringkasan kinerja platform: mitra, properti, langganan, dan pendapatan."
+        judul={t("Pemantauan Owner")}
+        deskripsi={t("Ringkasan kinerja platform: mitra, properti, langganan, dan pendapatan.")}
         aksi={
           <>
             <Button variant="outline" asChild>
-              <Link href="/owner/laporan">Laporan Langganan</Link>
+              <Link href="/owner/laporan">{t("Laporan Langganan")}</Link>
             </Button>
             <Button asChild>
               <Link href="/owner/mitra">
                 <Users />
-                Laporan Mitra
+                {t("Laporan Mitra")}
               </Link>
             </Button>
           </>
@@ -49,43 +51,43 @@ export function RingkasanOwner() {
       <KontenAsync
         hasil={ringkasan}
         skeleton={<SkeletonRingkasan />}
-        judulGagal="Gagal memuat ringkasan owner"
+        judulGagal={t("Gagal memuat ringkasan owner")}
       >
         {(data) => (
           <>
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
               <StatCard
-                label="Total Properti"
+                label={t("Total Properti")}
                 value={formatAngka(data.properties.total)}
                 icon={Building}
-                keterangan={`${formatAngka(data.properties.active)} tayang`}
+                keterangan={t("{n} tayang", { n: formatAngka(data.properties.active) })}
               />
               <StatCard
-                label="Mitra Aktif"
+                label={t("Mitra Aktif")}
                 value={formatAngka(data.partners.active)}
                 icon={Users}
-                keterangan={`${formatAngka(data.partners.suspended)} ditangguhkan`}
+                keterangan={t("{n} ditangguhkan", { n: formatAngka(data.partners.suspended) })}
               />
               <StatCard
-                label="Langganan Berjalan"
+                label={t("Langganan Berjalan")}
                 value={formatAngka(data.subscriptions.active)}
                 icon={Package}
-                keterangan={`${formatAngka(data.subscriptions.expiring_soon)} segera berakhir`}
+                keterangan={t("{n} segera berakhir", { n: formatAngka(data.subscriptions.expiring_soon) })}
               />
               <StatCard
-                label="Pendapatan Bulan Ini"
+                label={t("Pendapatan Bulan Ini")}
                 value={data.orders.revenue_this_month_label}
                 icon={Wallet}
-                keterangan={`Total ${data.orders.revenue_label}`}
+                keterangan={t("Total {nilai}", { nilai: data.orders.revenue_label })}
               />
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <CardTitle>Status Katalog</CardTitle>
+                  <CardTitle>{t("Status Katalog")}</CardTitle>
                   <CardDescription>
-                    {formatAngka(data.properties.total)} properti terdaftar
+                    {t("{n} properti terdaftar", { n: formatAngka(data.properties.total) })}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -95,16 +97,16 @@ export function RingkasanOwner() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Metrik Interaksi</CardTitle>
-                  <CardDescription>Akumulasi seluruh properti</CardDescription>
+                  <CardTitle>{t("Metrik Interaksi")}</CardTitle>
+                  <CardDescription>{t("Akumulasi seluruh properti")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <DaftarMetrik
                     item={[
-                      { label: "Order tercatat", nilai: data.orders.total, ikon: Receipt },
-                      { label: "Order berhasil", nilai: data.orders.paid, ikon: Wallet },
-                      { label: "Langganan aktif", nilai: data.subscriptions.active, ikon: Package },
-                      { label: "Menunggu bayar", nilai: data.orders.pending, ikon: Eye },
+                      { label: t("Order tercatat"), nilai: data.orders.total, ikon: Receipt },
+                      { label: t("Order berhasil"), nilai: data.orders.paid, ikon: Wallet },
+                      { label: t("Langganan aktif"), nilai: data.subscriptions.active, ikon: Package },
+                      { label: t("Menunggu bayar"), nilai: data.orders.pending, ikon: Eye },
                     ]}
                   />
                 </CardContent>
@@ -117,12 +119,12 @@ export function RingkasanOwner() {
       <Card className="gap-0 overflow-hidden p-0">
         <CardHeader className="flex-row items-start justify-between gap-4 p-6">
           <div className="flex flex-col gap-1">
-            <CardTitle>Mitra Teratas</CardTitle>
-            <CardDescription>Berdasarkan jumlah properti dan interaksi</CardDescription>
+            <CardTitle>{t("Mitra Teratas")}</CardTitle>
+            <CardDescription>{t("Berdasarkan jumlah properti dan interaksi")}</CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/owner/mitra">
-              Lihat semua
+              {t("Lihat semua")}
               <ArrowRight />
             </Link>
           </Button>
@@ -141,12 +143,12 @@ export function RingkasanOwner() {
       <Card className="gap-0 overflow-hidden p-0">
         <CardHeader className="flex-row items-start justify-between gap-4 p-6">
           <div className="flex flex-col gap-1">
-            <CardTitle>Langganan Terbaru</CardTitle>
-            <CardDescription>Transaksi pembayaran paket dari mitra</CardDescription>
+            <CardTitle>{t("Langganan Terbaru")}</CardTitle>
+            <CardDescription>{t("Transaksi pembayaran paket dari mitra")}</CardDescription>
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/owner/laporan">
-              Lihat semua
+              {t("Lihat semua")}
               <ArrowRight />
             </Link>
           </Button>

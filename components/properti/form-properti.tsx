@@ -1,9 +1,11 @@
 "use client";
 
+import * as React from "react";
 import type { Control, UseFormSetValue } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   KelompokField,
@@ -31,79 +33,111 @@ import type {
  * `kePermintaan`.
  */
 
-const OPSI_STATUS_SIMPAN: OpsiSelect[] = [
-  { nilai: "draft", label: "Simpan sebagai draf" },
-  { nilai: "active", label: "Ajukan & tayangkan" },
-];
+/** Menerjemahkan label pada daftar opsi select tanpa mengubah `nilai`-nya. */
+function terjemahOpsi(
+  t: (teks: string) => string,
+  opsi: readonly OpsiSelect[],
+): OpsiSelect[] {
+  return opsi.map((item) => ({ ...item, label: t(item.label) }));
+}
 
-function bilangan(label: string, maks: number) {
+/** Opsi penyimpanan dibuat lewat fungsi agar label mengikuti bahasa aktif. */
+function opsiStatusSimpan(t: (teks: string) => string): OpsiSelect[] {
+  return [
+    { nilai: "draft", label: t("Simpan sebagai draf") },
+    { nilai: "active", label: t("Ajukan & tayangkan") },
+  ];
+}
+
+function bilangan(
+  t: (teks: string, nilai?: Record<string, string | number>) => string,
+  label: string,
+  maks: number,
+) {
   return z
     .string()
     .trim()
-    .refine((nilai) => nilai === "" || /^\d+$/.test(nilai), `${label} harus berupa angka`)
-    .refine((nilai) => nilai === "" || Number(nilai) <= maks, `${label} maksimal ${maks}`);
+    .refine(
+      (nilai) => nilai === "" || /^\d+$/.test(nilai),
+      t("{label} harus berupa angka", { label }),
+    )
+    .refine(
+      (nilai) => nilai === "" || Number(nilai) <= maks,
+      t("{label} maksimal {maks}", { label, maks }),
+    );
 }
 
-export const skemaProperti = z.object({
-  title: z.string().trim().min(5, "Judul minimal 5 karakter").max(150, "Judul maksimal 150 karakter"),
-  description: z
-    .string()
-    .trim()
-    .min(20, "Deskripsi minimal 20 karakter")
-    .max(5000, "Deskripsi maksimal 5000 karakter"),
-  listing_type: z.enum(["dijual", "disewa"]),
-  property_type: z.enum([
-    "rumah",
-    "apartemen",
-    "ruko",
-    "tanah",
-    "villa",
-    "kantor",
-    "gudang",
-    "lainnya",
-  ]),
-  address: z.string().trim().min(1, "Alamat wajib diisi").max(255, "Alamat maksimal 255 karakter"),
-  city: z.string().trim().min(1, "Kota wajib diisi").max(100, "Kota maksimal 100 karakter"),
-  province: z
-    .string()
-    .trim()
-    .min(1, "Provinsi wajib diisi")
-    .max(100, "Provinsi maksimal 100 karakter"),
-  district: z.string().trim().max(100, "Kecamatan maksimal 100 karakter"),
-  latitude: z
-    .string()
-    .trim()
-    .refine(
-      (nilai) =>
-        nilai === "" ||
-        (/^-?\d+(\.\d+)?$/.test(nilai) && Number(nilai) >= -90 && Number(nilai) <= 90),
-      "Lintang harus antara -90 dan 90",
-    ),
-  longitude: z
-    .string()
-    .trim()
-    .refine(
-      (nilai) =>
-        nilai === "" ||
-        (/^-?\d+(\.\d+)?$/.test(nilai) && Number(nilai) >= -180 && Number(nilai) <= 180),
-      "Bujur harus antara -180 dan 180",
-    ),
-  price: z
-    .string()
-    .trim()
-    .min(1, "Harga wajib diisi")
-    .refine((nilai) => /^\d+$/.test(nilai), "Harga harus berupa angka"),
-  price_period: z.enum(["hari", "bulan", "tahun"]).or(z.literal("")),
-  land_area: bilangan("Luas tanah", 1000000),
-  building_area: bilangan("Luas bangunan", 1000000),
-  bedrooms: bilangan("Kamar tidur", 50),
-  bathrooms: bilangan("Kamar mandi", 50),
-  units_total: bilangan("Jumlah unit", 10000),
-  facilities: z.string().max(2000, "Fasilitas terlalu panjang"),
-  status: z.enum(["draft", "active"]),
-});
+/** Skema dibuat per pemanggil agar pesan error mengikuti bahasa aktif. */
+export function buatSkemaProperti(t: (teks: string) => string) {
+  return z.object({
+    title: z
+      .string()
+      .trim()
+      .min(5, t("Judul minimal 5 karakter"))
+      .max(150, t("Judul maksimal 150 karakter")),
+    description: z
+      .string()
+      .trim()
+      .min(20, t("Deskripsi minimal 20 karakter"))
+      .max(5000, t("Deskripsi maksimal 5000 karakter")),
+    listing_type: z.enum(["dijual", "disewa"]),
+    property_type: z.enum([
+      "rumah",
+      "apartemen",
+      "ruko",
+      "tanah",
+      "villa",
+      "kantor",
+      "gudang",
+      "lainnya",
+    ]),
+    address: z
+      .string()
+      .trim()
+      .min(1, t("Alamat wajib diisi"))
+      .max(255, t("Alamat maksimal 255 karakter")),
+    city: z.string().trim().min(1, t("Kota wajib diisi")).max(100, t("Kota maksimal 100 karakter")),
+    province: z
+      .string()
+      .trim()
+      .min(1, t("Provinsi wajib diisi"))
+      .max(100, t("Provinsi maksimal 100 karakter")),
+    district: z.string().trim().max(100, t("Kecamatan maksimal 100 karakter")),
+    latitude: z
+      .string()
+      .trim()
+      .refine(
+        (nilai) =>
+          nilai === "" ||
+          (/^-?\d+(\.\d+)?$/.test(nilai) && Number(nilai) >= -90 && Number(nilai) <= 90),
+        t("Lintang harus antara -90 dan 90"),
+      ),
+    longitude: z
+      .string()
+      .trim()
+      .refine(
+        (nilai) =>
+          nilai === "" ||
+          (/^-?\d+(\.\d+)?$/.test(nilai) && Number(nilai) >= -180 && Number(nilai) <= 180),
+        t("Bujur harus antara -180 dan 180"),
+      ),
+    price: z
+      .string()
+      .trim()
+      .min(1, t("Harga wajib diisi"))
+      .refine((nilai) => /^\d+$/.test(nilai), t("Harga harus berupa angka")),
+    price_period: z.enum(["hari", "bulan", "tahun"]).or(z.literal("")),
+    land_area: bilangan(t, t("Luas tanah"), 1000000),
+    building_area: bilangan(t, t("Luas bangunan"), 1000000),
+    bedrooms: bilangan(t, t("Kamar tidur"), 50),
+    bathrooms: bilangan(t, t("Kamar mandi"), 50),
+    units_total: bilangan(t, t("Jumlah unit"), 10000),
+    facilities: z.string().max(2000, t("Fasilitas terlalu panjang")),
+    status: z.enum(["draft", "active"]),
+  });
+}
 
-export type NilaiProperti = z.infer<typeof skemaProperti>;
+export type NilaiProperti = z.infer<ReturnType<typeof buatSkemaProperti>>;
 
 export const nilaiAwalProperti: NilaiProperti = {
   title: "",
@@ -202,9 +236,15 @@ export function BidangProperti({
   control: Control<NilaiProperti>;
   setValue: UseFormSetValue<NilaiProperti>;
 }) {
+  const { t } = useBahasa();
   const tipePenawaran = useWatch({ control, name: "listing_type" });
   const fasilitasAktif = useWatch({ control, name: "facilities" });
   const fasilitasMaster = useFasilitasPublik();
+
+  const opsiStatus = React.useMemo(() => opsiStatusSimpan(t), [t]);
+  const opsiPenawaran = React.useMemo(() => terjemahOpsi(t, OPSI_TIPE_PENAWARAN), [t]);
+  const opsiProperti = React.useMemo(() => terjemahOpsi(t, OPSI_TIPE_PROPERTI), [t]);
+  const opsiPeriode = React.useMemo(() => terjemahOpsi(t, OPSI_PERIODE_HARGA), [t]);
 
   // Daftar fasilitas yang sudah tercentang (dari master maupun kustom).
   const terpilih = new Set(
@@ -228,105 +268,110 @@ export function BidangProperti({
   return (
     <div className="flex flex-col gap-6">
       <KelompokField
-        judul="Informasi dasar"
-        deskripsi="Judul dan deskripsi yang dilihat calon penyewa/pembeli."
+        judul={t("Informasi dasar")}
+        deskripsi={t("Judul dan deskripsi yang dilihat calon penyewa/pembeli.")}
       >
         <TextField
           control={control}
           name="title"
-          label="Judul properti"
+          label={t("Judul properti")}
           wajib
-          placeholder="Contoh: Rumah 2 Lantai Dekat Kampus"
+          placeholder={t("Contoh: Rumah 2 Lantai Dekat Kampus")}
         />
         <TextareaField
           control={control}
           name="description"
-          label="Deskripsi"
+          label={t("Deskripsi")}
           wajib
           rows={5}
-          deskripsi="Minimal 20 karakter, jelaskan keunggulan properti."
+          deskripsi={t("Minimal 20 karakter, jelaskan keunggulan properti.")}
         />
       </KelompokField>
 
-      <KelompokField judul="Klasifikasi" kolom={2}>
+      <KelompokField judul={t("Klasifikasi")} kolom={2}>
         <SelectField
           control={control}
           name="listing_type"
-          label="Jenis penawaran"
-          opsi={OPSI_TIPE_PENAWARAN}
+          label={t("Jenis penawaran")}
+          opsi={opsiPenawaran}
           wajib
         />
         <SelectField
           control={control}
           name="property_type"
-          label="Jenis properti"
-          opsi={OPSI_TIPE_PROPERTI}
+          label={t("Jenis properti")}
+          opsi={opsiProperti}
           wajib
         />
         <SelectField
           control={control}
           name="status"
-          label="Status penyimpanan"
-          opsi={OPSI_STATUS_SIMPAN}
+          label={t("Status penyimpanan")}
+          opsi={opsiStatus}
         />
       </KelompokField>
 
-      <KelompokField judul="Lokasi" kolom={2}>
+      <KelompokField judul={t("Lokasi")} kolom={2}>
         <TextField
           control={control}
           name="address"
-          label="Alamat"
+          label={t("Alamat")}
           wajib
-          placeholder="Nama jalan, nomor"
+          placeholder={t("Nama jalan, nomor")}
           className="sm:col-span-2"
         />
-        <TextField control={control} name="district" label="Kecamatan" />
-        <TextField control={control} name="city" label="Kota/Kabupaten" wajib />
-        <TextField control={control} name="province" label="Provinsi" wajib />
-        <TextField control={control} name="latitude" label="Lintang" placeholder="-6.2000" />
-        <TextField control={control} name="longitude" label="Bujur" placeholder="106.8166" />
+        <TextField control={control} name="district" label={t("Kecamatan")} />
+        <TextField control={control} name="city" label={t("Kota/Kabupaten")} wajib />
+        <TextField control={control} name="province" label={t("Provinsi")} wajib />
+        <TextField control={control} name="latitude" label={t("Lintang")} placeholder="-6.2000" />
+        <TextField control={control} name="longitude" label={t("Bujur")} placeholder="106.8166" />
       </KelompokField>
 
-      <KelompokField judul="Harga & ukuran" kolom={2}>
+      <KelompokField judul={t("Harga & ukuran")} kolom={2}>
         <TextField
           control={control}
           name="price"
-          label="Harga"
+          label={t("Harga")}
           wajib
           inputMode="numeric"
           placeholder="1500000000"
-          deskripsi="Tanpa tanda titik atau koma."
+          deskripsi={t("Tanpa tanda titik atau koma.")}
         />
         {tipePenawaran === "disewa" ? (
           <SelectField
             control={control}
             name="price_period"
-            label="Periode harga"
-            opsi={OPSI_PERIODE_HARGA}
-            placeholder="Pilih periode"
+            label={t("Periode harga")}
+            opsi={opsiPeriode}
+            placeholder={t("Pilih periode")}
           />
         ) : null}
-        <TextField control={control} name="land_area" label="Luas tanah (m²)" inputMode="numeric" />
+        <TextField
+          control={control}
+          name="land_area"
+          label={t("Luas tanah (m²)")}
+          inputMode="numeric"
+        />
         <TextField
           control={control}
           name="building_area"
-          label="Luas bangunan (m²)"
+          label={t("Luas bangunan (m²)")}
           inputMode="numeric"
         />
-        <TextField control={control} name="bedrooms" label="Kamar tidur" inputMode="numeric" />
-        <TextField control={control} name="bathrooms" label="Kamar mandi" inputMode="numeric" />
+        <TextField control={control} name="bedrooms" label={t("Kamar tidur")} inputMode="numeric" />
+        <TextField control={control} name="bathrooms" label={t("Kamar mandi")} inputMode="numeric" />
         <TextField
           control={control}
           name="units_total"
-          label="Jumlah unit"
+          label={t("Jumlah unit")}
           inputMode="numeric"
-          deskripsi="Isi bila properti memiliki beberapa unit."
+          deskripsi={t("Isi bila properti memiliki beberapa unit.")}
         />
       </KelompokField>
 
       <KelompokField
-        judul="Fasilitas"
-        deskripsi="Pilih fasilitas dari daftar atau tambahkan fasilitas kustom dipisah koma."
+        judul={t("Fasilitas")}
+        deskripsi={t("Pilih fasilitas dari daftar atau tambahkan fasilitas kustom dipisah koma.")}
       >
         {fasilitasMaster.data && fasilitasMaster.data.length > 0 ? (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -347,10 +392,10 @@ export function BidangProperti({
         <TextareaField
           control={control}
           name="facilities"
-          label="Fasilitas kustom (opsional)"
+          label={t("Fasilitas kustom (opsional)")}
           rows={2}
-          placeholder="Contoh: Smart Lock, Lift Barang"
-          deskripsi="Fasilitas yang dipilih dari daftar di atas otomatis masuk ke sini."
+          placeholder={t("Contoh: Smart Lock, Lift Barang")}
+          deskripsi={t("Fasilitas yang dipilih dari daftar di atas otomatis masuk ke sini.")}
         />
       </KelompokField>
     </div>

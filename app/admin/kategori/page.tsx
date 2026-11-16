@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 
 import { KatalogKategori } from "@/components/admin/katalog-kategori";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Master Kategori",
-  description: "Kelola kategori properti untuk katalog publik.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman("Master Kategori", "Kelola kategori properti untuk katalog publik.");
+}
 
 export default function AdminKategoriPage() {
-  return <KatalogKategori />;
+  return (
+    <>
+      <KatalogKategori />
+    </>
+  );
 }

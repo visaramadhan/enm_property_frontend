@@ -1,3 +1,6 @@
+"use client";
+
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Progress } from "@/components/ui/progress";
 import { formatAngka } from "@/lib/format";
 import type { PropertyStats } from "@/types/api";
@@ -16,6 +19,8 @@ const BARIS: { kunci: keyof PropertyStats; label: string; indikator: string }[] 
  * menerima bentuk statistik properti yang sama dari backend.
  */
 export function DistribusiStatusProperti({ statistik }: { statistik: PropertyStats }) {
+  const { t } = useBahasa();
+
   return (
     <div className="flex flex-col gap-5">
       {BARIS.map((item) => {
@@ -24,7 +29,7 @@ export function DistribusiStatusProperti({ statistik }: { statistik: PropertySta
         return (
           <div key={item.kunci} className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3 text-sm">
-              <span className="text-ink-muted">{item.label}</span>
+              <span className="text-ink-muted">{t(item.label)}</span>
               <span data-numeric className="font-semibold text-ink">
                 {formatAngka(jumlah)}
               </span>

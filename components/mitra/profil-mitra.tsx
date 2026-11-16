@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, Save, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { BidangMitra, keRegisterPartner, nilaiDariMitra, skemaMitra, type NilaiMitra } from "@/components/mitra/form-mitra";
+import { BidangMitra, buatSkemaMitra, keRegisterPartner, nilaiDariMitra, type NilaiMitra } from "@/components/mitra/form-mitra";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
@@ -27,6 +28,7 @@ import type { PartnerView } from "@/types/api";
  * duplikasi aturan validasi (DRY).
  */
 export function ProfilMitra() {
+  const { t } = useBahasa();
   const profil = useProfilMitra();
   const langganan = useLanggananMitra();
   const pengaturan = usePengaturanPublik();
@@ -40,8 +42,8 @@ export function ProfilMitra() {
   return (
     <>
       <PageHeader
-        judul="Profil Mitra"
-        deskripsi="Lengkapi data badan usaha dan informasi akun kemitraan Anda."
+        judul={t("Profil Mitra")}
+        deskripsi={t("Lengkapi data badan usaha dan informasi akun kemitraan Anda.")}
       />
 
       <KontenAsync
@@ -52,7 +54,7 @@ export function ProfilMitra() {
             <Skeleton className="h-96 rounded-card" />
           </div>
         }
-        judulGagal="Gagal memuat profil mitra"
+        judulGagal={t("Gagal memuat profil mitra")}
       >
         {(mitra) => (
           <div className="flex flex-col gap-6">
@@ -62,19 +64,21 @@ export function ProfilMitra() {
         )}
       </KontenAsync>
 
-      <ProfilAkun deskripsi="Perbarui nama tampilan dan nomor telepon akun Anda." />
+      <ProfilAkun deskripsi={t("Perbarui nama tampilan dan nomor telepon akun Anda.")} />
     </>
   );
 }
 
 /** Ringkasan status kemitraan dan persetujuan perjanjian. */
 function KartuStatusMitra({ mitra }: { mitra: PartnerView }) {
+  const { t } = useBahasa();
+
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <CardTitle>Status Kemitraan</CardTitle>
-          <CardDescription>Status akun mitra Anda.</CardDescription>
+          <CardTitle>{t("Status Kemitraan")}</CardTitle>
+          <CardDescription>{t("Status akun mitra Anda.")}</CardDescription>
         </div>
         <StatusBadge jenis="mitra" status={mitra.status} label={mitra.status_label} />
       </CardHeader>
@@ -83,20 +87,20 @@ function KartuStatusMitra({ mitra }: { mitra: PartnerView }) {
         <DaftarDeskripsi
           kolom={3}
           item={[
-            { label: "Mitra sejak", nilai: mitra.joined_at ? formatTanggalWib(mitra.joined_at) : "-" },
+            { label: t("Mitra sejak"), nilai: mitra.joined_at ? formatTanggalWib(mitra.joined_at) : "-" },
             {
-              label: "Perjanjian",
+              label: t("Perjanjian"),
               nilai: mitra.agreement_accepted_at
-                ? `Disetujui ${formatTanggalWib(mitra.agreement_accepted_at)}`
-                : "Belum disetujui",
+                ? t("Disetujui {tgl}", { tgl: formatTanggalWib(mitra.agreement_accepted_at) })
+                : t("Belum disetujui"),
             },
-            { label: "Wilayah", nilai: `${mitra.city}, ${mitra.province}` },
+            { label: t("Wilayah"), nilai: `${mitra.city}, ${mitra.province}` },
           ]}
         />
 
         {mitra.status === "suspended" && mitra.suspended_reason ? (
           <p className="rounded-field border border-danger-border bg-danger-tint p-4 text-[13px] text-danger-ink">
-            <span className="font-semibold">Alasan penangguhan: </span>
+            <span className="font-semibold">{t("Alasan penangguhan: ")}</span>
             {mitra.suspended_reason}
           </p>
         ) : null}
@@ -104,7 +108,7 @@ function KartuStatusMitra({ mitra }: { mitra: PartnerView }) {
         {mitra.agreement_accepted_at ? (
           <p className="flex items-center gap-2 rounded-field border border-note-border bg-note-bg p-4 text-[13px] text-secondary">
             <ShieldCheck className="size-4 shrink-0" aria-hidden="true" />
-            Perjanjian kemitraan Anda telah tercatat dan berlaku.
+            {t("Perjanjian kemitraan Anda telah tercatat dan berlaku.")}
           </p>
         ) : null}
       </CardContent>
@@ -122,7 +126,10 @@ function FormulirMitra({
   whatsappAktif: boolean;
   nomorSistem: string;
 }) {
+  const { t } = useBahasa();
   const simpan = usePerbaruiProfilMitra();
+
+  const skema = React.useMemo(() => buatSkemaMitra(t), [t]);
 
   // Saat nomor WhatsApp dikelola sistem, bidang nomor diisi nomor sistem agar
   // tampil transparan kepada mitra (sendiri, tanpa bisa disunting).
@@ -133,7 +140,7 @@ function FormulirMitra({
   );
 
   const form = useForm<NilaiMitra>({
-    resolver: zodResolver(skemaMitra),
+    resolver: zodResolver(skema),
     defaultValues: nilaiAwal,
   });
 
@@ -153,9 +160,9 @@ function FormulirMitra({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Data Badan Usaha</CardTitle>
+        <CardTitle>{t("Data Badan Usaha")}</CardTitle>
         <CardDescription>
-          Informasi ini tampil pada halaman properti dan kontak calon penyewa.
+          {t("Informasi ini tampil pada halaman properti dan kontak calon penyewa.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -168,7 +175,7 @@ function FormulirMitra({
               ) : (
                 <Save />
               )}
-              Simpan data
+              {t("Simpan data")}
             </Button>
           </div>
         </form>

@@ -9,22 +9,30 @@ import { LoaderCircle, UserPlus } from "lucide-react";
 import { z } from "zod";
 
 import { AuthHeader, BrandSeluler, PeringatanFirebase } from "@/components/auth/elemen-auth";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { CheckboxField, PasswordField, TextField } from "@/components/shared/form-field";
+import { ToggleBahasa } from "@/components/shared/toggle-bahasa";
 import { Button } from "@/components/ui/button";
 import { useSiapkanSesi } from "@/lib/api/use-sesi";
 import { tujuanLanjut } from "@/lib/navigation";
 import { toastGagal, toastGagalAuth, toastSukses } from "@/lib/toast";
 
 /** Batas panjang mengikuti DTO backend agar validasi klien dan server selaras. */
-const skemaDaftar = z.object({
-  nama: z.string().trim().min(3, "Nama minimal 3 karakter").max(100, "Nama maksimal 100 karakter"),
-  email: z.email("Format email tidak valid"),
-  password: z.string().min(8, "Kata sandi minimal 8 karakter"),
-  setuju: z.boolean().refine((nilai) => nilai, "Anda harus menyetujui syarat dan ketentuan"),
-});
+function buatSkemaDaftar(t: (teks: string) => string) {
+  return z.object({
+    nama: z
+      .string()
+      .trim()
+      .min(3, t("Nama minimal 3 karakter"))
+      .max(100, t("Nama maksimal 100 karakter")),
+    email: z.email(t("Format email tidak valid")),
+    password: z.string().min(8, t("Kata sandi minimal 8 karakter")),
+    setuju: z.boolean().refine((nilai) => nilai, t("Anda harus menyetujui syarat dan ketentuan")),
+  });
+}
 
-type NilaiDaftar = z.infer<typeof skemaDaftar>;
+type NilaiDaftar = z.infer<ReturnType<typeof buatSkemaDaftar>>;
 
 /**
  * Formulir pendaftaran akun.
@@ -35,8 +43,11 @@ type NilaiDaftar = z.infer<typeof skemaDaftar>;
  */
 export function RegisterForm() {
   const router = useRouter();
+  const { t } = useBahasa();
   const siapkanSesi = useSiapkanSesi();
   const [mengirim, setMengirim] = React.useState(false);
+
+  const skemaDaftar = React.useMemo(() => buatSkemaDaftar(t), [t]);
 
   const form = useForm<NilaiDaftar>({
     resolver: zodResolver(skemaDaftar),
@@ -60,7 +71,7 @@ export function RegisterForm() {
       await updateProfile(kredensial.user, { displayName: values.nama });
       await sendEmailVerification(kredensial.user);
     } catch (error) {
-      toastGagalAuth("Gagal mendaftar", error);
+      toastGagalAuth(t("Gagal mendaftar"), error);
       setMengirim(false);
       return;
     }
@@ -68,12 +79,12 @@ export function RegisterForm() {
     try {
       await siapkanSesi();
       toastSukses(
-        "Pendaftaran berhasil",
-        "Akun Anda dibuat. Pilih paket langganan untuk mulai memasang properti.",
+        t("Pendaftaran berhasil"),
+        t("Akun Anda dibuat. Pilih paket langganan untuk mulai memasang properti."),
       );
       router.replace(tujuanLanjut() ?? "/paket");
     } catch (error) {
-      toastGagal("Gagal menyiapkan sesi", error);
+      toastGagal(t("Gagal menyiapkan sesi"), error);
       // Akun Firebase sudah terbentuk; arahkan ke halaman masuk agar pengguna
       // dapat melanjutkan tanpa membuat akun baru.
       router.replace("/login?lanjut=/paket");
@@ -84,13 +95,18 @@ export function RegisterForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <TombolBeranda />
+      <div className="flex items-center justify-between gap-3">
+        <TombolBeranda />
+        <ToggleBahasa />
+      </div>
       <BrandSeluler />
       <PeringatanFirebase />
 
       <AuthHeader
-        judul="Daftar akun"
-        deskripsi="Buat akun ENM Property. Setelah masuk, Anda dapat mendaftar sebagai mitra dan memilih paket langganan."
+        judul={t("Daftar akun")}
+        deskripsi={t(
+          "Buat akun ENM Property. Setelah masuk, Anda dapat mendaftar sebagai mitra dan memilih paket langganan.",
+        )}
       />
 
       <form onSubmit={form.handleSubmit(kirimDaftar)} noValidate className="flex flex-col gap-5">
@@ -98,16 +114,16 @@ export function RegisterForm() {
           <TextField
             control={form.control}
             name="nama"
-            label="Nama lengkap"
+            label={t("Nama lengkap")}
             autoComplete="name"
-            placeholder="Nama lengkap"
+            placeholder={t("Nama lengkap")}
             wajib
           />
 
           <TextField
             control={form.control}
             name="email"
-            label="Email"
+            label={t("Email")}
             type="email"
             inputMode="email"
             autoComplete="email"
@@ -118,8 +134,8 @@ export function RegisterForm() {
           <PasswordField
             control={form.control}
             name="password"
-            label="Kata sandi"
-            placeholder="Minimal 8 karakter"
+            label={t("Kata sandi")}
+            placeholder={t("Minimal 8 karakter")}
             autoComplete="new-password"
             wajib
           />
@@ -128,19 +144,19 @@ export function RegisterForm() {
         <CheckboxField
           control={form.control}
           name="setuju"
-          label="Saya menyetujui syarat dan ketentuan serta kebijakan privasi ENM Property."
+          label={t("Saya menyetujui syarat dan ketentuan serta kebijakan privasi ENM Property.")}
         />
 
         <Button type="submit" size="lg" className="w-full" disabled={mengirim}>
           {mengirim ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <UserPlus />}
-          Buat akun
+          {t("Buat akun")}
         </Button>
       </form>
 
       <p className="text-center text-sm text-ink-muted">
-        Sudah punya akun?{" "}
+        {t("Sudah punya akun?")}{" "}
         <Link href="/login" className="font-medium text-primary hover:underline">
-          Masuk
+          {t("Masuk")}
         </Link>
       </p>
     </div>

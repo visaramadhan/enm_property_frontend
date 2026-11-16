@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ImagePlus, Trash2 } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -25,6 +26,7 @@ export function PilihFotoLokal({
   onUbah: (berkas: File[]) => void;
   maksimal?: number;
 }) {
+  const { t } = useBahasa();
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   // Pratinjau memakai object URL yang dibebaskan kembali saat daftar berubah
@@ -47,9 +49,9 @@ export function PilihFotoLokal({
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <CardTitle>Foto Properti</CardTitle>
+          <CardTitle>{t("Foto Properti")}</CardTitle>
           <CardDescription>
-            Pilih hingga {maksimal} foto. Foto pertama menjadi sampul listing.
+            {t("Pilih hingga {maksimal} foto. Foto pertama menjadi sampul listing.", { maksimal })}
           </CardDescription>
         </div>
         <Button
@@ -59,7 +61,7 @@ export function PilihFotoLokal({
           onClick={() => inputRef.current?.click()}
         >
           <ImagePlus />
-          Pilih foto
+          {t("Pilih foto")}
         </Button>
         <input
           ref={inputRef}
@@ -74,7 +76,9 @@ export function PilihFotoLokal({
       <CardContent>
         {berkas.length === 0 ? (
           <p className="rounded-sm border border-dashed border-line px-4 py-6 text-center text-[13px] text-ink-muted">
-            Belum ada foto dipilih. Foto akan diunggah otomatis setelah properti tersimpan.
+            {t(
+              "Belum ada foto dipilih. Foto akan diunggah otomatis setelah properti tersimpan.",
+            )}
           </p>
         ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -88,13 +92,13 @@ export function PilihFotoLokal({
                 <img src={url} alt="" className="aspect-[4/3] w-full object-cover" />
                 <div className="flex items-center justify-between gap-1 border-t border-divider bg-surface p-1.5">
                   <span className="pl-1 text-xs text-ink-muted">
-                    {indeks === 0 ? "Sampul" : `Foto ${indeks + 1}`}
+                    {indeks === 0 ? t("Sampul") : t("Foto {n}", { n: indeks + 1 })}
                   </span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label="Hapus foto"
+                    aria-label={t("Hapus foto")}
                     onClick={() => hapus(indeks)}
                   >
                     <Trash2 className="text-danger" />

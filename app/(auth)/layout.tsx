@@ -1,4 +1,5 @@
 import { PanelBrandAuth } from "@/components/auth/brand-auth";
+import { MetadataDinamis } from "@/components/shared/metadata-dinamis";
 
 /**
  * Tata letak area autentikasi: panel brand (nilai logo dan gambarnya mengikuti
@@ -6,12 +7,15 @@ import { PanelBrandAuth } from "@/components/auth/brand-auth";
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <PanelBrandAuth />
+    <>
+      <MetadataDinamis />
+      <div className="grid min-h-screen lg:grid-cols-2">
+        <PanelBrandAuth />
 
-      <main className="flex flex-col items-center justify-center px-4 py-12 sm:px-8">
-        <div className="flex w-full max-w-md flex-col gap-6">{children}</div>
-      </main>
-    </div>
+        <main className="flex flex-col items-center justify-center px-4 py-12 sm:px-8">
+          <div className="flex w-full max-w-md flex-col gap-6">{children}</div>
+        </main>
+      </div>
+    </>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CheckCircle2, LogIn, Sparkles, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { EmptyState } from "@/components/shared/empty-state";
 import { KontenAsync } from "@/components/shared/konten-async";
@@ -28,33 +29,40 @@ import type { PlanView } from "@/types/api";
 
 /** Satu kartu paket dengan ringkasan harga dan tombol pilih. */
 function KartuPaket({ paket }: { paket: PlanView }) {
+  const { t } = useBahasa();
+
   return (
     <Card className="flex flex-col">
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <CardTitle>{paket.name}</CardTitle>
           <CardDescription>
-            {paket.description || "Paket langganan mitra ENM Property."}
+            {paket.description || t("Paket langganan mitra ENM Property.")}
           </CardDescription>
         </div>
-        {paket.is_free ? <Badge variant="success">Gratis</Badge> : null}
+        {paket.is_free ? <Badge variant="success">{t("Gratis")}</Badge> : null}
       </CardHeader>
 
       <CardContent className="flex flex-1 flex-col gap-6">
         <span data-numeric className="text-3xl font-semibold tracking-tight text-ink">
-          {paket.is_free ? "Gratis" : paket.price_label || formatRupiah(paket.price)}
+          {paket.is_free ? t("Gratis") : paket.price_label || formatRupiah(paket.price)}
         </span>
 
         <DaftarDeskripsi
           kolom={2}
           item={[
             {
-              label: "Durasi",
-              nilai: paket.duration_days > 0 ? `${formatAngka(paket.duration_days)} hari` : "Tanpa batas",
+              label: t("Durasi"),
+              nilai:
+                paket.duration_days > 0
+                  ? t("{n} hari", { n: formatAngka(paket.duration_days) })
+                  : t("Tanpa batas"),
             },
             {
-              label: "Kuota listing",
-              nilai: paket.is_unlimited ? "Tanpa batas" : `${formatAngka(paket.listing_quota)} listing`,
+              label: t("Kuota listing"),
+              nilai: paket.is_unlimited
+                ? t("Tanpa batas")
+                : t("{n} listing", { n: formatAngka(paket.listing_quota) }),
             },
           ]}
         />
@@ -74,7 +82,7 @@ function KartuPaket({ paket }: { paket: PlanView }) {
           <Button asChild className="w-full">
             <Link href={`/checkout/${paket.slug}`}>
               <Sparkles />
-              Pilih paket
+              {t("Pilih paket")}
             </Link>
           </Button>
         </div>
@@ -84,31 +92,32 @@ function KartuPaket({ paket }: { paket: PlanView }) {
 }
 
 export function KatalogPaketPublik() {
+  const { t } = useBahasa();
   const paket = usePaketPublik();
   const { pengguna } = useAuth();
 
   return (
     <>
       <PageHeader
-        judul="Paket Langganan"
-        deskripsi="Pilih paket yang sesuai kebutuhan Anda, lalu lanjutkan ke pembayaran."
+        judul={t("Paket Langganan")}
+        deskripsi={t("Pilih paket yang sesuai kebutuhan Anda, lalu lanjutkan ke pembayaran.")}
         aksi={
           pengguna ? (
             <Button variant="outline" asChild>
-              <Link href={dashboardPeran(pengguna.role)}>Buka dashboard</Link>
+              <Link href={dashboardPeran(pengguna.role)}>{t("Buka dashboard")}</Link>
             </Button>
           ) : (
             <>
               <Button variant="outline" asChild>
                 <Link href="/register">
                   <UserPlus />
-                  Daftar akun
+                  {t("Daftar akun")}
                 </Link>
               </Button>
               <Button asChild>
                 <Link href="/login">
                   <LogIn />
-                  Masuk
+                  {t("Masuk")}
                 </Link>
               </Button>
             </>
@@ -125,13 +134,13 @@ export function KatalogPaketPublik() {
             <Skeleton className="h-80 rounded-card" />
           </div>
         }
-        judulGagal="Gagal memuat paket"
+        judulGagal={t("Gagal memuat paket")}
       >
         {(daftar) =>
           daftar.length === 0 ? (
             <EmptyState
-              judul="Belum ada paket"
-              deskripsi="Paket langganan belum tersedia saat ini. Silakan coba lagi nanti."
+              judul={t("Belum ada paket")}
+              deskripsi={t("Paket langganan belum tersedia saat ini. Silakan coba lagi nanti.")}
             />
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

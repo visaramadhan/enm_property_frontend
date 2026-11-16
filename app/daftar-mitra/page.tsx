@@ -3,12 +3,14 @@ import type { Metadata } from "next";
 
 import { DaftarMitra } from "@/components/mitra/daftar-mitra";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Daftar Sebagai Mitra",
-  description:
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Daftar Sebagai Mitra",
     "Isi data badan usaha dan pilih paket langganan untuk memasang properti di katalog ENM Property.",
-};
+  );
+}
 
 /**
  * Halaman pendaftaran mitra (permintaan A).
@@ -19,15 +21,17 @@ export const metadata: Metadata = {
  */
 export default function DaftarMitraPage({ searchParams }: PageProps<"/daftar-mitra">) {
   return (
-    <Suspense fallback={<Skeleton className="h-96 rounded-card" />}>
-      {searchParams.then((params) => {
-        const nilai = params.lanjut;
-        const lanjut =
-          typeof nilai === "string" && nilai.startsWith("/") && !nilai.startsWith("//")
-            ? nilai
-            : undefined;
-        return <DaftarMitra lanjut={lanjut} />;
-      })}
-    </Suspense>
+    <>
+      <Suspense fallback={<Skeleton className="h-96 rounded-card" />}>
+        {searchParams.then((params) => {
+          const nilai = params.lanjut;
+          const lanjut =
+            typeof nilai === "string" && nilai.startsWith("/") && !nilai.startsWith("//")
+              ? nilai
+              : undefined;
+          return <DaftarMitra lanjut={lanjut} />;
+        })}
+      </Suspense>
+    </>
   );
 }

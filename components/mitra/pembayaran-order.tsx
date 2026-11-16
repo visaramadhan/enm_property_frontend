@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { CheckCircle2, CreditCard, LoaderCircle, LogOut, QrCode, Receipt, UserCog } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KodeQr } from "@/components/shared/kode-qr";
 import { KontenAsync } from "@/components/shared/konten-async";
@@ -38,23 +39,28 @@ import type { PaymentChannel, PaymentView } from "@/types/api";
  */
 
 /** Kanal pembayaran yang didukung backend (`ChargeRequest.method`). */
-const OPSI_METODE: { nilai: PaymentChannel; label: string }[] = [
-  { nilai: "qris", label: "QRIS — semua e-wallet & m-banking" },
-  { nilai: "bca", label: "Virtual Account BCA" },
-  { nilai: "bni", label: "Virtual Account BNI" },
-  { nilai: "bri", label: "Virtual Account BRI" },
-  { nilai: "permata", label: "Virtual Account Permata" },
-];
+function opsiMetode(t: (teks: string) => string): { nilai: PaymentChannel; label: string }[] {
+  return [
+    { nilai: "qris", label: t("QRIS — semua e-wallet & m-banking") },
+    { nilai: "bca", label: t("Virtual Account BCA") },
+    { nilai: "bni", label: t("Virtual Account BNI") },
+    { nilai: "bri", label: t("Virtual Account BRI") },
+    { nilai: "permata", label: t("Virtual Account Permata") },
+  ];
+}
 
 /** Pemilih metode pembayaran sebelum kode/instruksi dibuat. */
 function PilihMetodePembayaran({ orderCode }: { orderCode: string }) {
+  const { t } = useBahasa();
   const charge = useChargeLangganan();
   const [metode, setMetode] = React.useState<PaymentChannel>("qris");
+
+  const opsiMetodePembayaran = React.useMemo(() => opsiMetode(t), [t]);
 
   async function buatKode() {
     try {
       await charge.mutateAsync({ orderCode, body: { method: metode } });
-      toastSukses("Kode pembayaran dibuat", "Selesaikan pembayaran sesuai instruksi di bawah.");
+      toastSukses(t("Kode pembayaran dibuat"), t("Selesaikan pembayaran sesuai instruksi di bawah."));
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
     }
@@ -65,21 +71,21 @@ function PilihMetodePembayaran({ orderCode }: { orderCode: string }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="size-4 text-primary" aria-hidden="true" />
-          Pilih Metode Pembayaran
+          {t("Pilih Metode Pembayaran")}
         </CardTitle>
         <CardDescription>
-          Tentukan cara pembayaran, lalu buat kode agar instruksi pembayaran muncul di halaman ini.
+          {t("Tentukan cara pembayaran, lalu buat kode agar instruksi pembayaran muncul di halaman ini.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="metode-pembayaran">Metode</Label>
+          <Label htmlFor="metode-pembayaran">{t("Metode")}</Label>
           <Select value={metode} onValueChange={(nilai) => setMetode(nilai as PaymentChannel)}>
             <SelectTrigger id="metode-pembayaran">
-              <SelectValue placeholder="Pilih metode pembayaran" />
+              <SelectValue placeholder={t("Pilih metode pembayaran")} />
             </SelectTrigger>
             <SelectContent>
-              {OPSI_METODE.map((opsi) => (
+              {opsiMetodePembayaran.map((opsi) => (
                 <SelectItem key={opsi.nilai} value={opsi.nilai}>
                   {opsi.label}
                 </SelectItem>
@@ -90,7 +96,7 @@ function PilihMetodePembayaran({ orderCode }: { orderCode: string }) {
 
         <Button disabled={charge.isPending} onClick={() => void buatKode()}>
           {charge.isPending ? <LoaderCircle className="animate-spin" /> : <QrCode />}
-          Buat kode pembayaran
+          {t("Buat kode pembayaran")}
         </Button>
       </CardContent>
     </Card>
@@ -99,15 +105,16 @@ function PilihMetodePembayaran({ orderCode }: { orderCode: string }) {
 
 /** Instruksi pembayaran QRIS/VA yang sudah dibuat untuk order. */
 function InstruksiPembayaran({ data }: { data: PaymentView }) {
+  const { t } = useBahasa();
   const total = data.order.amount_label || formatRupiah(data.order.amount);
 
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <CardTitle>{data.method_label || "Instruksi Pembayaran"}</CardTitle>
+          <CardTitle>{data.method_label || t("Instruksi Pembayaran")}</CardTitle>
           <CardDescription>
-            Kode order <span data-numeric>{data.order.code}</span>
+            {t("Kode order")} <span data-numeric>{data.order.code}</span>
           </CardDescription>
         </div>
         <StatusBadge jenis="order" status={data.order.status} label={data.order.status_label} />
@@ -120,7 +127,7 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={data.qr_url}
-                alt="Kode QRIS pembayaran"
+                alt={t("Kode QRIS pembayaran")}
                 className="size-64 rounded-field border border-line bg-white object-contain p-3"
               />
             ) : data.qr_string ? (
@@ -143,8 +150,8 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
                 </p>
                 <TombolSalin
                   teks={data.qr_string}
-                  label="Salin kode QRIS"
-                  judulSukses="Kode QRIS tersalin"
+                  label={t("Salin kode QRIS")}
+                  judulSukses={t("Kode QRIS tersalin")}
                   variant="outline"
                   size="sm"
                   className="self-center"
@@ -153,16 +160,16 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
             ) : null}
 
             <p className="text-center text-[13px] text-ink-muted">
-              Pindai kode QR di atas memakai aplikasi e-wallet atau m-banking yang mendukung QRIS.
+              {t("Pindai kode QR di atas memakai aplikasi e-wallet atau m-banking yang mendukung QRIS.")}
             </p>
           </div>
         ) : (
           <DaftarDeskripsi
             kolom={2}
             item={[
-              { label: "Bank", nilai: data.channel_label || "-" },
+              { label: t("Bank"), nilai: data.channel_label || "-" },
               {
-                label: "Nomor Virtual Account",
+                label: t("Nomor Virtual Account"),
                 nilai: (
                   <span className="flex items-center gap-2">
                     <span data-numeric className="text-base font-semibold">
@@ -172,7 +179,7 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
                       <TombolSalin
                         teks={data.number}
                         label=""
-                        judulSukses="Nomor VA tersalin"
+                        judulSukses={t("Nomor VA tersalin")}
                         variant="ghost"
                         size="icon-sm"
                       />
@@ -180,9 +187,9 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
                   </span>
                 ),
               },
-              { label: "Total pembayaran", nilai: <span data-numeric>{total}</span> },
+              { label: t("Total pembayaran"), nilai: <span data-numeric>{total}</span> },
               {
-                label: "Bayar sebelum",
+                label: t("Bayar sebelum"),
                 nilai: data.expires_at ? formatWib(data.expires_at) : "-",
               },
             ]}
@@ -191,7 +198,7 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
 
         {data.method === "qris" ? (
           <div className="flex items-center justify-between rounded-field bg-divider px-4 py-3 text-sm">
-            <span className="text-ink-muted">Total pembayaran</span>
+            <span className="text-ink-muted">{t("Total pembayaran")}</span>
             <span data-numeric className="font-semibold text-ink">
               {total}
             </span>
@@ -200,9 +207,9 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
 
         {data.expires_at ? (
           <p className="text-[13px] text-ink-muted">
-            Selesaikan pembayaran sebelum{" "}
-            <span className="font-medium text-ink">{formatWib(data.expires_at)}</span> WIB. Halaman
-            ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.
+            {t("Selesaikan pembayaran sebelum")}{" "}
+            <span className="font-medium text-ink">{formatWib(data.expires_at)}</span>{" "}
+            {t("WIB. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.")}
           </p>
         ) : null}
       </CardContent>
@@ -211,25 +218,26 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
 }
 
 export function PembayaranOrder({ orderCode }: { orderCode: string }) {
+  const { t } = useBahasa();
   const pembayaran = usePembayaranOrder(orderCode, true, 5000);
 
   return (
     <>
       <PageHeader
-        judul="Pembayaran Langganan"
-        deskripsi="Selesaikan pembayaran paket Anda melalui QRIS atau virtual account."
+        judul={t("Pembayaran Langganan")}
+        deskripsi={t("Selesaikan pembayaran paket Anda melalui QRIS atau virtual account.")}
         aksi={
           <>
             <Button variant="outline" asChild>
               <Link href="/mitra/langganan">
                 <LogOut />
-                Keluar
+                {t("Keluar")}
               </Link>
             </Button>
             <Button variant="outline" asChild>
               <Link href={`/mitra/transaksi/${orderCode}`}>
                 <Receipt />
-                Lihat Transaksi
+                {t("Lihat Transaksi")}
               </Link>
             </Button>
           </>
@@ -239,7 +247,7 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
       <KontenAsync
         hasil={pembayaran}
         skeleton={<Skeleton className="h-80 rounded-card" />}
-        judulGagal="Gagal memuat instruksi pembayaran"
+        judulGagal={t("Gagal memuat instruksi pembayaran")}
       >
         {(data) =>
           data.is_paid ? (
@@ -248,36 +256,35 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
                 <div className="flex flex-col gap-1">
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle2 className="size-5 text-success" aria-hidden="true" />
-                    Pembayaran Berhasil
+                    {t("Pembayaran Berhasil")}
                   </CardTitle>
                   <CardDescription>
-                    Kode order <span data-numeric>{data.order.code}</span>
+                    {t("Kode order")} <span data-numeric>{data.order.code}</span>
                   </CardDescription>
                 </div>
                 <StatusBadge jenis="order" status={data.order.status} label={data.order.status_label} />
               </CardHeader>
               <CardContent className="flex flex-col gap-5">
                 <Alert variant="success">
-                  <AlertTitle>Paket Anda aktif</AlertTitle>
+                  <AlertTitle>{t("Paket Anda aktif")}</AlertTitle>
                   <AlertDescription>
-                    Pembayaran telah terkonfirmasi. Paket langganan{" "}
-                    <span className="font-medium text-ink">{data.order.plan_name}</span> kini aktif
-                    dan kuota listing Anda sudah diperbarui. Lengkapi profil kemitraan Anda agar
-                    listing dapat tayang di katalog.
+                    {t("Pembayaran telah terkonfirmasi. Paket langganan")}{" "}
+                    <span className="font-medium text-ink">{data.order.plan_name}</span>{" "}
+                    {t("kini aktif dan kuota listing Anda sudah diperbarui. Lengkapi profil kemitraan Anda agar listing dapat tayang di katalog.")}
                   </AlertDescription>
                 </Alert>
 
                 <DaftarDeskripsi
                   kolom={2}
                   item={[
-                    { label: "Paket", nilai: data.order.plan_name },
+                    { label: t("Paket"), nilai: data.order.plan_name },
                     {
-                      label: "Jumlah dibayar",
+                      label: t("Jumlah dibayar"),
                       nilai: data.order.amount_label || formatRupiah(data.order.amount),
                     },
-                    { label: "Metode", nilai: data.method_label || data.channel_label || "-" },
+                    { label: t("Metode"), nilai: data.method_label || data.channel_label || "-" },
                     {
-                      label: "Dibayar pada",
+                      label: t("Dibayar pada"),
                       nilai: data.order.paid_at ? formatWib(data.order.paid_at) : "-",
                     },
                   ]}
@@ -287,17 +294,17 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
                   <Button asChild>
                     <Link href="/mitra/profil">
                       <UserCog />
-                      Lengkapi Profil Mitra
+                      {t("Lengkapi Profil Mitra")}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
                     <Link href={`/mitra/transaksi/${orderCode}`}>
                       <Receipt />
-                      Lihat Transaksi
+                      {t("Lihat Transaksi")}
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link href="/mitra/langganan">Kembali ke Langganan</Link>
+                    <Link href="/mitra/langganan">{t("Kembali ke Langganan")}</Link>
                   </Button>
                 </div>
               </CardContent>

@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { formatAngka } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -39,6 +40,8 @@ export function Pagination({
   satuan?: string;
   className?: string;
 }) {
+  const { t } = useBahasa();
+
   if (!meta || meta.total <= 0) return null;
 
   const total = Math.max(meta.total_pages, 1);
@@ -54,11 +57,11 @@ export function Pagination({
       )}
     >
       <p className="text-[13px] text-ink-muted">
-        Menampilkan{" "}
+        {t("Menampilkan")}{" "}
         <span data-numeric className="font-medium text-ink">
           {formatAngka(awal)}-{formatAngka(akhir)}
         </span>{" "}
-        dari{" "}
+        {t("dari")}{" "}
         <span data-numeric className="font-medium text-ink">
           {formatAngka(meta.total)}
         </span>{" "}
@@ -70,7 +73,7 @@ export function Pagination({
           type="button"
           variant="outline"
           size="icon-sm"
-          aria-label="Halaman sebelumnya"
+          aria-label={t("Halaman sebelumnya")}
           disabled={aktif <= 1}
           onClick={() => onUbahHalaman(aktif - 1)}
         >
@@ -92,7 +95,7 @@ export function Pagination({
               type="button"
               variant={nomor === aktif ? "primary" : "outline"}
               size="icon-sm"
-              aria-label={`Halaman ${nomor}`}
+              aria-label={t("Halaman {nomor}", { nomor })}
               aria-current={nomor === aktif ? "page" : undefined}
               onClick={() => onUbahHalaman(nomor)}
             >
@@ -105,7 +108,7 @@ export function Pagination({
           type="button"
           variant="outline"
           size="icon-sm"
-          aria-label="Halaman berikutnya"
+          aria-label={t("Halaman berikutnya")}
           disabled={aktif >= total}
           onClick={() => onUbahHalaman(aktif + 1)}
         >

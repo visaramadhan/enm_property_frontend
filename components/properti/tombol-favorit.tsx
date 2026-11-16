@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Heart, LoaderCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { useHapusFavorit, useProfilSaya, useTambahFavorit } from "@/lib/api/hooks";
 import { useSudahTerpasang } from "@/lib/hooks/use-sudah-terpasang";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export function TombolFavorit({
   variasi?: "ikon" | "tombol";
   className?: string;
 }) {
+  const { t } = useBahasa();
   const profil = useProfilSaya();
   const sudahTerpasang = useSudahTerpasang();
   const tambah = useTambahFavorit();
@@ -89,7 +91,7 @@ export function TombolFavorit({
         onClick={alihkan}
       >
         {sibuk ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : ikonHati}
-        {tersimpan ? "Tersimpan di favorit" : "Simpan ke favorit"}
+        {tersimpan ? t("Tersimpan di favorit") : t("Simpan ke favorit")}
       </Button>
     );
   }
@@ -101,8 +103,8 @@ export function TombolFavorit({
       size="icon-sm"
       className={cn("rounded-full bg-surface/90 backdrop-blur", className)}
       aria-pressed={tersimpan}
-      aria-label={tersimpan ? "Hapus dari favorit" : "Simpan ke favorit"}
-      title={tersimpan ? "Hapus dari favorit" : "Simpan ke favorit"}
+      aria-label={tersimpan ? t("Hapus dari favorit") : t("Simpan ke favorit")}
+      title={tersimpan ? t("Hapus dari favorit") : t("Simpan ke favorit")}
       disabled={sibuk}
       onClick={alihkan}
     >

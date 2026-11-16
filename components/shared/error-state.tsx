@@ -2,6 +2,7 @@
 
 import { RotateCw, TriangleAlert } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { pesanErrorApi } from "@/lib/api/client";
@@ -9,7 +10,7 @@ import { pesanErrorApi } from "@/lib/api/client";
 /** Keadaan gagal memuat data, dengan tombol coba lagi. */
 export function ErrorState({
   error,
-  judul = "Gagal memuat data",
+  judul,
   onCobaLagi,
   className,
 }: {
@@ -18,6 +19,8 @@ export function ErrorState({
   onCobaLagi?: () => void;
   className?: string;
 }) {
+  const { t } = useBahasa();
+
   return (
     <div className={cn("flex flex-col items-center justify-center gap-3 px-6 py-14 text-center", className)}>
       <span
@@ -27,13 +30,13 @@ export function ErrorState({
         <TriangleAlert className="size-6" />
       </span>
       <div className="flex flex-col gap-1">
-        <p className="text-sm font-semibold text-ink">{judul}</p>
+        <p className="text-sm font-semibold text-ink">{judul ?? t("Gagal memuat data")}</p>
         <p className="max-w-md text-[13px] text-ink-muted">{pesanErrorApi(error)}</p>
       </div>
       {onCobaLagi ? (
         <Button variant="outline" size="sm" onClick={onCobaLagi}>
           <RotateCw />
-          Coba lagi
+          {t("Coba lagi")}
         </Button>
       ) : null}
     </div>

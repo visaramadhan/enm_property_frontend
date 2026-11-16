@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { usePengaturanPublik } from "@/lib/api/hooks";
 import { useSudahTerpasang } from "@/lib/hooks/use-sudah-terpasang";
 import { cn } from "@/lib/utils";
@@ -83,7 +84,7 @@ export function LogoHeader({
   kelasNama,
   kelasTagline,
   className,
-  label = "Beranda",
+  label,
 }: {
   tagline?: string;
   kelasMark?: string;
@@ -92,10 +93,11 @@ export function LogoHeader({
   className?: string;
   label?: string;
 }) {
+  const { t } = useBahasa();
   const situs = useIdentitasSitus();
 
   return (
-    <Link href="/" aria-label={label} className={cn("flex items-center gap-3", className)}>
+    <Link href="/" aria-label={label ?? t("Beranda")} className={cn("flex items-center gap-3", className)}>
       <LogoMark className={kelasMark} />
       <span className="flex min-w-0 flex-col">
         <span className={cn("truncate text-sm font-extrabold tracking-tight text-ink", kelasNama)}>

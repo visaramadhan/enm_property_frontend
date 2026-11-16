@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, CheckCircle2, CreditCard, Download, Receipt, XCircle } from "lucide-react";
 
 import { KartuLangganan } from "@/components/mitra/kartu-langganan";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
@@ -26,6 +27,7 @@ import { unduhBerkas } from "@/lib/unduh";
  * menampilkan paket yang aktif tanpa dimuat ulang manual.
  */
 export function DetailTransaksi({ orderCode }: { orderCode: string }) {
+  const { t } = useBahasa();
   const status = useStatusOrder(orderCode, true, 5000);
 
   async function unduhInvoice() {
@@ -35,9 +37,9 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
         unduhBerkas(blob, `invoice-${orderCode}.pdf`);
       },
       {
-        memuat: "Menyiapkan invoice...",
-        sukses: "Invoice berhasil diunduh",
-        gagal: "Gagal mengunduh invoice",
+        memuat: t("Menyiapkan invoice..."),
+        sukses: t("Invoice berhasil diunduh"),
+        gagal: t("Gagal mengunduh invoice"),
       },
     );
   }
@@ -45,13 +47,13 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
   return (
     <>
       <PageHeader
-        judul="Detail Transaksi"
-        deskripsi="Status pembayaran dan rincian transaksi langganan Anda."
+        judul={t("Detail Transaksi")}
+        deskripsi={t("Status pembayaran dan rincian transaksi langganan Anda.")}
         aksi={
           <Button variant="outline" asChild>
             <Link href="/mitra/transaksi">
               <ArrowLeft />
-              Kembali
+              {t("Kembali")}
             </Link>
           </Button>
         }
@@ -60,7 +62,7 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
       <KontenAsync
         hasil={status}
         skeleton={<Skeleton className="h-80 rounded-card" />}
-        judulGagal="Gagal memuat transaksi"
+        judulGagal={t("Gagal memuat transaksi")}
       >
         {(data) => {
           const order = data.order;
@@ -79,8 +81,8 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                       <StatusBadge jenis="order" status={order.status} label={order.status_label} />
                     </CardTitle>
                     <CardDescription>
-                      Paket <span className="font-medium text-ink">{order.plan_name}</span> untuk
-                      mitra {order.partner_name || "-"}.
+                      {t("Paket")} <span className="font-medium text-ink">{order.plan_name}</span>{" "}
+                      {t("untuk mitra {nama}.", { nama: order.partner_name || "-" })}
                     </CardDescription>
                   </div>
                 </CardHeader>
@@ -89,16 +91,16 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                   <DaftarDeskripsi
                     kolom={3}
                     item={[
-                      { label: "Paket", nilai: order.plan_name },
-                      { label: "Jenis", nilai: order.kind_label },
+                      { label: t("Paket"), nilai: order.plan_name },
+                      { label: t("Jenis"), nilai: order.kind_label },
                       {
-                        label: "Jumlah",
+                        label: t("Jumlah"),
                         nilai: <span data-numeric>{order.amount_label || formatRupiah(order.amount)}</span>,
                       },
-                      { label: "Penyedia", nilai: order.provider },
-                      { label: "Dibuat", nilai: formatWib(order.created_at) },
-                      { label: "Kedaluwarsa", nilai: formatWib(order.expires_at) },
-                      { label: "Dibayar pada", nilai: order.paid_at ? formatWib(order.paid_at) : "-" },
+                      { label: t("Penyedia"), nilai: order.provider },
+                      { label: t("Dibuat"), nilai: formatWib(order.created_at) },
+                      { label: t("Kedaluwarsa"), nilai: formatWib(order.expires_at) },
+                      { label: t("Dibayar pada"), nilai: order.paid_at ? formatWib(order.paid_at) : "-" },
                     ]}
                   />
                 </CardContent>
@@ -106,28 +108,31 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
 
               {lunas ? (
                 <Alert variant="success">
-                  <AlertTitle>Pembayaran berhasil</AlertTitle>
+                  <AlertTitle>{t("Pembayaran berhasil")}</AlertTitle>
                   <AlertDescription>
-                    Paket <span className="font-medium text-ink">{order.plan_name}</span> telah aktif
-                    dan kuota listing Anda sudah diperbarui.
+                    {t("Paket")} <span className="font-medium text-ink">{order.plan_name}</span>{" "}
+                    {t("telah aktif dan kuota listing Anda sudah diperbarui.")}
                   </AlertDescription>
                 </Alert>
               ) : gagal ? (
                 <Alert variant="danger">
-                  <AlertTitle>Pembayaran tidak berhasil</AlertTitle>
+                  <AlertTitle>{t("Pembayaran tidak berhasil")}</AlertTitle>
                   <AlertDescription>
-                    Transaksi ini berstatus {order.status_label.toLowerCase()}.{" "}
-                    {data.can_retry
-                      ? "Anda dapat mengulang pembayaran dari halaman Paket & Langganan."
-                      : "Hubungi dukungan bila Anda merasa telah melakukan pembayaran."}
+                    {t("Transaksi ini berstatus {status}.", {
+                      status: t(order.status_label).toLowerCase(),
+                    })}{" "}
+                    {t(
+                      data.can_retry
+                        ? "Anda dapat mengulang pembayaran dari halaman Paket & Langganan."
+                        : "Hubungi dukungan bila Anda merasa telah melakukan pembayaran.",
+                    )}
                   </AlertDescription>
                 </Alert>
               ) : menunggu ? (
                 <Alert variant="warning">
-                  <AlertTitle>Menunggu pembayaran</AlertTitle>
+                  <AlertTitle>{t("Menunggu pembayaran")}</AlertTitle>
                   <AlertDescription>
-                    Selesaikan pembayaran melalui QRIS atau virtual account. Halaman ini akan
-                    diperbarui otomatis setelah pembayaran terkonfirmasi.
+                    {t("Selesaikan pembayaran melalui QRIS atau virtual account. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.")}
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -141,7 +146,7 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                   <Button asChild>
                     <Link href={`/pembayaran/${orderCode}`}>
                       <CreditCard />
-                      Bayar sekarang
+                      {t("Bayar sekarang")}
                     </Link>
                   </Button>
                 ) : null}
@@ -149,7 +154,7 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                 {lunas ? (
                   <Button variant="outline" onClick={() => void unduhInvoice()}>
                     <Download />
-                    Unduh invoice
+                    {t("Unduh invoice")}
                   </Button>
                 ) : null}
 
@@ -157,7 +162,7 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                   <Button asChild>
                     <Link href="/mitra/langganan">
                       <CheckCircle2 />
-                      Pilih paket lagi
+                      {t("Pilih paket lagi")}
                     </Link>
                   </Button>
                 ) : null}
@@ -165,7 +170,9 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                 {!menunggu && !lunas && !gagal ? (
                   <p className="flex items-center gap-2 text-[13px] text-ink-muted">
                     <XCircle className="size-4 shrink-0 text-ink-subtle" aria-hidden="true" />
-                    Transaksi berstatus {order.status_label.toLowerCase()}.
+                    {t("Transaksi berstatus {status}.", {
+                      status: t(order.status_label).toLowerCase(),
+                    })}
                   </p>
                 ) : null}
               </div>

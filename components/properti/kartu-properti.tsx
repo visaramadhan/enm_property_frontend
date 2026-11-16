@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import { Bath, Bed, MapPin, Ruler, Sparkles } from "lucide-react";
 
 import { TombolFavorit } from "@/components/properti/tombol-favorit";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +20,7 @@ import type { PropertySummary } from "@/types/api";
  * tautan kartu (`z-10`) sehingga tetap dapat ditekan.
  */
 export function KartuProperti({ properti }: { properti: PropertySummary }) {
+  const { t } = useBahasa();
   const tujuan = `/katalog/${properti.slug}`;
 
   return (
@@ -24,7 +28,7 @@ export function KartuProperti({ properti }: { properti: PropertySummary }) {
       <Link
         href={tujuan}
         className="absolute inset-0 z-0"
-        aria-label={`Lihat detail ${properti.title}`}
+        aria-label={t("Lihat detail {judul}", { judul: properti.title })}
       />
 
       <div className="relative aspect-video w-full overflow-hidden bg-divider">
@@ -37,7 +41,7 @@ export function KartuProperti({ properti }: { properti: PropertySummary }) {
           />
         ) : (
           <span className="grid size-full place-items-center text-[13px] text-ink-subtle">
-            Tanpa foto
+            {t("Tanpa foto")}
           </span>
         )}
 
@@ -46,7 +50,7 @@ export function KartuProperti({ properti }: { properti: PropertySummary }) {
           {properti.boost_active ? (
             <Badge variant="accent">
               <Sparkles />
-              Unggulan
+              {t("Unggulan")}
             </Badge>
           ) : null}
         </div>
@@ -70,13 +74,13 @@ export function KartuProperti({ properti }: { properti: PropertySummary }) {
           {properti.bedrooms > 0 ? (
             <span className="flex items-center gap-1.5">
               <Bed className="size-4" aria-hidden="true" />
-              {formatAngka(properti.bedrooms)} kamar
+              {t("{n} kamar", { n: formatAngka(properti.bedrooms) })}
             </span>
           ) : null}
           {properti.bathrooms > 0 ? (
             <span className="flex items-center gap-1.5">
               <Bath className="size-4" aria-hidden="true" />
-              {formatAngka(properti.bathrooms)} mandi
+              {t("{n} mandi", { n: formatAngka(properti.bathrooms) })}
             </span>
           ) : null}
           {properti.building_area > 0 ? (
@@ -93,7 +97,7 @@ export function KartuProperti({ properti }: { properti: PropertySummary }) {
           </span>
 
           <Button asChild variant="outline" className="relative z-10 w-full">
-            <Link href={tujuan}>Lihat detail</Link>
+            <Link href={tujuan}>{t("Lihat detail")}</Link>
           </Button>
         </div>
       </div>

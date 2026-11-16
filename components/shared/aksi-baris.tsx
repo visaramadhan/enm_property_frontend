@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import { MoreHorizontal } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -27,17 +28,19 @@ export interface AksiBarisItem {
  */
 export function AksiBaris({
   aksi,
-  label = "Aksi baris",
+  label,
 }: {
   aksi: AksiBarisItem[];
   label?: string;
 }) {
+  const { t } = useBahasa();
+
   if (aksi.length === 0) return null;
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label={label}>
+        <Button variant="ghost" size="icon-sm" aria-label={label ?? t("Aksi baris")}>
           <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>

@@ -5,6 +5,7 @@ import { ImagePlus, LoaderCircle, Star, Trash2 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,7 @@ import type { PhotoView } from "@/types/api";
  * ulang di halaman lain (DRY).
  */
 export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: PhotoView[] }) {
+  const { t } = useBahasa();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const unggah = useUnggahFotoMitra();
   const hapus = useHapusFotoMitra();
@@ -62,9 +64,11 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
-          <CardTitle>Galeri Foto</CardTitle>
+          <CardTitle>{t("Galeri Foto")}</CardTitle>
           <CardDescription>
-            {formatAngka(foto.length)} foto terunggah. Foto utama dipakai sebagai sampul listing.
+            {t("{n} foto terunggah. Foto utama dipakai sebagai sampul listing.", {
+              n: formatAngka(foto.length),
+            })}
           </CardDescription>
         </div>
         <Button
@@ -78,7 +82,7 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
           ) : (
             <ImagePlus />
           )}
-          Unggah foto
+          {t("Unggah foto")}
         </Button>
         <input
           ref={inputRef}
@@ -94,8 +98,10 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
         {foto.length === 0 ? (
           <EmptyState
             ikon={ImagePlus}
-            judul="Belum ada foto"
-            deskripsi="Unggah minimal satu foto agar listing Anda lebih menarik calon penyewa maupun pembeli."
+            judul={t("Belum ada foto")}
+            deskripsi={t(
+              "Unggah minimal satu foto agar listing Anda lebih menarik calon penyewa maupun pembeli.",
+            )}
           />
         ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
@@ -111,7 +117,7 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
                   <img src={item.url} alt="" className="aspect-[4/3] w-full object-cover" />
                   {item.is_primary ? (
                     <Badge variant="accent" className="absolute left-2 top-2">
-                      Utama
+                      {t("Utama")}
                     </Badge>
                   ) : null}
                 </div>
@@ -121,7 +127,7 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label="Jadikan foto utama"
+                    aria-label={t("Jadikan foto utama")}
                     disabled={item.is_primary || sedangMengubah}
                     onClick={() => void tetapkanUtama(item.id)}
                   >
@@ -131,7 +137,7 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    aria-label="Hapus foto"
+                    aria-label={t("Hapus foto")}
                     disabled={sedangMengubah}
                     onClick={() => setTargetHapus(item)}
                   >
@@ -150,9 +156,9 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetHapus(null);
           }}
-          judul="Hapus foto"
-          deskripsi="Foto akan dihapus permanen dari listing ini."
-          labelKonfirmasi="Hapus"
+          judul={t("Hapus foto")}
+          deskripsi={t("Foto akan dihapus permanen dari listing ini.")}
+          labelKonfirmasi={t("Hapus")}
           variant="danger"
           memuat={hapus.isPending}
           onKonfirmasi={() => void konfirmasiHapus()}

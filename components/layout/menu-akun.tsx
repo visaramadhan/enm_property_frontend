@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronDown, Heart, LayoutDashboard, LogOut, Store, UserCog } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ import type { UserView } from "@/types/api";
 type Akun = Pick<UserView, "name" | "email" | "role" | "avatar_url" | "partner">;
 
 function IsiMenu({ akun, keluar }: { akun: Akun; keluar: () => Promise<void> }) {
+  const { t } = useBahasa();
   const berandaDashboard = dashboardPeran(akun.role);
   /* Pengguna dianggap mitra bila sudah memiliki profil kemitraan; peran `mitra`
      dipakai sebagai cadangan. Dipakai untuk mengganti tautan "Daftar Sebagai
@@ -61,7 +63,7 @@ function IsiMenu({ akun, keluar }: { akun: Akun; keluar: () => Promise<void> }) 
       <DropdownMenuItem asChild>
         <Link href="/akun">
           <UserCog />
-          Profil Saya
+          {t("Profil Saya")}
         </Link>
       </DropdownMenuItem>
 
@@ -69,7 +71,7 @@ function IsiMenu({ akun, keluar }: { akun: Akun; keluar: () => Promise<void> }) 
         <DropdownMenuItem asChild>
           <Link href="/akun/favorit">
             <Heart />
-            Favorit Saya
+            {t("Favorit Saya")}
           </Link>
         </DropdownMenuItem>
       ) : null}
@@ -78,7 +80,7 @@ function IsiMenu({ akun, keluar }: { akun: Akun; keluar: () => Promise<void> }) 
         <DropdownMenuItem asChild>
           <Link href="/daftar-mitra">
             <Store />
-            Daftar Sebagai Mitra
+            {t("Daftar Sebagai Mitra")}
           </Link>
         </DropdownMenuItem>
       ) : null}
@@ -87,7 +89,7 @@ function IsiMenu({ akun, keluar }: { akun: Akun; keluar: () => Promise<void> }) 
         <DropdownMenuItem asChild>
           <Link href={tujuanDashboard}>
             <LayoutDashboard />
-            Dashboard
+            {t("Dashboard")}
           </Link>
         </DropdownMenuItem>
       ) : null}
@@ -96,7 +98,7 @@ function IsiMenu({ akun, keluar }: { akun: Akun; keluar: () => Promise<void> }) 
 
       <DropdownMenuItem variant="danger" onSelect={() => void keluar()}>
         <LogOut />
-        Keluar
+        {t("Keluar")}
       </DropdownMenuItem>
     </DropdownMenuContent>
   );
@@ -113,13 +115,14 @@ export function MenuAkun({
   const profil = useProfilSaya();
   const sudahTerpasang = useSudahTerpasang();
   const keluar = useKeluar();
+  const { t } = useBahasa();
 
   const akun: Akun | null = sudahTerpasang && profil.data ? profil.data : null;
 
   if (variasi === "tautan") {
     return (
       <Link href={akun ? "/akun" : "/login"} className={className}>
-        {akun ? "Akun Saya" : "Masuk"}
+        {akun ? t("Akun Saya") : t("Masuk")}
       </Link>
     );
   }
@@ -127,7 +130,7 @@ export function MenuAkun({
   if (!akun) {
     return (
       <Button asChild variant="outline" size="sm" className={className}>
-        <Link href="/login">Masuk</Link>
+        <Link href="/login">{t("Masuk")}</Link>
       </Button>
     );
   }
@@ -140,7 +143,7 @@ export function MenuAkun({
           variant="outline"
           size="sm"
           className={cn("gap-2", className)}
-          aria-label={`Menu akun ${akun.name}`}
+          aria-label={t("Menu akun {nama}", { nama: akun.name })}
         >
           <Avatar size="sm">
             {akun.avatar_url ? <AvatarImage src={akun.avatar_url} alt="" /> : null}

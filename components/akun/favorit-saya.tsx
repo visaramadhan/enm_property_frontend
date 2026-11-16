@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, HeartOff } from "lucide-react";
 
 import { KartuProperti } from "@/components/properti/kartu-properti";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -24,6 +25,7 @@ import { useTabelQuery } from "@/lib/hooks/use-tabel-query";
  * keterangan informatif, bukan halaman galat.
  */
 export function FavoritSaya() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery({ perPage: 9 });
   const favorit = useDaftarFavorit(tabel.query);
 
@@ -34,13 +36,13 @@ export function FavoritSaya() {
   return (
     <>
       <PageHeader
-        judul="Favorit Saya"
-        deskripsi="Properti yang Anda simpan untuk ditinjau kembali."
+        judul={t("Favorit Saya")}
+        deskripsi={t("Properti yang Anda simpan untuk ditinjau kembali.")}
         aksi={
           <Button variant="outline" asChild>
             <Link href="/akun">
               <ArrowLeft />
-              Kembali ke profil
+              {t("Kembali ke profil")}
             </Link>
           </Button>
         }
@@ -48,16 +50,17 @@ export function FavoritSaya() {
 
       {terbatasPeran ? (
         <Alert variant="info">
-          <AlertTitle>Fitur favorit khusus akun customer</AlertTitle>
+          <AlertTitle>{t("Fitur favorit khusus akun customer")}</AlertTitle>
           <AlertDescription>
-            Akun Anda tidak memiliki akses ke daftar favorit. Gunakan akun customer untuk menyimpan
-            properti yang diminati.
+            {t(
+              "Akun Anda tidak memiliki akses ke daftar favorit. Gunakan akun customer untuk menyimpan properti yang diminati.",
+            )}
           </AlertDescription>
         </Alert>
       ) : favorit.isError ? (
         <ErrorState
           error={favorit.error}
-          judul="Gagal memuat favorit"
+          judul={t("Gagal memuat favorit")}
           onCobaLagi={() => void favorit.refetch()}
         />
       ) : favorit.isPending ? (
@@ -69,11 +72,11 @@ export function FavoritSaya() {
       ) : daftar.length === 0 ? (
         <EmptyState
           ikon={HeartOff}
-          judul="Belum ada favorit"
-          deskripsi="Tekan ikon hati pada properti di katalog untuk menyimpannya di sini."
+          judul={t("Belum ada favorit")}
+          deskripsi={t("Tekan ikon hati pada properti di katalog untuk menyimpannya di sini.")}
           aksi={
             <Button asChild>
-              <Link href="/katalog">Jelajahi katalog</Link>
+              <Link href="/katalog">{t("Jelajahi katalog")}</Link>
             </Button>
           }
         />
@@ -90,7 +93,7 @@ export function FavoritSaya() {
           <Pagination
             meta={favorit.data?.meta}
             onUbahHalaman={tabel.aturHalaman}
-            satuan="favorit"
+            satuan={t("favorit")}
           />
         </div>
       )}

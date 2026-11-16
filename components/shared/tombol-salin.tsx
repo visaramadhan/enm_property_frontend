@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Check, Copy } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { salinDenganToast } from "@/lib/papan-klip";
 
@@ -24,12 +25,16 @@ type PropsTombolSalin = Omit<React.ComponentProps<typeof Button>, "onClick" | "c
  */
 export function TombolSalin({
   teks,
-  label = "Salin",
-  judulSukses = "Tersalin ke papan klip",
+  label,
+  judulSukses,
   ...props
 }: PropsTombolSalin) {
+  const { t } = useBahasa();
   const [tersalin, setTersalin] = React.useState(false);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const teksLabel = label ?? t("Salin");
+  const teksJudulSukses = judulSukses ?? t("Tersalin ke papan klip");
 
   React.useEffect(
     () => () => {
@@ -39,7 +44,7 @@ export function TombolSalin({
   );
 
   async function salin() {
-    const berhasil = await salinDenganToast(teks, judulSukses);
+    const berhasil = await salinDenganToast(teks, teksJudulSukses);
     if (!berhasil) return;
     setTersalin(true);
     if (timer.current) clearTimeout(timer.current);
@@ -49,7 +54,7 @@ export function TombolSalin({
   return (
     <Button type="button" onClick={() => void salin()} {...props}>
       {tersalin ? <Check /> : <Copy />}
-      {label ? <span>{tersalin ? "Tersalin" : label}</span> : null}
+      {teksLabel ? <span>{tersalin ? t("Tersalin") : teksLabel}</span> : null}
     </Button>
   );
 }

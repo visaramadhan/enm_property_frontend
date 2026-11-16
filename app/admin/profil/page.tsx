@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 
 import { ProfilAkun } from "@/components/shared/profil-akun";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Profil Saya",
-  description: "Kelola informasi akun dan keamanan Anda.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman("Profil Saya", "Kelola informasi akun dan keamanan Anda.");
+}
 
 export default function AdminProfilPage() {
-  return <ProfilAkun />;
+  return (
+    <>
+      <ProfilAkun />
+    </>
+  );
 }

@@ -1,6 +1,9 @@
+"use client";
+
 import { CircleAlert } from "lucide-react";
 
 import { LogoBrand } from "@/components/auth/brand-auth";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { isFirebaseConfigured } from "@/lib/firebase/client";
 import { cn } from "@/lib/utils";
 
@@ -36,18 +39,21 @@ export function BrandSeluler() {
 
 /** Peringatan bila env var Firebase belum diisi sehingga form auth tidak berfungsi. */
 export function PeringatanFirebase() {
+  const { t } = useBahasa();
+
   if (isFirebaseConfigured) return null;
 
   return (
     <div role="alert" className="flex gap-3 rounded-card border border-warning/40 bg-warning/10 p-4">
       <CircleAlert className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden="true" />
       <p className="text-xs text-ink-muted">
-        Firebase belum dikonfigurasi. Lengkapi{" "}
+        {t("Firebase belum dikonfigurasi. Lengkapi")}{" "}
         <code className="rounded bg-divider px-1 py-0.5 font-mono text-[11px]">
           NEXT_PUBLIC_FIREBASE_*
         </code>{" "}
-        pada <code className="rounded bg-divider px-1 py-0.5 font-mono text-[11px]">.env.local</code>{" "}
-        sebelum melanjutkan.
+        {t("pada")}{" "}
+        <code className="rounded bg-divider px-1 py-0.5 font-mono text-[11px]">.env.local</code>{" "}
+        {t("sebelum melanjutkan.")}
       </p>
     </div>
   );

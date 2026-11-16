@@ -1,7 +1,9 @@
 "use client";
 
+import * as React from "react";
 import { Download, LoaderCircle, Receipt, RefreshCw } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { DataTable, type KolomTabel } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -21,18 +23,20 @@ import type { InvoiceItem, SubscriptionView } from "@/types/api";
 
 /** Ringkasan langganan yang sedang berjalan (bila ada). */
 function KartuLanggananSaatIni({ langganan }: { langganan: SubscriptionView }) {
+  const { t } = useBahasa();
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Langganan Saat Ini</CardTitle>
-        <CardDescription>Status paket yang sedang aktif pada akun mitra Anda.</CardDescription>
+        <CardTitle>{t("Langganan Saat Ini")}</CardTitle>
+        <CardDescription>{t("Status paket yang sedang aktif pada akun mitra Anda.")}</CardDescription>
       </CardHeader>
       <CardContent>
         <DaftarDeskripsi
           kolom={3}
           item={[
             {
-              label: "Paket",
+              label: t("Paket"),
               nilai: langganan.plan_name ? (
                 <span className="flex flex-wrap items-center gap-2">
                   {langganan.plan_name}
@@ -43,23 +47,25 @@ function KartuLanggananSaatIni({ langganan }: { langganan: SubscriptionView }) {
                   />
                 </span>
               ) : (
-                "Belum berlangganan"
+                t("Belum berlangganan")
               ),
             },
-            { label: "Mulai", nilai: langganan.starts_at ? formatTanggalWib(langganan.starts_at) : "-" },
-            { label: "Berakhir", nilai: langganan.ends_at ? formatTanggalWib(langganan.ends_at) : "-" },
+            { label: t("Mulai"), nilai: langganan.starts_at ? formatTanggalWib(langganan.starts_at) : "-" },
+            { label: t("Berakhir"), nilai: langganan.ends_at ? formatTanggalWib(langganan.ends_at) : "-" },
             {
-              label: "Sisa hari",
-              nilai: langganan.id ? `${formatAngka(langganan.days_remaining)} hari` : "-",
-            },
-            {
-              label: "Listing terpakai",
+              label: t("Sisa hari"),
               nilai: langganan.id
-                ? `${formatAngka(langganan.listings_used)} listing`
+                ? t("{n} hari", { n: formatAngka(langganan.days_remaining) })
                 : "-",
             },
             {
-              label: "Kode order terakhir",
+              label: t("Listing terpakai"),
+              nilai: langganan.id
+                ? t("{n} listing", { n: formatAngka(langganan.listings_used) })
+                : "-",
+            },
+            {
+              label: t("Kode order terakhir"),
               nilai: langganan.last_order_code ?? "-",
               penuh: true,
             },
@@ -70,45 +76,50 @@ function KartuLanggananSaatIni({ langganan }: { langganan: SubscriptionView }) {
   );
 }
 
-const kolomItem: KolomTabel<InvoiceItem>[] = [
-  {
-    kunci: "item",
-    judul: "Item",
-    render: (baris) => (
-      <span className="flex flex-col">
-        <span className="font-medium text-ink">{baris.name}</span>
-        {baris.description ? (
-          <span className="text-xs text-ink-muted">{baris.description}</span>
-        ) : null}
-      </span>
-    ),
-  },
-  {
-    kunci: "kuantitas",
-    judul: "Kuantitas",
-    kepalaClassName: "text-right",
-    selClassName: "text-right",
-    render: (baris) => <span data-numeric>{formatAngka(baris.quantity)}</span>,
-  },
-  {
-    kunci: "harga",
-    judul: "Harga Satuan",
-    kepalaClassName: "text-right",
-    selClassName: "text-right",
-    render: (baris) => <span data-numeric>{formatRupiah(baris.unit_price)}</span>,
-  },
-  {
-    kunci: "total",
-    judul: "Total",
-    kepalaClassName: "text-right",
-    selClassName: "text-right font-medium",
-    render: (baris) => <span data-numeric>{baris.total_label}</span>,
-  },
-];
+function kolomItem(t: (teks: string) => string): KolomTabel<InvoiceItem>[] {
+  return [
+    {
+      kunci: "item",
+      judul: t("Item"),
+      render: (baris) => (
+        <span className="flex flex-col">
+          <span className="font-medium text-ink">{baris.name}</span>
+          {baris.description ? (
+            <span className="text-xs text-ink-muted">{baris.description}</span>
+          ) : null}
+        </span>
+      ),
+    },
+    {
+      kunci: "kuantitas",
+      judul: t("Kuantitas"),
+      kepalaClassName: "text-right",
+      selClassName: "text-right",
+      render: (baris) => <span data-numeric>{formatAngka(baris.quantity)}</span>,
+    },
+    {
+      kunci: "harga",
+      judul: t("Harga Satuan"),
+      kepalaClassName: "text-right",
+      selClassName: "text-right",
+      render: (baris) => <span data-numeric>{formatRupiah(baris.unit_price)}</span>,
+    },
+    {
+      kunci: "total",
+      judul: t("Total"),
+      kepalaClassName: "text-right",
+      selClassName: "text-right font-medium",
+      render: (baris) => <span data-numeric>{baris.total_label}</span>,
+    },
+  ];
+}
 
 /** Detail invoice pesanan terakhir beserta unduhan PDF. */
 function KartuInvoice({ orderCode }: { orderCode: string }) {
+  const { t } = useBahasa();
   const invoice = useInvoice(orderCode);
+
+  const kolom = React.useMemo(() => kolomItem(t), [t]);
 
   async function unduh() {
     await jalankanDenganToast(
@@ -117,9 +128,9 @@ function KartuInvoice({ orderCode }: { orderCode: string }) {
         unduhBerkas(blob, `invoice-${orderCode}.pdf`);
       },
       {
-        memuat: "Menyiapkan invoice...",
-        sukses: "Invoice berhasil diunduh",
-        gagal: "Gagal mengunduh invoice",
+        memuat: t("Menyiapkan invoice..."),
+        sukses: t("Invoice berhasil diunduh"),
+        gagal: t("Gagal mengunduh invoice"),
       },
     );
   }
@@ -128,14 +139,14 @@ function KartuInvoice({ orderCode }: { orderCode: string }) {
     <KontenAsync
       hasil={invoice}
       skeleton={<Skeleton className="h-72 rounded-card" />}
-      judulGagal="Gagal memuat invoice"
+      judulGagal={t("Gagal memuat invoice")}
     >
       {(data) => (
         <Card className="gap-0 overflow-hidden p-0">
           <CardHeader className="flex-row items-start justify-between gap-4 p-6">
             <div className="flex flex-col gap-1">
               <CardTitle className="flex flex-wrap items-center gap-2">
-                Invoice
+                {t("Invoice")}
                 <span data-numeric className="font-semibold">
                   {data.invoice_number}
                 </span>
@@ -146,7 +157,7 @@ function KartuInvoice({ orderCode }: { orderCode: string }) {
                 />
               </CardTitle>
               <CardDescription>
-                Kode order <span data-numeric>{data.order.code}</span>
+                {t("Kode order")} <span data-numeric>{data.order.code}</span>
               </CardDescription>
             </div>
 
@@ -157,11 +168,11 @@ function KartuInvoice({ orderCode }: { orderCode: string }) {
                 onClick={() => void invoice.refetch()}
               >
                 {invoice.isFetching ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
-                Periksa status
+                {t("Periksa status")}
               </Button>
               <Button variant="outline" onClick={() => void unduh()}>
                 <Download />
-                Unduh PDF
+                {t("Unduh PDF")}
               </Button>
             </div>
           </CardHeader>
@@ -170,22 +181,22 @@ function KartuInvoice({ orderCode }: { orderCode: string }) {
             <DaftarDeskripsi
               kolom={3}
               item={[
-                { label: "Mitra", nilai: data.partner.business_name },
-                { label: "Diterbitkan", nilai: formatTanggalWib(data.issued_at) },
-                { label: "Dibayar", nilai: data.paid_at ? formatTanggalWib(data.paid_at) : "-" },
-                { label: "Paket", nilai: data.order.plan_name },
+                { label: t("Mitra"), nilai: data.partner.business_name },
+                { label: t("Diterbitkan"), nilai: formatTanggalWib(data.issued_at) },
+                { label: t("Dibayar"), nilai: data.paid_at ? formatTanggalWib(data.paid_at) : "-" },
+                { label: t("Paket"), nilai: data.order.plan_name },
                 {
-                  label: "Metode",
-                  nilai: data.order.provider === "free" ? "Tanpa biaya" : data.order.provider,
+                  label: t("Metode"),
+                  nilai: data.order.provider === "free" ? t("Tanpa biaya") : data.order.provider,
                 },
-                { label: "Berlaku hingga", nilai: formatTanggalWib(data.order.expires_at) },
+                { label: t("Berlaku hingga"), nilai: formatTanggalWib(data.order.expires_at) },
               ]}
             />
           </div>
 
           <div className="border-t border-divider p-6">
             <DataTable
-              kolom={kolomItem}
+              kolom={kolom}
               data={data.items}
               kunciBaris={(baris, indeks) => `${baris.name}-${indeks}`}
             />
@@ -194,13 +205,13 @@ function KartuInvoice({ orderCode }: { orderCode: string }) {
           <div className="flex justify-end border-t border-divider px-6 py-5">
             <dl className="flex w-full max-w-xs flex-col gap-2">
               <div className="flex items-center justify-between text-sm">
-                <dt className="text-ink-muted">Subtotal</dt>
+                <dt className="text-ink-muted">{t("Subtotal")}</dt>
                 <dd data-numeric className="text-ink">
                   {data.subtotal_label || formatRupiah(data.subtotal)}
                 </dd>
               </div>
               <div className="flex items-center justify-between border-t border-divider pt-2 text-sm">
-                <dt className="font-semibold text-ink">Total</dt>
+                <dt className="font-semibold text-ink">{t("Total")}</dt>
                 <dd data-numeric className="font-semibold text-ink">
                   {data.total_label || formatRupiah(data.total)}
                 </dd>
@@ -223,19 +234,20 @@ function KartuInvoice({ orderCode }: { orderCode: string }) {
  * kebenarannya.
  */
 export function PembayaranMitra() {
+  const { t } = useBahasa();
   const langganan = useLanggananMitra();
 
   return (
     <>
       <PageHeader
-        judul="Riwayat Pembayaran"
-        deskripsi="Tinjau tagihan langganan dan unduh invoice pembayaran Anda."
+        judul={t("Riwayat Pembayaran")}
+        deskripsi={t("Tinjau tagihan langganan dan unduh invoice pembayaran Anda.")}
       />
 
       <KontenAsync
         hasil={langganan}
         skeleton={<Skeleton className="h-56 rounded-card" />}
-        judulGagal="Gagal memuat data langganan"
+        judulGagal={t("Gagal memuat data langganan")}
       >
         {(data) => {
           const kodeOrder = data.last_order_code;
@@ -246,8 +258,8 @@ export function PembayaranMitra() {
                 <CardContent className="pt-6">
                   <EmptyState
                     ikon={Receipt}
-                    judul="Belum ada riwayat pembayaran"
-                    deskripsi="Invoice pembayaran akan muncul setelah Anda berlangganan paket berbayar."
+                    judul={t("Belum ada riwayat pembayaran")}
+                    deskripsi={t("Invoice pembayaran akan muncul setelah Anda berlangganan paket berbayar.")}
                   />
                 </CardContent>
               </Card>
@@ -262,10 +274,9 @@ export function PembayaranMitra() {
                 <KartuInvoice orderCode={kodeOrder} />
               ) : (
                 <Alert variant="info">
-                  <AlertTitle>Belum ada invoice</AlertTitle>
+                  <AlertTitle>{t("Belum ada invoice")}</AlertTitle>
                   <AlertDescription>
-                    Paket gratis tidak menghasilkan invoice. Invoice akan tersedia saat Anda
-                    melakukan pembayaran paket berbayar.
+                    {t("Paket gratis tidak menghasilkan invoice. Invoice akan tersedia saat Anda melakukan pembayaran paket berbayar.")}
                   </AlertDescription>
                 </Alert>
               )}

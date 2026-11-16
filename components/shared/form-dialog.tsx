@@ -3,6 +3,7 @@
 import * as React from "react";
 import { LoaderCircle } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,8 +29,8 @@ export function FormDialog({
   deskripsi,
   children,
   onSubmit,
-  labelKirim = "Simpan",
-  labelBatal = "Batal",
+  labelKirim,
+  labelBatal,
   memuat = false,
   ukuran = "max-w-lg",
 }: {
@@ -44,6 +45,10 @@ export function FormDialog({
   memuat?: boolean;
   ukuran?: string;
 }) {
+  const { t } = useBahasa();
+  const teksKirim = labelKirim ?? t("Simpan");
+  const teksBatal = labelBatal ?? t("Batal");
+
   return (
     <Dialog
       open={terbuka}
@@ -75,11 +80,11 @@ export function FormDialog({
               onClick={() => onUbahTerbuka(false)}
               disabled={memuat}
             >
-              {labelBatal}
+              {teksBatal}
             </Button>
             <Button type="submit" disabled={memuat}>
               {memuat ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : null}
-              {labelKirim}
+              {teksKirim}
             </Button>
           </DialogFooter>
         </form>

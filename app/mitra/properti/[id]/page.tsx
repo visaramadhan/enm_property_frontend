@@ -3,11 +3,14 @@ import type { Metadata } from "next";
 
 import { FormulirPropertiMitra } from "@/components/mitra/formulir-properti";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Ubah Properti",
-  description: "Perbarui informasi listing properti dan kelola galeri foto.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Ubah Properti",
+    "Perbarui informasi listing properti dan kelola galeri foto.",
+  );
+}
 
 /**
  * Segmen dinamis pertama proyek ini.
@@ -18,11 +21,13 @@ export const metadata: Metadata = {
  */
 export default function UbahPropertiPage({ params }: PageProps<"/mitra/properti/[id]">) {
   return (
-    <Suspense fallback={<KerangkaUbahProperti />}>
-      {params.then(({ id }) => (
-        <FormulirPropertiMitra propertiId={id} />
-      ))}
-    </Suspense>
+    <>
+      <Suspense fallback={<KerangkaUbahProperti />}>
+        {params.then(({ id }) => (
+          <FormulirPropertiMitra propertiId={id} />
+        ))}
+      </Suspense>
+    </>
   );
 }
 

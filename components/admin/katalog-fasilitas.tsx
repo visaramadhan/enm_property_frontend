@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { KolomTabel } from "@/components/shared/data-table";
@@ -27,27 +28,32 @@ import {
 import { useTabelQuery } from "@/lib/hooks/use-tabel-query";
 import type { CreateFacilityRequest, FacilityView, UpdateFacilityRequest } from "@/types/api";
 
-const skemaFasilitas = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Nama fasilitas minimal 2 karakter")
-    .max(80, "Nama fasilitas maksimal 80 karakter"),
-  slug: z
-    .string()
-    .trim()
-    .max(60, "Slug maksimal 60 karakter")
-    .refine((nilai) => nilai === "" || /^[a-z0-9-]+$/.test(nilai), "Slug hanya huruf kecil, angka, dan tanda hubung"),
-  description: z.string().trim().max(300, "Deskripsi maksimal 300 karakter"),
-  icon: z.string().trim().max(60, "Ikon maksimal 60 karakter"),
-  sort_order: z
-    .string()
-    .trim()
-    .refine((nilai) => /^\d+$/.test(nilai), "Urutan harus berupa angka"),
-  is_active: z.boolean(),
-});
+/** Penerjemah teks dari konteks bahasa. */
+type Terjemah = (teks: string) => string;
 
-type NilaiFasilitas = z.infer<typeof skemaFasilitas>;
+function buatSkemaFasilitas(t: Terjemah) {
+  return z.object({
+    name: z
+      .string()
+      .trim()
+      .min(2, t("Nama fasilitas minimal 2 karakter"))
+      .max(80, t("Nama fasilitas maksimal 80 karakter")),
+    slug: z
+      .string()
+      .trim()
+      .max(60, t("Slug maksimal 60 karakter"))
+      .refine((nilai) => nilai === "" || /^[a-z0-9-]+$/.test(nilai), t("Slug hanya huruf kecil, angka, dan tanda hubung")),
+    description: z.string().trim().max(300, t("Deskripsi maksimal 300 karakter")),
+    icon: z.string().trim().max(60, t("Ikon maksimal 60 karakter")),
+    sort_order: z
+      .string()
+      .trim()
+      .refine((nilai) => /^\d+$/.test(nilai), t("Urutan harus berupa angka")),
+    is_active: z.boolean(),
+  });
+}
+
+type NilaiFasilitas = z.infer<ReturnType<typeof buatSkemaFasilitas>>;
 
 function nilaiDariFasilitas(fasilitas: FacilityView): NilaiFasilitas {
   return {
@@ -82,10 +88,12 @@ function keUpdateFasilitas(nilai: NilaiFasilitas): UpdateFacilityRequest {
 }
 
 function FormFasilitas({ fasilitas, onTutup }: { fasilitas?: FacilityView; onTutup: () => void }) {
+  const { t } = useBahasa();
   const buat = useBuatFasilitas();
   const ubah = usePerbaruiFasilitas();
+  const skema = React.useMemo(() => buatSkemaFasilitas(t), [t]);
   const form = useForm<NilaiFasilitas>({
-    resolver: zodResolver(skemaFasilitas),
+    resolver: zodResolver(skema),
     defaultValues: fasilitas
       ? nilaiDariFasilitas(fasilitas)
       : { name: "", slug: "", description: "", icon: "", sort_order: "0", is_active: true },
@@ -107,38 +115,38 @@ function FormFasilitas({ fasilitas, onTutup }: { fasilitas?: FacilityView; onTut
       onUbahTerbuka={(nilai) => {
         if (!nilai) onTutup();
       }}
-      judul={fasilitas ? "Ubah fasilitas" : "Fasilitas baru"}
-      deskripsi="Fasilitas dipakai mitra untuk melengkapi informasi listing properti."
+      judul={fasilitas ? t("Ubah fasilitas") : t("Fasilitas baru")}
+      deskripsi={t("Fasilitas dipakai mitra untuk melengkapi informasi listing properti.")}
       memuat={buat.isPending || ubah.isPending}
-      labelKirim={fasilitas ? "Simpan perubahan" : "Buat fasilitas"}
+      labelKirim={fasilitas ? t("Simpan perubahan") : t("Buat fasilitas")}
       onSubmit={form.handleSubmit(kirim)}
     >
-      <KelompokField judul="Identitas fasilitas">
-        <TextField control={form.control} name="name" label="Nama fasilitas" wajib placeholder="Contoh: Kolam Renang" />
+      <KelompokField judul={t("Identitas fasilitas")}>
+        <TextField control={form.control} name="name" label={t("Nama fasilitas")} wajib placeholder={t("Contoh: Kolam Renang")} />
         {fasilitas ? null : (
           <TextField
             control={form.control}
             name="slug"
-            label="Slug"
-            placeholder="opsional, dibuat otomatis bila kosong"
+            label={t("Slug")}
+            placeholder={t("opsional, dibuat otomatis bila kosong")}
           />
         )}
-        <TextareaField control={form.control} name="description" label="Deskripsi" rows={2} />
+        <TextareaField control={form.control} name="description" label={t("Deskripsi")} rows={2} />
         <TextField
           control={form.control}
           name="icon"
-          label="Ikon"
-          placeholder="opsional, nama ikon (mis. waves, car)"
+          label={t("Ikon")}
+          placeholder={t("opsional, nama ikon (mis. waves, car)")}
         />
       </KelompokField>
 
-      <KelompokField judul="Pengurutan & status" kolom={2}>
-        <TextField control={form.control} name="sort_order" label="Urutan tampil" inputMode="numeric" />
+      <KelompokField judul={t("Pengurutan & status")} kolom={2}>
+        <TextField control={form.control} name="sort_order" label={t("Urutan tampil")} inputMode="numeric" />
         <CheckboxField
           control={form.control}
           name="is_active"
-          label="Aktifkan fasilitas"
-          deskripsi="Fasilitas aktif dapat dipilih mitra saat mengunggah listing."
+          label={t("Aktifkan fasilitas")}
+          deskripsi={t("Fasilitas aktif dapat dipilih mitra saat mengunggah listing.")}
         />
       </KelompokField>
     </FormDialog>
@@ -146,6 +154,7 @@ function FormFasilitas({ fasilitas, onTutup }: { fasilitas?: FacilityView; onTut
 }
 
 export function KatalogFasilitas() {
+  const { t } = useBahasa();
   const { pengguna } = useAuth();
   const bolehKelola = pengguna?.role === "superadmin";
 
@@ -184,7 +193,7 @@ export function KatalogFasilitas() {
   const kolom: KolomTabel<FacilityView>[] = [
     {
       kunci: "fasilitas",
-      judul: "Fasilitas",
+      judul: t("Fasilitas"),
       render: (baris) => (
         <span className="flex flex-col">
           <span className="font-medium text-ink">{baris.name}</span>
@@ -194,23 +203,23 @@ export function KatalogFasilitas() {
     },
     {
       kunci: "deskripsi",
-      judul: "Deskripsi",
+      judul: t("Deskripsi"),
       selClassName: "text-ink-muted",
       render: (baris) => baris.description || "—",
     },
     {
       kunci: "urutan",
-      judul: "Urutan",
+      judul: t("Urutan"),
       kepalaClassName: "text-right",
       selClassName: "text-right text-ink-muted",
       render: (baris) => <span data-numeric>{baris.sort_order}</span>,
     },
     {
       kunci: "status",
-      judul: "Status",
+      judul: t("Status"),
       render: (baris) => (
         <Badge variant={baris.is_active ? "success" : "neutral"}>
-          {baris.is_active ? "Aktif" : "Nonaktif"}
+          {baris.is_active ? t("Aktif") : t("Nonaktif")}
         </Badge>
       ),
     },
@@ -223,14 +232,14 @@ export function KatalogFasilitas() {
         bolehKelola ? (
           <AksiBaris
             aksi={[
-              { label: "Ubah fasilitas", ikon: PencilLine, onPilih: () => setEditor({ terbuka: true, fasilitas: baris }) },
+              { label: t("Ubah fasilitas"), ikon: PencilLine, onPilih: () => setEditor({ terbuka: true, fasilitas: baris }) },
               {
-                label: baris.is_active ? "Nonaktifkan" : "Aktifkan",
+                label: baris.is_active ? t("Nonaktifkan") : t("Aktifkan"),
                 ikon: Power,
                 onPilih: () => setTargetStatus(baris),
               },
               {
-                label: "Hapus fasilitas",
+                label: t("Hapus fasilitas"),
                 ikon: Trash2,
                 variant: "danger",
                 onPilih: () => setTargetHapus(baris),
@@ -244,13 +253,13 @@ export function KatalogFasilitas() {
   return (
     <>
       <PageHeader
-        judul="Master Fasilitas"
-        deskripsi="Kelola fasilitas properti yang dapat dipilih mitra saat mengunggah listing."
+        judul={t("Master Fasilitas")}
+        deskripsi={t("Kelola fasilitas properti yang dapat dipilih mitra saat mengunggah listing.")}
         aksi={
           bolehKelola ? (
             <Button onClick={() => setEditor({ terbuka: true })}>
               <Plus />
-              Tambah Fasilitas
+              {t("Tambah Fasilitas")}
             </Button>
           ) : null
         }
@@ -267,12 +276,12 @@ export function KatalogFasilitas() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari nama atau deskripsi fasilitas..."
-        satuan="fasilitas"
+        placeholderCari={t("Cari nama atau deskripsi fasilitas...")}
+        satuan={t("fasilitas")}
         kosong={
           <EmptyState
-            judul="Belum ada fasilitas"
-            deskripsi="Tambahkan fasilitas agar mitra dapat melengkapi informasi listing properti."
+            judul={t("Belum ada fasilitas")}
+            deskripsi={t("Tambahkan fasilitas agar mitra dapat melengkapi informasi listing properti.")}
           />
         }
       />
@@ -292,13 +301,13 @@ export function KatalogFasilitas() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetStatus(null);
           }}
-          judul={targetStatus.is_active ? "Nonaktifkan fasilitas" : "Aktifkan fasilitas"}
+          judul={targetStatus.is_active ? t("Nonaktifkan fasilitas") : t("Aktifkan fasilitas")}
           deskripsi={
             targetStatus.is_active
-              ? `Fasilitas "${targetStatus.name}" tidak akan dapat dipilih mitra.`
-              : `Fasilitas "${targetStatus.name}" akan dapat dipilih mitra saat mengunggah listing.`
+              ? t('Fasilitas "{nama}" tidak akan dapat dipilih mitra.', { nama: targetStatus.name })
+              : t('Fasilitas "{nama}" akan dapat dipilih mitra saat mengunggah listing.', { nama: targetStatus.name })
           }
-          labelKonfirmasi={targetStatus.is_active ? "Nonaktifkan" : "Aktifkan"}
+          labelKonfirmasi={targetStatus.is_active ? t("Nonaktifkan") : t("Aktifkan")}
           variant={targetStatus.is_active ? "danger" : "primary"}
           memuat={ubahStatus.isPending}
           onKonfirmasi={() => void konfirmasiStatus()}
@@ -312,9 +321,11 @@ export function KatalogFasilitas() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetHapus(null);
           }}
-          judul="Hapus fasilitas"
-          deskripsi={`Fasilitas "${targetHapus.name}" akan dihapus dari master data. Tindakan ini tidak dapat dibatalkan.`}
-          labelKonfirmasi="Hapus"
+          judul={t("Hapus fasilitas")}
+          deskripsi={t('Fasilitas "{nama}" akan dihapus dari master data. Tindakan ini tidak dapat dibatalkan.', {
+            nama: targetHapus.name,
+          })}
+          labelKonfirmasi={t("Hapus")}
           variant="danger"
           memuat={hapus.isPending}
           onKonfirmasi={() => void konfirmasiHapus()}

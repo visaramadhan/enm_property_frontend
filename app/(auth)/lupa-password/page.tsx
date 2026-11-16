@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 
 import { LupaPasswordForm } from "@/components/auth/lupa-password-form";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Lupa Kata Sandi",
-  description: "Minta tautan reset kata sandi untuk akun ENM Property Anda.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Lupa Kata Sandi",
+    "Minta tautan reset kata sandi untuk akun ENM Property Anda.",
+  );
+}
 
 export default function LupaPasswordPage() {
-  return <LupaPasswordForm />;
+  return (
+    <>
+      <LupaPasswordForm />
+    </>
+  );
 }

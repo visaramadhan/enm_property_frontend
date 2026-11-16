@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { NILAI_SEMUA, type OpsiSelect } from "@/components/shared/form-field";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,7 +33,7 @@ export interface KolomFilter {
 export function FilterBar({
   nilaiCari,
   onCari,
-  placeholder = "Cari...",
+  placeholder,
   filter = [],
   aksi,
   className,
@@ -44,6 +45,9 @@ export function FilterBar({
   aksi?: React.ReactNode;
   className?: string;
 }) {
+  const { t } = useBahasa();
+  const teksPlaceholder = placeholder ?? t("Cari...");
+
   return (
     <div className={cn("flex flex-col gap-3 lg:flex-row lg:items-center", className)}>
       {onCari ? (
@@ -56,8 +60,8 @@ export function FilterBar({
             type="search"
             value={nilaiCari ?? ""}
             onChange={(event) => onCari(event.target.value)}
-            placeholder={placeholder}
-            aria-label={placeholder}
+            placeholder={teksPlaceholder}
+            aria-label={teksPlaceholder}
             className="pl-9"
           />
         </div>
@@ -73,7 +77,9 @@ export function FilterBar({
             <SelectValue placeholder={item.label} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NILAI_SEMUA}>{item.label}: Semua</SelectItem>
+            <SelectItem value={NILAI_SEMUA}>
+              {item.label}: {t("Semua")}
+            </SelectItem>
             {item.opsi.map((opsi) => (
               <SelectItem key={opsi.nilai} value={opsi.nilai}>
                 {opsi.label}

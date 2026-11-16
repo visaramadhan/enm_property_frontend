@@ -6,6 +6,7 @@ import { ImageUp, LoaderCircle, Plus, Rocket, Save, Trash2 } from "lucide-react"
 import { useForm, useWatch, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { FormField, KelompokField, TextareaField, TextField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
@@ -23,6 +24,7 @@ import {
   useUnggahGambarLanding,
 } from "@/lib/api/hooks";
 import { formatWib } from "@/lib/format";
+import type { NilaiTerjemah } from "@/lib/app-i18n";
 import type { LandingContentView, LandingFAQItem, LandingImageKind } from "@/types/api";
 
 /** Jumlah area prioritas yang diwajibkan skema: minimal 4, maksimal 6. */
@@ -37,79 +39,84 @@ const FAQ_MAKSIMAL = 12;
  * `standar_cms.txt`: meta_title 50-60 karakter, meta_description 120-160,
  * hero_title maksimal 70, dan 4-6 area prioritas berisi maksimal 60 karakter.
  */
-const skemaLanding = z.object({
-  hero_title: z.string().trim().min(1, "Judul hero wajib diisi").max(70, "Maksimal 70 karakter"),
-  hero_subtitle: z.string().trim().max(150, "Maksimal 150 karakter"),
-  hero_cta_text: z.string().trim().max(40, "Maksimal 40 karakter"),
-  hero_image_url: z.string().trim().max(500, "Maksimal 500 karakter"),
-  hero_images: z
-    .array(z.string().trim().max(500, "Maksimal 500 karakter"))
-    .max(KOLASE_MAKSIMAL, `Maksimal ${KOLASE_MAKSIMAL} gambar kolase`),
-  meta_title: z.string().trim().min(50, "Minimal 50 karakter").max(60, "Maksimal 60 karakter"),
-  meta_description: z
-    .string()
-    .trim()
-    .min(120, "Minimal 120 karakter")
-    .max(160, "Maksimal 160 karakter"),
-  meta_og_image: z.string().trim().max(500, "Maksimal 500 karakter"),
-  highlight_areas: z
-    .array(
-      z.string().trim().min(1, "Nama area tidak boleh kosong").max(60, "Maksimal 60 karakter"),
-    )
-    .min(AREA_MINIMAL, "Minimal 4 area prioritas")
-    .max(AREA_MAKSIMAL, "Maksimal 6 area prioritas"),
-  cta_title: z.string().trim().max(70, "Maksimal 70 karakter"),
-  cta_description: z.string().trim().max(200, "Maksimal 200 karakter"),
-  keunggulan_title: z.string().trim().max(70, "Maksimal 70 karakter"),
-  keunggulan_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
-  properti_title: z.string().trim().max(70, "Maksimal 70 karakter"),
-  properti_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
-  paket_title: z.string().trim().max(70, "Maksimal 70 karakter"),
-  paket_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
-  panduan_title: z.string().trim().max(70, "Maksimal 70 karakter"),
-  panduan_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
-  faq_title: z.string().trim().max(70, "Maksimal 70 karakter"),
-  faq_subtitle: z.string().trim().max(200, "Maksimal 200 karakter"),
-  // Daftar pertanyaan-jawaban. Baris yang tidak lengkap dibuang backend, jadi
-  // di sini cukup dibatasi panjang dan jumlahnya saja.
-  faq_items: z
-    .array(
-      z.object({
-        tanya: z.string().trim().max(200, "Maksimal 200 karakter"),
-        jawab: z.string().trim().max(1000, "Maksimal 1000 karakter"),
-      }),
-    )
-    .max(FAQ_MAKSIMAL, `Maksimal ${FAQ_MAKSIMAL} pertanyaan`),
-  // Varian bahasa Inggris (khusus halaman `/en`). Semua opsional: bila
-  // dikosongkan, halaman Inggris memakai teks bawaan komponen.
-  hero_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
-  hero_subtitle_en: z.string().trim().max(150, "Maksimal 150 karakter"),
-  hero_cta_text_en: z.string().trim().max(40, "Maksimal 40 karakter"),
-  meta_title_en: z.string().trim().max(60, "Maksimal 60 karakter"),
-  meta_description_en: z.string().trim().max(160, "Maksimal 160 karakter"),
-  cta_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
-  cta_description_en: z.string().trim().max(200, "Maksimal 200 karakter"),
-  keunggulan_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
-  keunggulan_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
-  properti_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
-  properti_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
-  paket_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
-  paket_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
-  panduan_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
-  panduan_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
-  faq_title_en: z.string().trim().max(70, "Maksimal 70 karakter"),
-  faq_subtitle_en: z.string().trim().max(200, "Maksimal 200 karakter"),
-  faq_items_en: z
-    .array(
-      z.object({
-        tanya: z.string().trim().max(200, "Maksimal 200 karakter"),
-        jawab: z.string().trim().max(1000, "Maksimal 1000 karakter"),
-      }),
-    )
-    .max(FAQ_MAKSIMAL, `Maksimal ${FAQ_MAKSIMAL} pertanyaan`),
-});
+/** Penerjemah teks dari konteks bahasa. */
+type Terjemah = (teks: string, nilai?: NilaiTerjemah) => string;
 
-type NilaiLanding = z.infer<typeof skemaLanding>;
+function buatSkemaLanding(t: Terjemah) {
+  return z.object({
+    hero_title: z.string().trim().min(1, t("Judul hero wajib diisi")).max(70, t("Maksimal 70 karakter")),
+    hero_subtitle: z.string().trim().max(150, t("Maksimal 150 karakter")),
+    hero_cta_text: z.string().trim().max(40, t("Maksimal 40 karakter")),
+    hero_image_url: z.string().trim().max(500, t("Maksimal 500 karakter")),
+    hero_images: z
+      .array(z.string().trim().max(500, t("Maksimal 500 karakter")))
+      .max(KOLASE_MAKSIMAL, t("Maksimal {n} gambar kolase", { n: KOLASE_MAKSIMAL })),
+    meta_title: z.string().trim().min(50, t("Minimal 50 karakter")).max(60, t("Maksimal 60 karakter")),
+    meta_description: z
+      .string()
+      .trim()
+      .min(120, t("Minimal 120 karakter"))
+      .max(160, t("Maksimal 160 karakter")),
+    meta_og_image: z.string().trim().max(500, t("Maksimal 500 karakter")),
+    highlight_areas: z
+      .array(
+        z.string().trim().min(1, t("Nama area tidak boleh kosong")).max(60, t("Maksimal 60 karakter")),
+      )
+      .min(AREA_MINIMAL, t("Minimal 4 area prioritas"))
+      .max(AREA_MAKSIMAL, t("Maksimal 6 area prioritas")),
+    cta_title: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    cta_description: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    keunggulan_title: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    keunggulan_subtitle: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    properti_title: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    properti_subtitle: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    paket_title: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    paket_subtitle: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    panduan_title: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    panduan_subtitle: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    faq_title: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    faq_subtitle: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    // Daftar pertanyaan-jawaban. Baris yang tidak lengkap dibuang backend, jadi
+    // di sini cukup dibatasi panjang dan jumlahnya saja.
+    faq_items: z
+      .array(
+        z.object({
+          tanya: z.string().trim().max(200, t("Maksimal 200 karakter")),
+          jawab: z.string().trim().max(1000, t("Maksimal 1000 karakter")),
+        }),
+      )
+      .max(FAQ_MAKSIMAL, t("Maksimal {n} pertanyaan", { n: FAQ_MAKSIMAL })),
+    // Varian bahasa Inggris (khusus halaman `/en`). Semua opsional: bila
+    // dikosongkan, halaman Inggris memakai teks bawaan komponen.
+    hero_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    hero_subtitle_en: z.string().trim().max(150, t("Maksimal 150 karakter")),
+    hero_cta_text_en: z.string().trim().max(40, t("Maksimal 40 karakter")),
+    meta_title_en: z.string().trim().max(60, t("Maksimal 60 karakter")),
+    meta_description_en: z.string().trim().max(160, t("Maksimal 160 karakter")),
+    cta_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    cta_description_en: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    keunggulan_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    keunggulan_subtitle_en: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    properti_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    properti_subtitle_en: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    paket_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    paket_subtitle_en: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    panduan_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    panduan_subtitle_en: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    faq_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
+    faq_subtitle_en: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    faq_items_en: z
+      .array(
+        z.object({
+          tanya: z.string().trim().max(200, t("Maksimal 200 karakter")),
+          jawab: z.string().trim().max(1000, t("Maksimal 1000 karakter")),
+        }),
+      )
+      .max(FAQ_MAKSIMAL, t("Maksimal {n} pertanyaan", { n: FAQ_MAKSIMAL })),
+  });
+}
+
+type NilaiLanding = z.infer<ReturnType<typeof buatSkemaLanding>>;
 
 /**
  * Bagian landing page yang judul dan deskripsinya dapat disesuaikan.
@@ -205,6 +212,7 @@ function FieldGambar({
   label: string;
   deskripsi: string;
 }) {
+  const { t } = useBahasa();
   const unggah = useUnggahGambarLanding();
   const berkasRef = React.useRef<HTMLInputElement>(null);
   const nilai = useWatch({ control: form.control, name: nama });
@@ -220,7 +228,7 @@ function FieldGambar({
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="text-sm font-semibold text-ink">{label}</span>
+      <span className="text-sm font-semibold text-ink">{t(label)}</span>
       <div className="flex flex-wrap items-center gap-4">
         {nilai ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -231,7 +239,7 @@ function FieldGambar({
           />
         ) : (
           <span className="grid h-24 w-40 shrink-0 place-items-center rounded-sm border border-dashed border-line text-xs text-ink-subtle">
-            Belum ada gambar
+            {t("Belum ada gambar")}
           </span>
         )}
 
@@ -260,17 +268,17 @@ function FieldGambar({
             ) : (
               <ImageUp aria-hidden="true" />
             )}
-            {unggah.isPending ? "Mengunggah..." : "Unggah gambar"}
+            {unggah.isPending ? t("Mengunggah...") : t("Unggah gambar")}
           </Button>
-          <span className="text-xs text-ink-muted">{deskripsi}</span>
+          <span className="text-xs text-ink-muted">{t(deskripsi)}</span>
         </div>
       </div>
 
       <TextField
         control={form.control}
         name={nama}
-        label="URL gambar"
-        deskripsi="Terisi otomatis setelah unggahan berhasil; dapat juga diisi tautan gambar eksternal."
+        label={t("URL gambar")}
+        deskripsi={t("Terisi otomatis setelah unggahan berhasil; dapat juga diisi tautan gambar eksternal.")}
       />
     </div>
   );
@@ -286,6 +294,7 @@ function FieldGambar({
  * ditambah/dihapus.
  */
 function FieldArea({ form }: { form: UseFormReturn<NilaiLanding> }) {
+  const { t } = useBahasa();
   const tersimpan = useWatch({ control: form.control, name: "highlight_areas" }) ?? [];
   // Lengkapi menjadi minimal empat baris agar pengguna langsung dapat mengisi.
   const area = [
@@ -299,23 +308,23 @@ function FieldArea({ form }: { form: UseFormReturn<NilaiLanding> }) {
 
   return (
     <KelompokField
-      judul="Highlight Wilayah"
-      deskripsi="4-6 area prioritas yang ditonjolkan pada landing page dan menjadi tautan internal ke katalog wilayah."
+      judul={t("Highlight Wilayah")}
+      deskripsi={t("4-6 area prioritas yang ditonjolkan pada landing page dan menjadi tautan internal ke katalog wilayah.")}
     >
       {area.map((_, index) => (
         <div key={index} className="flex items-end gap-2">
           <TextField
             control={form.control}
             name={`highlight_areas.${index}`}
-            label={`Area ${index + 1}`}
+            label={t("Area {nomor}", { nomor: index + 1 })}
             className="flex-1"
-            placeholder="Contoh: Denpasar"
+            placeholder={t("Contoh: Denpasar")}
           />
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            aria-label={`Hapus area ${index + 1}`}
+            aria-label={t("Hapus area {nomor}", { nomor: index + 1 })}
             disabled={area.length <= AREA_MINIMAL}
             onClick={() => simpan(area.filter((_, i) => i !== index))}
           >
@@ -333,7 +342,7 @@ function FieldArea({ form }: { form: UseFormReturn<NilaiLanding> }) {
           onClick={() => simpan([...area, ""])}
         >
           <Plus aria-hidden="true" />
-          Tambah area
+          {t("Tambah area")}
         </Button>
       </div>
     </KelompokField>
@@ -349,6 +358,7 @@ function FieldArea({ form }: { form: UseFormReturn<NilaiLanding> }) {
  * properti teratas sehingga kolase tetap terisi.
  */
 function FieldKolase({ form }: { form: UseFormReturn<NilaiLanding> }) {
+  const { t } = useBahasa();
   const unggah = useUnggahGambarLanding();
   const berkasRef = React.useRef<HTMLInputElement>(null);
   const daftar = useWatch({ control: form.control, name: "hero_images" }) ?? [];
@@ -375,10 +385,9 @@ function FieldKolase({ form }: { form: UseFormReturn<NilaiLanding> }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <span className="text-sm font-semibold text-ink">Gambar kolase hero</span>
+      <span className="text-sm font-semibold text-ink">{t("Gambar kolase hero")}</span>
       <p className="text-xs text-ink-muted">
-        Unggah 3-4 gambar. Gambar pertama tampil paling besar dan sisanya mengisi kolase. Bila
-        kosong, halaman memakai foto properti teratas.
+        {t("Unggah 3-4 gambar. Gambar pertama tampil paling besar dan sisanya mengisi kolase. Bila kosong, halaman memakai foto properti teratas.")}
       </p>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -393,7 +402,7 @@ function FieldKolase({ form }: { form: UseFormReturn<NilaiLanding> }) {
               type="button"
               variant="ghost"
               size="icon"
-              aria-label={`Hapus gambar ${index + 1}`}
+              aria-label={t("Hapus gambar {nomor}", { nomor: index + 1 })}
               className="absolute top-1 right-1 size-7 bg-surface/80"
               onClick={() => hapus(index)}
             >
@@ -414,7 +423,7 @@ function FieldKolase({ form }: { form: UseFormReturn<NilaiLanding> }) {
             ) : (
               <span className="flex flex-col items-center gap-1">
                 <ImageUp aria-hidden="true" />
-                Tambah gambar
+                {t("Tambah gambar")}
               </span>
             )}
           </button>
@@ -454,6 +463,7 @@ function FieldFaq({
   judul: string;
   deskripsi: string;
 }) {
+  const { t } = useBahasa();
   const tersimpan = useWatch({ control: form.control, name: nama });
   const daftar = (tersimpan ?? []) as LandingFAQItem[];
 
@@ -468,11 +478,11 @@ function FieldFaq({
           key={index}
           className="flex flex-col gap-4 rounded-card border border-line bg-canvas/40 p-4"
         >
-          <FormField label={`Pertanyaan ${index + 1}`}>
+          <FormField label={t("Pertanyaan {nomor}", { nomor: index + 1 })}>
             <Input
               value={item.tanya}
               maxLength={200}
-              placeholder="Tulis pertanyaan"
+              placeholder={t("Tulis pertanyaan")}
               onChange={(event) =>
                 simpan(
                   daftar.map((isi, i) =>
@@ -482,12 +492,12 @@ function FieldFaq({
               }
             />
           </FormField>
-          <FormField label={`Jawaban ${index + 1}`}>
+          <FormField label={t("Jawaban {nomor}", { nomor: index + 1 })}>
             <Textarea
               value={item.jawab}
               rows={3}
               maxLength={1000}
-              placeholder="Tulis jawaban"
+              placeholder={t("Tulis jawaban")}
               onChange={(event) =>
                 simpan(
                   daftar.map((isi, i) =>
@@ -505,7 +515,7 @@ function FieldFaq({
               onClick={() => simpan(daftar.filter((_, i) => i !== index))}
             >
               <Trash2 aria-hidden="true" />
-              Hapus pertanyaan
+              {t("Hapus pertanyaan")}
             </Button>
           </div>
         </div>
@@ -520,13 +530,13 @@ function FieldFaq({
           onClick={() => simpan([...daftar, { tanya: "", jawab: "" }])}
         >
           <Plus aria-hidden="true" />
-          Tambah pertanyaan
+          {t("Tambah pertanyaan")}
         </Button>
       </div>
 
       {daftar.length === 0 ? (
         <p className="text-xs text-ink-muted">
-          Belum ada pertanyaan khusus. Halaman memakai pertanyaan bawaan hingga daftar ini diisi.
+          {t("Belum ada pertanyaan khusus. Halaman memakai pertanyaan bawaan hingga daftar ini diisi.")}
         </p>
       ) : null}
     </KelompokField>
@@ -535,10 +545,12 @@ function FieldFaq({
 
 /** Formulir CMS lengkap untuk admin dan superadmin. */
 function FormLanding({ konten }: { konten: LandingContentView }) {
+  const { t } = useBahasa();
   const simpan = usePerbaruiLanding();
   const publikasi = usePublikasikanLanding();
+  const skema = React.useMemo(() => buatSkemaLanding(t), [t]);
   const form = useForm<NilaiLanding>({
-    resolver: zodResolver(skemaLanding),
+    resolver: zodResolver(skema),
     defaultValues: nilaiAwal(konten),
   });
 
@@ -571,32 +583,32 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
     >
       <Card>
         <CardHeader>
-          <CardTitle>Hero Banner</CardTitle>
+          <CardTitle>{t("Hero Banner")}</CardTitle>
           <CardDescription>
-            Judul utama halaman ditampilkan sebagai satu-satunya tag <code>&lt;h1&gt;</code> (teks
-            murni, tanpa editor WYSIWYG).
+            {t("Judul utama halaman ditampilkan sebagai satu-satunya tag")} <code>&lt;h1&gt;</code>{" "}
+            {t("(teks murni, tanpa editor WYSIWYG).")}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <TextField
             control={form.control}
             name="hero_title"
-            label="Judul hero"
+            label={t("Judul hero")}
             wajib
-            deskripsi="Maksimal 70 karakter."
+            deskripsi={t("Maksimal 70 karakter.")}
           />
           <TextareaField
             control={form.control}
             name="hero_subtitle"
-            label="Subjudul hero"
+            label={t("Subjudul hero")}
             rows={3}
-            deskripsi="Maksimal 150 karakter."
+            deskripsi={t("Maksimal 150 karakter.")}
           />
           <TextField
             control={form.control}
             name="hero_cta_text"
-            label="Teks tombol CTA hero"
-            deskripsi="Maksimal 40 karakter, mis. “Jelajahi Katalog”."
+            label={t("Teks tombol CTA hero")}
+            deskripsi={t("Maksimal 40 karakter, mis. “Jelajahi Katalog”.")}
           />
           <FieldGambar form={form} {...OPSI_GAMBAR[0]} />
           <FieldKolase form={form} />
@@ -605,26 +617,27 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Metadata SEO Global</CardTitle>
+          <CardTitle>{t("Metadata SEO Global")}</CardTitle>
           <CardDescription>
-            Dipakai sebagai <code>title</code> dan <code>description</code> halaman utama.
+            {t("Dipakai sebagai")} <code>title</code> {t("dan")} <code>description</code>{" "}
+            {t("halaman utama.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <TextField
             control={form.control}
             name="meta_title"
-            label="Meta title"
+            label={t("Meta title")}
             wajib
-            deskripsi="50-60 karakter agar tidak terpotong di hasil pencarian."
+            deskripsi={t("50-60 karakter agar tidak terpotong di hasil pencarian.")}
           />
           <TextareaField
             control={form.control}
             name="meta_description"
-            label="Meta description"
+            label={t("Meta description")}
             rows={3}
             wajib
-            deskripsi="120-160 karakter."
+            deskripsi={t("120-160 karakter.")}
           />
           <FieldGambar form={form} {...OPSI_GAMBAR[1]} />
         </CardContent>
@@ -632,9 +645,9 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Wilayah Unggulan</CardTitle>
+          <CardTitle>{t("Wilayah Unggulan")}</CardTitle>
           <CardDescription>
-            Area prioritas yang ditonjolkan pada landing page sekaligus memperkuat internal linking.
+            {t("Area prioritas yang ditonjolkan pada landing page sekaligus memperkuat internal linking.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -644,9 +657,9 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Judul &amp; Deskripsi Bagian</CardTitle>
+          <CardTitle>{t("Judul & Deskripsi Bagian")}</CardTitle>
           <CardDescription>
-            Judul dan deskripsi tiap bagian halaman utama. Kosongkan untuk memakai teks bawaan.
+            {t("Judul dan deskripsi tiap bagian halaman utama. Kosongkan untuk memakai teks bawaan.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -655,15 +668,15 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
               <TextField
                 control={form.control}
                 name={`${bagian.kunci}_title`}
-                label={`Judul bagian ${bagian.label}`}
-                deskripsi="Maksimal 70 karakter."
+                label={t("Judul bagian {label}", { label: t(bagian.label) })}
+                deskripsi={t("Maksimal 70 karakter.")}
               />
               <TextareaField
                 control={form.control}
                 name={`${bagian.kunci}_subtitle`}
-                label={`Deskripsi bagian ${bagian.label}`}
+                label={t("Deskripsi bagian {label}", { label: t(bagian.label) })}
                 rows={2}
-                deskripsi="Maksimal 200 karakter."
+                deskripsi={t("Maksimal 200 karakter.")}
               />
             </div>
           ))}
@@ -672,52 +685,51 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Pertanyaan (FAQ)</CardTitle>
+          <CardTitle>{t("Daftar Pertanyaan (FAQ)")}</CardTitle>
           <CardDescription>
-            Pertanyaan dan jawaban yang tampil pada bagian FAQ. Kosongkan untuk memakai daftar
-            bawaan; baris yang tidak lengkap otomatis diabaikan.
+            {t("Pertanyaan dan jawaban yang tampil pada bagian FAQ. Kosongkan untuk memakai daftar bawaan; baris yang tidak lengkap otomatis diabaikan.")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <FieldFaq
             form={form}
             nama="faq_items"
-            judul="Pertanyaan umum (Indonesia)"
-            deskripsi="Tampil pada halaman utama berbahasa Indonesia."
+            judul={t("Pertanyaan umum (Indonesia)")}
+            deskripsi={t("Tampil pada halaman utama berbahasa Indonesia.")}
           />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>CTA Mitra “Titip Properti”</CardTitle>
+          <CardTitle>{t("CTA Mitra “Titip Properti”")}</CardTitle>
           <CardDescription>
-            Ajakan kemitraan yang mengarahkan pengunjung ke halaman pendaftaran mitra.
+            {t("Ajakan kemitraan yang mengarahkan pengunjung ke halaman pendaftaran mitra.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <TextField
             control={form.control}
             name="cta_title"
-            label="Judul CTA"
-            deskripsi="Maksimal 70 karakter."
+            label={t("Judul CTA")}
+            deskripsi={t("Maksimal 70 karakter.")}
           />
           <TextareaField
             control={form.control}
             name="cta_description"
-            label="Deskripsi CTA"
+            label={t("Deskripsi CTA")}
             rows={3}
-            deskripsi="Maksimal 200 karakter."
+            deskripsi={t("Maksimal 200 karakter.")}
           />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Bahasa Inggris (English)</CardTitle>
+          <CardTitle>{t("Bahasa Inggris (English)")}</CardTitle>
           <CardDescription>
-            Teks untuk halaman <code>/en</code>. Kosongkan bila terjemahan belum tersedia; halaman
-            Inggris akan memakai teks bawaan sehingga tidak pernah tampil kosong.
+            {t("Teks untuk halaman")} <code>/en</code>.{" "}
+            {t("Kosongkan bila terjemahan belum tersedia; halaman Inggris akan memakai teks bawaan sehingga tidak pernah tampil kosong.")}
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
@@ -725,21 +737,21 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             <TextField
               control={form.control}
               name="hero_title_en"
-              label="Hero title (EN)"
-              deskripsi="Maksimal 70 karakter."
+              label={t("Hero title (EN)")}
+              deskripsi={t("Maksimal 70 karakter.")}
             />
             <TextareaField
               control={form.control}
               name="hero_subtitle_en"
-              label="Hero subtitle (EN)"
+              label={t("Hero subtitle (EN)")}
               rows={3}
-              deskripsi="Maksimal 150 karakter."
+              deskripsi={t("Maksimal 150 karakter.")}
             />
             <TextField
               control={form.control}
               name="hero_cta_text_en"
-              label="Hero CTA text (EN)"
-              deskripsi="Maksimal 40 karakter."
+              label={t("Hero CTA text (EN)")}
+              deskripsi={t("Maksimal 40 karakter.")}
             />
           </div>
 
@@ -747,15 +759,15 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             <TextField
               control={form.control}
               name="meta_title_en"
-              label="Meta title (EN)"
-              deskripsi="Maksimal 60 karakter."
+              label={t("Meta title (EN)")}
+              deskripsi={t("Maksimal 60 karakter.")}
             />
             <TextareaField
               control={form.control}
               name="meta_description_en"
-              label="Meta description (EN)"
+              label={t("Meta description (EN)")}
               rows={3}
-              deskripsi="Maksimal 160 karakter."
+              deskripsi={t("Maksimal 160 karakter.")}
             />
           </div>
 
@@ -764,15 +776,15 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
               <TextField
                 control={form.control}
                 name={`${bagian.kunci}_title_en`}
-                label={`Bagian ${bagian.label} — judul (EN)`}
-                deskripsi="Maksimal 70 karakter."
+                label={t("Bagian {label} — judul (EN)", { label: t(bagian.label) })}
+                deskripsi={t("Maksimal 70 karakter.")}
               />
               <TextareaField
                 control={form.control}
                 name={`${bagian.kunci}_subtitle_en`}
-                label={`Bagian ${bagian.label} — deskripsi (EN)`}
+                label={t("Bagian {label} — deskripsi (EN)", { label: t(bagian.label) })}
                 rows={2}
-                deskripsi="Maksimal 200 karakter."
+                deskripsi={t("Maksimal 200 karakter.")}
               />
             </div>
           ))}
@@ -781,30 +793,30 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             <TextField
               control={form.control}
               name="cta_title_en"
-              label="CTA title (EN)"
-              deskripsi="Maksimal 70 karakter."
+              label={t("CTA title (EN)")}
+              deskripsi={t("Maksimal 70 karakter.")}
             />
             <TextareaField
               control={form.control}
               name="cta_description_en"
-              label="CTA description (EN)"
+              label={t("CTA description (EN)")}
               rows={3}
-              deskripsi="Maksimal 200 karakter."
+              deskripsi={t("Maksimal 200 karakter.")}
             />
           </div>
 
           <FieldFaq
             form={form}
             nama="faq_items_en"
-            judul="FAQ items (EN)"
-            deskripsi="Tampil pada halaman landing berbahasa Inggris (/en). Kosongkan untuk memakai daftar bawaan."
+            judul={t("FAQ items (EN)")}
+            deskripsi={t("Tampil pada halaman landing berbahasa Inggris (/en). Kosongkan untuk memakai daftar bawaan.")}
           />
         </CardContent>
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-xs text-ink-subtle">
-          Terakhir diperbarui {formatWib(konten.updated_at)}
+          {t("Terakhir diperbarui {tgl}", { tgl: formatWib(konten.updated_at) })}
         </span>
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" variant="outline" disabled={sibuk}>
@@ -813,7 +825,7 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             ) : (
               <Save aria-hidden="true" />
             )}
-            Simpan perubahan
+            {t("Simpan perubahan")}
           </Button>
           <Button type="button" disabled={sibuk} onClick={form.handleSubmit(simpanLaluPublikasi)}>
             {publikasi.isPending ? (
@@ -821,7 +833,7 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             ) : (
               <Rocket aria-hidden="true" />
             )}
-            Publish perubahan landing page
+            {t("Publish perubahan landing page")}
           </Button>
         </div>
       </div>
@@ -841,17 +853,19 @@ function BarisNilai({ label, nilai }: { label: string; nilai: string }) {
 
 /** Pratinjau baca-saja konten landing untuk peran owner. */
 function RingkasanLanding({ konten }: { konten: LandingContentView }) {
+  const { t } = useBahasa();
+
   return (
     <div className="flex flex-col gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Hero Banner</CardTitle>
-          <CardDescription>Konten yang ditampilkan pada bagian paling atas halaman utama.</CardDescription>
+          <CardTitle>{t("Hero Banner")}</CardTitle>
+          <CardDescription>{t("Konten yang ditampilkan pada bagian paling atas halaman utama.")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <BarisNilai label="Judul hero" nilai={konten.hero_title} />
-          <BarisNilai label="Subjudul hero" nilai={konten.hero_subtitle} />
-          <BarisNilai label="Teks tombol CTA" nilai={konten.hero_cta_text} />
+          <BarisNilai label={t("Judul hero")} nilai={konten.hero_title} />
+          <BarisNilai label={t("Subjudul hero")} nilai={konten.hero_subtitle} />
+          <BarisNilai label={t("Teks tombol CTA")} nilai={konten.hero_cta_text} />
           {konten.hero_image_url ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
@@ -863,7 +877,7 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
           {konten.hero_images.length > 0 ? (
             <div className="flex flex-col gap-2">
               <span className="text-xs font-semibold tracking-wide text-ink-subtle uppercase">
-                Gambar kolase
+                {t("Gambar kolase")}
               </span>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {konten.hero_images.map((url, index) => (
@@ -883,20 +897,20 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Metadata SEO Global</CardTitle>
-          <CardDescription>Judul dan deskripsi yang tampil di hasil pencarian.</CardDescription>
+          <CardTitle>{t("Metadata SEO Global")}</CardTitle>
+          <CardDescription>{t("Judul dan deskripsi yang tampil di hasil pencarian.")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <BarisNilai label="Meta title" nilai={konten.meta_title} />
-          <BarisNilai label="Meta description" nilai={konten.meta_description} />
-          <BarisNilai label="Gambar Open Graph" nilai={konten.meta_og_image} />
+          <BarisNilai label={t("Meta title")} nilai={konten.meta_title} />
+          <BarisNilai label={t("Meta description")} nilai={konten.meta_description} />
+          <BarisNilai label={t("Gambar Open Graph")} nilai={konten.meta_og_image} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Wilayah Unggulan</CardTitle>
-          <CardDescription>Area prioritas yang ditonjolkan pada landing page.</CardDescription>
+          <CardTitle>{t("Wilayah Unggulan")}</CardTitle>
+          <CardDescription>{t("Area prioritas yang ditonjolkan pada landing page.")}</CardDescription>
         </CardHeader>
         <CardContent>
           {konten.highlight_areas.length > 0 ? (
@@ -908,22 +922,25 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-ink-muted">Belum ada area prioritas.</p>
+            <p className="text-sm text-ink-muted">{t("Belum ada area prioritas.")}</p>
           )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Judul &amp; Deskripsi Bagian</CardTitle>
-          <CardDescription>Judul dan deskripsi tiap bagian halaman utama.</CardDescription>
+          <CardTitle>{t("Judul & Deskripsi Bagian")}</CardTitle>
+          <CardDescription>{t("Judul dan deskripsi tiap bagian halaman utama.")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {BAGIAN_LANDING.map((bagian) => (
             <div key={bagian.kunci} className="flex flex-col gap-4">
-              <BarisNilai label={`Judul bagian ${bagian.label}`} nilai={konten[`${bagian.kunci}_title`]} />
               <BarisNilai
-                label={`Deskripsi bagian ${bagian.label}`}
+                label={t("Judul bagian {label}", { label: t(bagian.label) })}
+                nilai={konten[`${bagian.kunci}_title`]}
+              />
+              <BarisNilai
+                label={t("Deskripsi bagian {label}", { label: t(bagian.label) })}
                 nilai={konten[`${bagian.kunci}_subtitle`]}
               />
             </div>
@@ -933,75 +950,81 @@ function RingkasanLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Pertanyaan (FAQ)</CardTitle>
-          <CardDescription>Pertanyaan dan jawaban pada bagian FAQ halaman utama.</CardDescription>
+          <CardTitle>{t("Daftar Pertanyaan (FAQ)")}</CardTitle>
+          <CardDescription>{t("Pertanyaan dan jawaban pada bagian FAQ halaman utama.")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {konten.faq_items.length > 0 ? (
             konten.faq_items.map((item, index) => (
               <div key={index} className="flex flex-col gap-4">
-                <BarisNilai label={`Pertanyaan ${index + 1}`} nilai={item.tanya} />
-                <BarisNilai label={`Jawaban ${index + 1}`} nilai={item.jawab} />
+                <BarisNilai label={t("Pertanyaan {nomor}", { nomor: index + 1 })} nilai={item.tanya} />
+                <BarisNilai label={t("Jawaban {nomor}", { nomor: index + 1 })} nilai={item.jawab} />
               </div>
             ))
           ) : (
-            <p className="text-sm text-ink-muted">Memakai daftar pertanyaan bawaan.</p>
+            <p className="text-sm text-ink-muted">{t("Memakai daftar pertanyaan bawaan.")}</p>
           )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>CTA Mitra “Titip Properti”</CardTitle>
+          <CardTitle>{t("CTA Mitra “Titip Properti”")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <BarisNilai label="Judul CTA" nilai={konten.cta_title} />
-          <BarisNilai label="Deskripsi CTA" nilai={konten.cta_description} />
+          <BarisNilai label={t("Judul CTA")} nilai={konten.cta_title} />
+          <BarisNilai label={t("Deskripsi CTA")} nilai={konten.cta_description} />
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Bahasa Inggris (English)</CardTitle>
+          <CardTitle>{t("Bahasa Inggris (English)")}</CardTitle>
           <CardDescription>
-            Versi teks untuk halaman <code>/en</code>.
+            {t("Versi teks untuk halaman")} <code>/en</code>.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <BarisNilai label="Hero title (EN)" nilai={konten.hero_title_en} />
-          <BarisNilai label="Hero subtitle (EN)" nilai={konten.hero_subtitle_en} />
-          <BarisNilai label="Hero CTA text (EN)" nilai={konten.hero_cta_text_en} />
-          <BarisNilai label="Meta title (EN)" nilai={konten.meta_title_en} />
-          <BarisNilai label="Meta description (EN)" nilai={konten.meta_description_en} />
+          <BarisNilai label={t("Hero title (EN)")} nilai={konten.hero_title_en} />
+          <BarisNilai label={t("Hero subtitle (EN)")} nilai={konten.hero_subtitle_en} />
+          <BarisNilai label={t("Hero CTA text (EN)")} nilai={konten.hero_cta_text_en} />
+          <BarisNilai label={t("Meta title (EN)")} nilai={konten.meta_title_en} />
+          <BarisNilai label={t("Meta description (EN)")} nilai={konten.meta_description_en} />
           {BAGIAN_LANDING.map((bagian) => (
             <div key={bagian.kunci} className="flex flex-col gap-4">
               <BarisNilai
-                label={`Bagian ${bagian.label} — judul (EN)`}
+                label={t("Bagian {label} — judul (EN)", { label: t(bagian.label) })}
                 nilai={konten[`${bagian.kunci}_title_en`]}
               />
               <BarisNilai
-                label={`Bagian ${bagian.label} — deskripsi (EN)`}
+                label={t("Bagian {label} — deskripsi (EN)", { label: t(bagian.label) })}
                 nilai={konten[`${bagian.kunci}_subtitle_en`]}
               />
             </div>
           ))}
-          <BarisNilai label="CTA title (EN)" nilai={konten.cta_title_en} />
-          <BarisNilai label="CTA description (EN)" nilai={konten.cta_description_en} />
+          <BarisNilai label={t("CTA title (EN)")} nilai={konten.cta_title_en} />
+          <BarisNilai label={t("CTA description (EN)")} nilai={konten.cta_description_en} />
           {konten.faq_items_en.length > 0 ? (
             konten.faq_items_en.map((item, index) => (
               <div key={index} className="flex flex-col gap-4">
-                <BarisNilai label={`FAQ ${index + 1} — pertanyaan (EN)`} nilai={item.tanya} />
-                <BarisNilai label={`FAQ ${index + 1} — jawaban (EN)`} nilai={item.jawab} />
+                <BarisNilai
+                  label={t("FAQ {nomor} — pertanyaan (EN)", { nomor: index + 1 })}
+                  nilai={item.tanya}
+                />
+                <BarisNilai
+                  label={t("FAQ {nomor} — jawaban (EN)", { nomor: index + 1 })}
+                  nilai={item.jawab}
+                />
               </div>
             ))
           ) : (
-            <BarisNilai label="FAQ items (EN)" nilai="" />
+            <BarisNilai label={t("FAQ items (EN)")} nilai="" />
           )}
         </CardContent>
       </Card>
 
       <span className="text-xs text-ink-subtle">
-        Terakhir diperbarui {formatWib(konten.updated_at)}
+        {t("Terakhir diperbarui {tgl}", { tgl: formatWib(konten.updated_at) })}
       </span>
     </div>
   );
@@ -1019,18 +1042,19 @@ function KerangkaLanding() {
 
 /** Halaman CMS landing untuk admin dan superadmin (boleh mengubah). */
 export function LandingCmsEditor() {
+  const { t } = useBahasa();
   const hasil = useLandingAdmin();
 
   return (
     <>
       <PageHeader
-        judul="Landing Page"
-        deskripsi="Kelola konten halaman utama: hero, metadata SEO, wilayah unggulan, dan ajakan mitra."
+        judul={t("Landing Page")}
+        deskripsi={t("Kelola konten halaman utama: hero, metadata SEO, wilayah unggulan, dan ajakan mitra.")}
       />
       <KontenAsync
         hasil={hasil}
         skeleton={<KerangkaLanding />}
-        judulGagal="Gagal memuat konten landing page"
+        judulGagal={t("Gagal memuat konten landing page")}
       >
         {(konten) => <FormLanding konten={konten} />}
       </KontenAsync>
@@ -1040,18 +1064,19 @@ export function LandingCmsEditor() {
 
 /** Halaman landing versi baca-saja untuk peran owner. */
 export function LandingCmsPeninjau() {
+  const { t } = useBahasa();
   const hasil = useLandingOwner();
 
   return (
     <>
       <PageHeader
-        judul="Landing Page"
-        deskripsi="Pantau konten halaman utama. Perubahan hanya dapat dilakukan oleh admin."
+        judul={t("Landing Page")}
+        deskripsi={t("Pantau konten halaman utama. Perubahan hanya dapat dilakukan oleh admin.")}
       />
       <KontenAsync
         hasil={hasil}
         skeleton={<KerangkaLanding />}
-        judulGagal="Gagal memuat konten landing page"
+        judulGagal={t("Gagal memuat konten landing page")}
       >
         {(konten) => <RingkasanLanding konten={konten} />}
       </KontenAsync>

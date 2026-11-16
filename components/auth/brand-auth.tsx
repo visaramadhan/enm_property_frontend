@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { inisialSitus, useIdentitasSitus } from "@/components/shared/logo-situs";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +49,7 @@ export function LogoBrand({
   className?: string;
 }) {
   const situs = useIdentitasSitus();
+  const { t } = useBahasa();
   const gaya = GAYA[variasi];
 
   return (
@@ -68,7 +70,7 @@ export function LogoBrand({
       )}
       <span className="flex flex-col">
         <span className={cn("text-sm font-semibold", gaya.nama)}>{situs.site_name}</span>
-        <span className={cn("text-xs", gaya.keterangan)}>Platform Listing Properti</span>
+        <span className={cn("text-xs", gaya.keterangan)}>{t("Platform Listing Properti")}</span>
       </span>
     </Link>
   );
@@ -77,6 +79,7 @@ export function LogoBrand({
 /** Panel brand area autentikasi untuk layar lebar. */
 export function PanelBrandAuth() {
   const situs = useIdentitasSitus();
+  const { t } = useBahasa();
 
   return (
     <aside className="relative hidden flex-col justify-between overflow-hidden bg-secondary p-12 text-secondary-foreground lg:flex">
@@ -103,7 +106,7 @@ export function PanelBrandAuth() {
 
       <div className="relative flex flex-col gap-8">
         <h2 className="max-w-md text-3xl font-semibold leading-snug">
-          Kelola listing properti Anda dari satu dashboard.
+          {t("Kelola listing properti Anda dari satu dashboard.")}
         </h2>
 
         <ol className="flex flex-col gap-6">
@@ -117,9 +120,9 @@ export function PanelBrandAuth() {
                 {item.nomor}
               </span>
               <div className="flex flex-col gap-1">
-                <span className="text-base font-semibold">{item.judul}</span>
+                <span className="text-base font-semibold">{t(item.judul)}</span>
                 <span className="max-w-sm text-sm text-secondary-foreground/70">
-                  {item.deskripsi}
+                  {t(item.deskripsi)}
                 </span>
               </div>
             </li>
@@ -128,7 +131,7 @@ export function PanelBrandAuth() {
       </div>
 
       <p className="relative text-xs text-secondary-foreground/50">
-        &copy; {situs.site_name}. Seluruh harga dalam Rupiah (IDR) dan waktu WIB.
+        &copy; {situs.site_name}. {t("Seluruh harga dalam Rupiah (IDR) dan waktu WIB.")}
       </p>
     </aside>
   );

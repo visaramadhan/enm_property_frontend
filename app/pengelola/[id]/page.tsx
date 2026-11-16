@@ -3,11 +3,14 @@ import type { Metadata } from "next";
 
 import { HalamanPengelola } from "@/components/katalog/halaman-pengelola";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Profil Pengelola",
-  description: "Lihat seluruh properti yang dikelola oleh mitra ENM Property.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Profil Pengelola",
+    "Lihat seluruh properti yang dikelola oleh mitra ENM Property.",
+  );
+}
 
 /**
  * Halaman profil pengelola (mitra) beserta katalog miliknya.
@@ -18,11 +21,13 @@ export const metadata: Metadata = {
  */
 export default function PengelolaPage({ params }: PageProps<"/pengelola/[id]">) {
   return (
-    <Suspense fallback={<KerangkaPengelola />}>
-      {params.then(({ id }) => (
-        <HalamanPengelola id={id} />
-      ))}
-    </Suspense>
+    <>
+      <Suspense fallback={<KerangkaPengelola />}>
+        {params.then(({ id }) => (
+          <HalamanPengelola id={id} />
+        ))}
+      </Suspense>
+    </>
   );
 }
 

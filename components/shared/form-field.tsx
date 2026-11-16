@@ -4,6 +4,7 @@ import * as React from "react";
 import { Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 import { Controller, type Control, type FieldValues, type Path } from "react-hook-form";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -196,6 +197,7 @@ export function PasswordField<T extends FieldValues>({
   autoComplete?: string;
 }) {
   const [lihat, setLihat] = React.useState(false);
+  const { t } = useBahasa();
 
   return (
     <Controller
@@ -224,7 +226,7 @@ export function PasswordField<T extends FieldValues>({
             <button
               type="button"
               onClick={() => setLihat((nilai) => !nilai)}
-              aria-label={lihat ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+              aria-label={lihat ? t("Sembunyikan kata sandi") : t("Tampilkan kata sandi")}
               className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-field text-ink-subtle transition-colors duration-150 ease-out hover:text-ink"
             >
               {lihat ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
@@ -343,9 +345,12 @@ export function CeklisField<T extends FieldValues>({
   label,
   deskripsi,
   className,
-  placeholder = "Tulis satu poin perjanjian...",
+  placeholder,
   maksimal = 20,
 }: PropsDasar<T> & { placeholder?: string; maksimal?: number }) {
+  const { t } = useBahasa();
+  const teksPlaceholder = placeholder ?? t("Tulis satu poin perjanjian...");
+
   return (
     <Controller
       control={control}
@@ -375,7 +380,7 @@ export function CeklisField<T extends FieldValues>({
 
             {nilai.length === 0 ? (
               <p className="rounded-field border border-dashed border-divider px-4 py-3 text-xs text-ink-muted">
-                Belum ada poin ceklis. Mitra hanya menyetujui perjanjian secara umum.
+                {t("Belum ada poin ceklis. Mitra hanya menyetujui perjanjian secara umum.")}
               </p>
             ) : (
               <ul className="flex flex-col gap-2">
@@ -391,15 +396,15 @@ export function CeklisField<T extends FieldValues>({
                     <Input
                       value={teks}
                       onChange={(event) => ubahPoin(indeks, event.target.value)}
-                      placeholder={placeholder}
-                      aria-label={`Poin ${indeks + 1}`}
+                      placeholder={teksPlaceholder}
+                      aria-label={t("Poin {nomor}", { nomor: indeks + 1 })}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon-sm"
                       onClick={() => hapusPoin(indeks)}
-                      aria-label={`Hapus poin ${indeks + 1}`}
+                      aria-label={t("Hapus poin {nomor}", { nomor: indeks + 1 })}
                     >
                       <Trash2 />
                     </Button>
@@ -417,7 +422,7 @@ export function CeklisField<T extends FieldValues>({
                 disabled={nilai.length >= maksimal}
               >
                 <Plus />
-                Tambah poin
+                {t("Tambah poin")}
               </Button>
             </div>
 

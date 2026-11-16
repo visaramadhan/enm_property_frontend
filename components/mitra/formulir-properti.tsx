@@ -11,12 +11,13 @@ import { GaleriFoto } from "@/components/mitra/galeri-foto";
 import { PilihFotoLokal } from "@/components/mitra/pilih-foto-lokal";
 import {
   BidangProperti,
+  buatSkemaProperti,
   kePermintaan,
   nilaiAwalProperti,
   nilaiDariProperti,
-  skemaProperti,
   type NilaiProperti,
 } from "@/components/properti/form-properti";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
@@ -68,13 +69,15 @@ function PanelProperti({
   properti?: PropertyDetail;
 }) {
   const router = useRouter();
+  const { t } = useBahasa();
   const buat = useBuatProperti();
   const ubah = usePerbaruiProperti();
   const unggah = useUnggahFotoMitra();
   const profil = useProfilMitra(mode === "baru");
   const [fotoBaru, setFotoBaru] = React.useState<File[]>([]);
+  const skema = React.useMemo(() => buatSkemaProperti(t), [t]);
   const form = useForm<NilaiProperti>({
-    resolver: zodResolver(skemaProperti),
+    resolver: zodResolver(skema),
     defaultValues: properti ? nilaiDariProperti(properti) : nilaiAwalProperti,
   });
 
@@ -112,11 +115,11 @@ function PanelProperti({
   return (
     <>
       <PageHeader
-        judul={mode === "baru" ? "Tambah Properti" : "Ubah Properti"}
+        judul={mode === "baru" ? t("Tambah Properti") : t("Ubah Properti")}
         deskripsi={
           mode === "baru"
-            ? "Lengkapi data listing lalu simpan sebagai draf atau ajukan untuk tayang."
-            : "Perbarui informasi listing, lalu simpan perubahan."
+            ? t("Lengkapi data listing lalu simpan sebagai draf atau ajukan untuk tayang.")
+            : t("Perbarui informasi listing, lalu simpan perubahan.")
         }
         aksi={
           <div className="flex flex-wrap gap-2">
@@ -124,14 +127,14 @@ function PanelProperti({
               <Button variant="outline" asChild>
                 <Link href={`/pengelola/${profil.data.id}?dari=dashboard`}>
                   <Eye />
-                  Review katalog
+                  {t("Review katalog")}
                 </Link>
               </Button>
             ) : null}
             <Button variant="outline" asChild>
               <Link href="/mitra/properti">
                 <ArrowLeft />
-                Kembali
+                {t("Kembali")}
               </Link>
             </Button>
           </div>
@@ -140,7 +143,7 @@ function PanelProperti({
 
       {blokirPaket ? (
         <Alert variant="warning">
-          <AlertTitle>Paket langganan diperlukan</AlertTitle>
+          <AlertTitle>{t("Paket langganan diperlukan")}</AlertTitle>
           <AlertDescription>{blokirPaket}</AlertDescription>
         </Alert>
       ) : null}
@@ -161,7 +164,7 @@ function PanelProperti({
 
               <div className="flex flex-wrap justify-end gap-2 border-t border-divider pt-6">
                 <Button type="button" variant="outline" asChild>
-                  <Link href="/mitra/properti">Batal</Link>
+                  <Link href="/mitra/properti">{t("Batal")}</Link>
                 </Button>
                 <Button type="submit" disabled={memuat}>
                   {memuat ? (
@@ -169,7 +172,7 @@ function PanelProperti({
                   ) : (
                     <Save />
                   )}
-                  {mode === "baru" ? "Simpan properti" : "Simpan perubahan"}
+                  {mode === "baru" ? t("Simpan properti") : t("Simpan perubahan")}
                 </Button>
               </div>
             </form>
@@ -179,8 +182,8 @@ function PanelProperti({
         {properti ? (
           <Card className="lg:sticky lg:top-6 lg:self-start">
             <CardHeader>
-              <CardTitle>Ringkasan</CardTitle>
-              <CardDescription>Data ini diperbarui otomatis oleh sistem.</CardDescription>
+              <CardTitle>{t("Ringkasan")}</CardTitle>
+              <CardDescription>{t("Data ini diperbarui otomatis oleh sistem.")}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-5">
               <div className="flex flex-wrap items-center gap-2">
@@ -194,12 +197,12 @@ function PanelProperti({
               <DaftarDeskripsi
                 kolom={1}
                 item={[
-                  { label: "Harga", nilai: formatRupiah(properti.price) },
-                  { label: "Tayangan", nilai: formatAngka(properti.views) },
-                  { label: "Unit tersedia", nilai: formatAngka(properti.units_available) },
-                  { label: "Slug", nilai: properti.slug },
-                  { label: "Diajukan", nilai: formatTanggalWib(properti.created_at) },
-                  { label: "Diperbarui", nilai: formatTanggalWib(properti.updated_at) },
+                  { label: t("Harga"), nilai: formatRupiah(properti.price) },
+                  { label: t("Tayangan"), nilai: formatAngka(properti.views) },
+                  { label: t("Unit tersedia"), nilai: formatAngka(properti.units_available) },
+                  { label: t("Slug"), nilai: properti.slug },
+                  { label: t("Diajukan"), nilai: formatTanggalWib(properti.created_at) },
+                  { label: t("Diperbarui"), nilai: formatTanggalWib(properti.updated_at) },
                 ]}
               />
             </CardContent>
@@ -207,15 +210,21 @@ function PanelProperti({
         ) : (
           <Card className="lg:sticky lg:top-6 lg:self-start">
             <CardHeader>
-              <CardTitle>Tips listing</CardTitle>
-              <CardDescription>Agar properti lebih cepat mendapat peminat.</CardDescription>
+              <CardTitle>{t("Tips listing")}</CardTitle>
+              <CardDescription>{t("Agar properti lebih cepat mendapat peminat.")}</CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="flex flex-col gap-3 text-[13px] text-ink-muted">
-                <li>Gunakan judul yang menyebut tipe properti dan lokasi.</li>
-                <li>Isi luas tanah, luas bangunan, serta jumlah kamar bila ada.</li>
-                <li>Pisahkan fasilitas dengan koma, contoh: Carport, Taman, Keamanan 24 jam.</li>
-                <li>Pilih foto sebelum menyimpan; foto diunggah otomatis setelah properti tersimpan.</li>
+                <li>{t("Gunakan judul yang menyebut tipe properti dan lokasi.")}</li>
+                <li>{t("Isi luas tanah, luas bangunan, serta jumlah kamar bila ada.")}</li>
+                <li>
+                  {t("Pisahkan fasilitas dengan koma, contoh: Carport, Taman, Keamanan 24 jam.")}
+                </li>
+                <li>
+                  {t(
+                    "Pilih foto sebelum menyimpan; foto diunggah otomatis setelah properti tersimpan.",
+                  )}
+                </li>
               </ul>
             </CardContent>
           </Card>
@@ -226,13 +235,14 @@ function PanelProperti({
 }
 
 function DetailPropertiMitra({ propertiId }: { propertiId: string }) {
+  const { t } = useBahasa();
   const detail = useDetailPropertiMitra(propertiId);
 
   return (
     <KontenAsync
       hasil={detail}
       skeleton={<KerangkaFormulir />}
-      judulGagal="Gagal memuat properti"
+      judulGagal={t("Gagal memuat properti")}
     >
       {(properti) => (
         <>

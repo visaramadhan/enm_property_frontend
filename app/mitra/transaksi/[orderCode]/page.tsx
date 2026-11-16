@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 
 import { DetailTransaksi } from "@/components/mitra/detail-transaksi";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Detail Transaksi",
-  description: "Status pembayaran dan rincian transaksi langganan.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman("Detail Transaksi", "Status pembayaran dan rincian transaksi langganan.");
+}
 
 /**
  * Detail transaksi dinamis: `params` baru diketahui saat permintaan berjalan
@@ -17,11 +17,13 @@ export default function MitraTransaksiDetailPage({
   params,
 }: PageProps<"/mitra/transaksi/[orderCode]">) {
   return (
-    <Suspense fallback={<KerangkaDetailTransaksi />}>
-      {params.then(({ orderCode }) => (
-        <DetailTransaksi orderCode={orderCode} />
-      ))}
-    </Suspense>
+    <>
+      <Suspense fallback={<KerangkaDetailTransaksi />}>
+        {params.then(({ orderCode }) => (
+          <DetailTransaksi orderCode={orderCode} />
+        ))}
+      </Suspense>
+    </>
   );
 }
 

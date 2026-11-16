@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Building2, LayoutDashboard, UserRound } from "lucide-react";
 
 import { KartuProperti } from "@/components/properti/kartu-properti";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { EmptyState } from "@/components/shared/empty-state";
 import { KontenAsync } from "@/components/shared/konten-async";
@@ -26,6 +27,7 @@ import { usePengelolaPublik } from "@/lib/api/hooks";
  * dapat langsung kembali ke daftar propertinya.
  */
 export function HalamanPengelola({ id }: { id: string }) {
+  const { t } = useBahasa();
   const pengelola = usePengelolaPublik(id);
   const searchParams = useSearchParams();
   const dariDashboard = searchParams.get("dari") === "dashboard";
@@ -36,7 +38,7 @@ export function HalamanPengelola({ id }: { id: string }) {
         <Button variant="ghost" size="sm" asChild className="self-start">
           <Link href="/mitra/properti">
             <LayoutDashboard />
-            Kembali ke dashboard
+            {t("Kembali ke dashboard")}
           </Link>
         </Button>
       ) : (
@@ -46,7 +48,7 @@ export function HalamanPengelola({ id }: { id: string }) {
       <KontenAsync
         hasil={pengelola}
         skeleton={<KerangkaPengelola />}
-        judulGagal="Profil pengelola tidak dapat dimuat"
+        judulGagal={t("Profil pengelola tidak dapat dimuat")}
       >
         {(data) => (
           <div className="flex flex-col gap-6">
@@ -73,22 +75,22 @@ export function HalamanPengelola({ id }: { id: string }) {
                         {data.province ? `, ${data.province}` : ""}
                       </span>
                     ) : null}
-                    <Badge variant="neutral">{data.total_listings} properti</Badge>
+                    <Badge variant="neutral">{t("{n} properti", { n: data.total_listings })}</Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <PageHeader
-              judul="Katalog pengelola"
-              deskripsi="Seluruh properti yang tayang dan dikelola oleh mitra ini."
+              judul={t("Katalog pengelola")}
+              deskripsi={t("Seluruh properti yang tayang dan dikelola oleh mitra ini.")}
             />
 
             {data.properties.length === 0 ? (
               <EmptyState
                 ikon={Building2}
-                judul="Belum ada properti"
-                deskripsi="Pengelola ini belum menayangkan properti apa pun."
+                judul={t("Belum ada properti")}
+                deskripsi={t("Pengelola ini belum menayangkan properti apa pun.")}
               />
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

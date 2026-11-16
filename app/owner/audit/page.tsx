@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 
 import { AuditLog } from "@/components/shared/audit-log";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Audit Log",
-  description: "Jejak tindakan administratif pada platform.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman("Audit Log", "Jejak tindakan administratif pada platform.");
+}
 
 export default function OwnerAuditPage() {
-  return <AuditLog />;
+  return (
+    <>
+      <AuditLog />
+    </>
+  );
 }

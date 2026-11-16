@@ -8,12 +8,12 @@ import { useForm } from "react-hook-form";
 import {
   BidangPenggunaBaru,
   BidangPenggunaUbah,
+  buatSkemaPenggunaBaru,
+  buatSkemaPenggunaUbah,
   keBuatPengguna,
   keUpdatePengguna,
   nilaiAwalPenggunaBaru,
   nilaiDariPengguna,
-  skemaPenggunaBaru,
-  skemaPenggunaUbah,
   type NilaiPenggunaBaru,
   type NilaiPenggunaUbah,
 } from "@/components/admin/form-akun";
@@ -26,6 +26,7 @@ import { FormDialog } from "@/components/shared/form-dialog";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { TabelData } from "@/components/shared/tabel-data";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -47,9 +48,11 @@ interface FilterAkun {
 }
 
 function FormAkunBaru({ onTutup }: { onTutup: () => void }) {
+  const { t } = useBahasa();
   const buat = useBuatPengguna();
+  const skema = React.useMemo(() => buatSkemaPenggunaBaru(t), [t]);
   const form = useForm<NilaiPenggunaBaru>({
-    resolver: zodResolver(skemaPenggunaBaru),
+    resolver: zodResolver(skema),
     defaultValues: nilaiAwalPenggunaBaru,
   });
 
@@ -68,11 +71,11 @@ function FormAkunBaru({ onTutup }: { onTutup: () => void }) {
       onUbahTerbuka={(nilai) => {
         if (!nilai) onTutup();
       }}
-      judul="Akun baru"
-      deskripsi="Buat akun pengguna beserta peran awalnya."
+      judul={t("Akun baru")}
+      deskripsi={t("Buat akun pengguna beserta peran awalnya.")}
       ukuran="max-w-xl"
       memuat={buat.isPending}
-      labelKirim="Buat akun"
+      labelKirim={t("Buat akun")}
       onSubmit={form.handleSubmit(kirim)}
     >
       <BidangPenggunaBaru control={form.control} />
@@ -81,9 +84,11 @@ function FormAkunBaru({ onTutup }: { onTutup: () => void }) {
 }
 
 function FormAkunUbah({ pengguna, onTutup }: { pengguna: UserView; onTutup: () => void }) {
+  const { t } = useBahasa();
   const ubah = usePerbaruiPengguna();
+  const skema = React.useMemo(() => buatSkemaPenggunaUbah(t), [t]);
   const form = useForm<NilaiPenggunaUbah>({
-    resolver: zodResolver(skemaPenggunaUbah),
+    resolver: zodResolver(skema),
     defaultValues: nilaiDariPengguna(pengguna),
   });
 
@@ -102,11 +107,11 @@ function FormAkunUbah({ pengguna, onTutup }: { pengguna: UserView; onTutup: () =
       onUbahTerbuka={(nilai) => {
         if (!nilai) onTutup();
       }}
-      judul="Ubah akun"
+      judul={t("Ubah akun")}
       deskripsi={pengguna.email}
       ukuran="max-w-xl"
       memuat={ubah.isPending}
-      labelKirim="Simpan perubahan"
+      labelKirim={t("Simpan perubahan")}
       onSubmit={form.handleSubmit(kirim)}
     >
       <BidangPenggunaUbah control={form.control} />
@@ -115,6 +120,7 @@ function FormAkunUbah({ pengguna, onTutup }: { pengguna: UserView; onTutup: () =
 }
 
 export function ManajemenAkun() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery<FilterAkun>({ perPage: 10 });
   const daftar = useDaftarPengguna(tabel.query);
   const ubahStatus = useUbahStatusPengguna();
@@ -150,16 +156,16 @@ export function ManajemenAkun() {
     if (!tautanReset) return;
     try {
       await navigator.clipboard.writeText(tautanReset);
-      toastSukses("Tautan reset disalin");
+      toastSukses(t("Tautan reset disalin"));
     } catch {
-      toastSukses("Salin manual", tautanReset);
+      toastSukses(t("Salin manual"), tautanReset);
     }
   }
 
   const kolom: KolomTabel<UserView>[] = [
     {
       kunci: "pengguna",
-      judul: "Pengguna",
+      judul: t("Pengguna"),
       render: (baris) => (
         <span className="flex flex-col">
           <span className="font-medium text-ink">{baris.name}</span>
@@ -169,31 +175,31 @@ export function ManajemenAkun() {
     },
     {
       kunci: "peran",
-      judul: "Peran",
+      judul: t("Peran"),
       render: (baris) => <StatusBadge jenis="peran" status={baris.role} label={baris.role_label} />,
     },
     {
       kunci: "telepon",
-      judul: "Telepon",
+      judul: t("Telepon"),
       selClassName: "whitespace-nowrap text-ink-muted",
       render: (baris) => baris.phone || "-",
     },
     {
       kunci: "status",
-      judul: "Status",
+      judul: t("Status"),
       render: (baris) => (
         <StatusBadge
           jenis="pengguna"
           status={baris.status}
-          label={baris.status === "active" ? "Aktif" : "Nonaktif"}
+          label={baris.status === "active" ? t("Aktif") : t("Nonaktif")}
         />
       ),
     },
     {
       kunci: "masuk",
-      judul: "Terakhir masuk",
+      judul: t("Terakhir masuk"),
       selClassName: "whitespace-nowrap text-ink-muted",
-      render: (baris) => (baris.last_login_at ? formatWib(baris.last_login_at) : "Belum pernah"),
+      render: (baris) => (baris.last_login_at ? formatWib(baris.last_login_at) : t("Belum pernah")),
     },
     {
       kunci: "aksi",
@@ -203,13 +209,13 @@ export function ManajemenAkun() {
       render: (baris) => (
         <AksiBaris
           aksi={[
-            { label: "Ubah data", ikon: PencilLine, onPilih: () => setEditor({ mode: "ubah", pengguna: baris }) },
+            { label: t("Ubah data"), ikon: PencilLine, onPilih: () => setEditor({ mode: "ubah", pengguna: baris }) },
             {
-              label: baris.status === "active" ? "Nonaktifkan" : "Aktifkan",
+              label: baris.status === "active" ? t("Nonaktifkan") : t("Aktifkan"),
               ikon: Power,
               onPilih: () => setTargetStatus(baris),
             },
-            { label: "Reset kata sandi", ikon: KeyRound, onPilih: () => void mintaReset(baris) },
+            { label: t("Reset kata sandi"), ikon: KeyRound, onPilih: () => void mintaReset(baris) },
           ]}
         />
       ),
@@ -219,12 +225,12 @@ export function ManajemenAkun() {
   return (
     <>
       <PageHeader
-        judul="Manajemen Akun"
-        deskripsi="Kelola akun, peran, dan status seluruh pengguna platform."
+        judul={t("Manajemen Akun")}
+        deskripsi={t("Kelola akun, peran, dan status seluruh pengguna platform.")}
         aksi={
           <Button onClick={() => setEditor({ mode: "baru" })}>
             <Plus />
-            Tambah Akun
+            {t("Tambah Akun")}
           </Button>
         }
       />
@@ -240,25 +246,25 @@ export function ManajemenAkun() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari nama atau email..."
-        satuan="akun"
+        placeholderCari={t("Cari nama atau email...")}
+        satuan={t("akun")}
         filter={[
           {
             kunci: "role",
-            label: "Peran",
+            label: t("Peran"),
             nilai: tabel.filter.role,
-            opsi: OPSI_PERAN,
+            opsi: OPSI_PERAN.map((o) => ({ ...o, label: t(o.label) })),
             onUbah: (nilai) => tabel.ubahFilter("role", nilai as Role | undefined),
           },
           {
             kunci: "status",
-            label: "Status",
+            label: t("Status"),
             nilai: tabel.filter.status,
-            opsi: OPSI_STATUS_PENGGUNA,
+            opsi: OPSI_STATUS_PENGGUNA.map((o) => ({ ...o, label: t(o.label) })),
             onUbah: (nilai) => tabel.ubahFilter("status", nilai as UserStatus | undefined),
           },
         ]}
-        kosong={<EmptyState judul="Belum ada akun" deskripsi="Akun pengguna akan tampil di sini." />}
+        kosong={<EmptyState judul={t("Belum ada akun")} deskripsi={t("Akun pengguna akan tampil di sini.")} />}
       />
 
       {editor?.mode === "baru" ? <FormAkunBaru key="baru" onTutup={() => setEditor(null)} /> : null}
@@ -277,12 +283,12 @@ export function ManajemenAkun() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetStatus(null);
           }}
-          judul="Ubah status akun"
+          judul={t("Ubah status akun")}
           deskripsi={targetStatus.email}
-          opsi={OPSI_STATUS_PENGGUNA}
+          opsi={OPSI_STATUS_PENGGUNA.map((o) => ({ ...o, label: t(o.label) }))}
           nilaiAwal={targetStatus.status}
           denganAlasan
-          labelAlasan="Alasan (opsional)"
+          labelAlasan={t("Alasan (opsional)")}
           memuat={ubahStatus.isPending}
           onKirim={kirimStatus}
         />
@@ -294,13 +300,13 @@ export function ManajemenAkun() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTautanReset(null);
           }}
-          judul="Tautan reset kata sandi"
-          deskripsi="Bagikan tautan ini kepada pengguna; tautan hanya berlaku terbatas."
+          judul={t("Tautan reset kata sandi")}
+          deskripsi={t("Bagikan tautan ini kepada pengguna; tautan hanya berlaku terbatas.")}
           ukuran="max-w-lg"
           footer={
             <Button type="button" onClick={() => void salinTautan()}>
               <Check />
-              Salin tautan
+              {t("Salin tautan")}
             </Button>
           }
         >

@@ -3,11 +3,14 @@ import type { Metadata } from "next";
 
 import { CheckoutPaket } from "@/components/checkout/checkout-paket";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Checkout Paket",
-  description: "Tinjau paket langganan yang Anda pilih sebelum melanjutkan pembayaran.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Checkout Paket",
+    "Tinjau paket langganan yang Anda pilih sebelum melanjutkan pembayaran.",
+  );
+}
 
 /**
  * Checkout satu paket berbasis tautan.
@@ -18,11 +21,13 @@ export const metadata: Metadata = {
  */
 export default function CheckoutPaketPage({ params }: PageProps<"/checkout/[slug]">) {
   return (
-    <Suspense fallback={<KerangkaCheckout />}>
-      {params.then(({ slug }) => (
-        <CheckoutPaket slug={slug} />
-      ))}
-    </Suspense>
+    <>
+      <Suspense fallback={<KerangkaCheckout />}>
+        {params.then(({ slug }) => (
+          <CheckoutPaket slug={slug} />
+        ))}
+      </Suspense>
+    </>
   );
 }
 

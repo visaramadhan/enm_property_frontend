@@ -4,6 +4,7 @@ import * as React from "react";
 import type { User } from "firebase/auth";
 import { LoaderCircle } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { toastGagalAuth } from "@/lib/toast";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,7 @@ export function GoogleMark({ className }: { className?: string }) {
  * (mis. sinkronisasi sesi lalu pengalihan rute).
  */
 export function GoogleButton({
-  label = "Lanjutkan dengan Google",
+  label,
   onSukses,
   disabled,
   className,
@@ -35,6 +36,7 @@ export function GoogleButton({
   disabled?: boolean;
   className?: string;
 }) {
+  const { t } = useBahasa();
   const [memuat, setMemuat] = React.useState(false);
 
   async function masukGoogle() {
@@ -51,7 +53,7 @@ export function GoogleButton({
       const kredensial = await signInWithPopup(getFirebaseAuth(), provider);
       await onSukses(kredensial.user);
     } catch (error) {
-      toastGagalAuth("Gagal masuk dengan Google", error);
+      toastGagalAuth(t("Gagal masuk dengan Google"), error);
     } finally {
       setMemuat(false);
     }
@@ -67,7 +69,7 @@ export function GoogleButton({
       disabled={disabled || memuat}
     >
       {memuat ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <GoogleMark />}
-      {label}
+      {label ?? t("Lanjutkan dengan Google")}
     </Button>
   );
 }

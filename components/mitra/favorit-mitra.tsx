@@ -5,6 +5,7 @@ import Link from "next/link";
 import { HeartOff, Trash2 } from "lucide-react";
 
 import { SelHarga, SelProperti } from "@/components/properti/sel-properti";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { KolomTabel } from "@/components/shared/data-table";
@@ -31,6 +32,7 @@ import type { FavoriteView } from "@/types/api";
  * informatif alih-alih halaman galat, tanpa menghapus pemanggilan endpoint.
  */
 export function FavoritMitra() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery({ perPage: 10 });
   const daftar = useDaftarFavorit(tabel.query);
   const hapus = useHapusFavorit();
@@ -42,7 +44,7 @@ export function FavoritMitra() {
   const kolom: KolomTabel<FavoriteView>[] = [
     {
       kunci: "properti",
-      judul: "Properti",
+      judul: t("Properti"),
       render: (baris) =>
         baris.property ? (
           <SelProperti properti={baris.property} />
@@ -52,12 +54,12 @@ export function FavoritMitra() {
     },
     {
       kunci: "harga",
-      judul: "Harga",
+      judul: t("Harga"),
       render: (baris) => (baris.property ? <SelHarga properti={baris.property} /> : "-"),
     },
     {
       kunci: "status",
-      judul: "Status",
+      judul: t("Status"),
       render: (baris) =>
         baris.property ? (
           <StatusBadge
@@ -71,14 +73,14 @@ export function FavoritMitra() {
     },
     {
       kunci: "tayangan",
-      judul: "Tayangan",
+      judul: t("Tayangan"),
       kepalaClassName: "text-right",
       selClassName: "text-right",
       render: (baris) => <span data-numeric>{formatAngka(baris.property?.views ?? 0)}</span>,
     },
     {
       kunci: "disimpan",
-      judul: "Disimpan",
+      judul: t("Disimpan"),
       selClassName: "whitespace-nowrap text-ink-muted",
       render: (baris) => formatTanggalWib(baris.created_at),
     },
@@ -90,7 +92,7 @@ export function FavoritMitra() {
       render: (baris) => (
         <AksiBaris
           aksi={[
-            { label: "Hapus dari favorit", ikon: Trash2, variant: "danger", onPilih: () => setTarget(baris) },
+            { label: t("Hapus dari favorit"), ikon: Trash2, variant: "danger", onPilih: () => setTarget(baris) },
           ]}
         />
       ),
@@ -110,24 +112,24 @@ export function FavoritMitra() {
   return (
     <>
       <PageHeader
-        judul="Favorit"
-        deskripsi="Daftar properti yang Anda simpan untuk ditinjau kembali."
+        judul={t("Favorit")}
+        deskripsi={t("Daftar properti yang Anda simpan untuk ditinjau kembali.")}
       />
 
       {terbatasPeran ? (
         <Card>
           <CardContent className="pt-6">
             <Alert variant="info">
-              <AlertTitle>Fitur favorit khusus akun customer</AlertTitle>
+              <AlertTitle>{t("Fitur favorit khusus akun customer")}</AlertTitle>
               <AlertDescription>
-                Backend hanya mengizinkan peran <span className="font-medium">customer</span> untuk
-                menyimpan properti favorit. Jelajahi katalog properti terlebih dahulu, lalu simpan
-                listing yang diminati melalui akun customer.
+                {t("Backend hanya mengizinkan peran")}{" "}
+                <span className="font-medium">customer</span>{" "}
+                {t("untuk menyimpan properti favorit. Jelajahi katalog properti terlebih dahulu, lalu simpan listing yang diminati melalui akun customer.")}
               </AlertDescription>
             </Alert>
             <div className="mt-5">
               <Button variant="outline" asChild>
-                <Link href="/mitra/properti">Lihat Properti Saya</Link>
+                <Link href="/mitra/properti">{t("Lihat Properti Saya")}</Link>
               </Button>
             </div>
           </CardContent>
@@ -135,7 +137,7 @@ export function FavoritMitra() {
       ) : daftar.isError ? (
         <ErrorState
           error={daftar.error}
-          judul="Gagal memuat favorit"
+          judul={t("Gagal memuat favorit")}
           onCobaLagi={() => void daftar.refetch()}
         />
       ) : (
@@ -146,12 +148,12 @@ export function FavoritMitra() {
           kunciBaris={(baris) => baris.id}
           memuat={daftar.isPending}
           onUbahHalaman={tabel.aturHalaman}
-          satuan="favorit"
+          satuan={t("favorit")}
           kosong={
             <EmptyState
               ikon={HeartOff}
-              judul="Belum ada favorit"
-              deskripsi="Properti yang Anda simpan akan tampil di sini."
+              judul={t("Belum ada favorit")}
+              deskripsi={t("Properti yang Anda simpan akan tampil di sini.")}
             />
           }
         />
@@ -164,13 +166,15 @@ export function FavoritMitra() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTarget(null);
           }}
-          judul="Hapus dari favorit"
+          judul={t("Hapus dari favorit")}
           deskripsi={
             target.property
-              ? `Properti "${target.property.title}" akan dihapus dari daftar favorit Anda.`
-              : "Properti ini akan dihapus dari daftar favorit Anda."
+              ? t('Properti "{judul}" akan dihapus dari daftar favorit Anda.', {
+                  judul: target.property.title,
+                })
+              : t("Properti ini akan dihapus dari daftar favorit Anda.")
           }
-          labelKonfirmasi="Hapus"
+          labelKonfirmasi={t("Hapus")}
           variant="danger"
           memuat={hapus.isPending}
           onKonfirmasi={() => void konfirmasiHapus()}

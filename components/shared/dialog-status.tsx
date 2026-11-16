@@ -1,9 +1,11 @@
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { FormDialog } from "@/components/shared/form-dialog";
 import { SelectField, TextareaField, type OpsiSelect } from "@/components/shared/form-field";
 
@@ -18,12 +20,15 @@ import { SelectField, TextareaField, type OpsiSelect } from "@/components/shared
  * agar nilai awal terisi tanpa memerlukan effect sinkronisasi.
  */
 
-const skema = z.object({
-  status: z.string().min(1, "Pilih status terlebih dahulu"),
-  reason: z.string().trim().max(255, "Alasan maksimal 255 karakter"),
-});
+/** Skema validasi dibuat per pemanggil agar pesan error mengikuti bahasa aktif. */
+function buatSkema(t: (teks: string) => string) {
+  return z.object({
+    status: z.string().min(1, t("Pilih status terlebih dahulu")),
+    reason: z.string().trim().max(255, t("Alasan maksimal 255 karakter")),
+  });
+}
 
-export type NilaiStatus = z.infer<typeof skema>;
+export type NilaiStatus = z.infer<ReturnType<typeof buatSkema>>;
 
 export function DialogUbahStatus({
   terbuka,
@@ -32,10 +37,10 @@ export function DialogUbahStatus({
   deskripsi,
   opsi,
   nilaiAwal = "",
-  labelStatus = "Status baru",
+  labelStatus,
   denganAlasan = false,
-  labelAlasan = "Alasan",
-  labelKirim = "Perbarui status",
+  labelAlasan,
+  labelKirim,
   memuat = false,
   onKirim,
 }: {
@@ -52,6 +57,12 @@ export function DialogUbahStatus({
   memuat?: boolean;
   onKirim: (nilai: NilaiStatus) => void;
 }) {
+  const { t } = useBahasa();
+  const skema = React.useMemo(() => buatSkema(t), [t]);
+  const teksLabelStatus = labelStatus ?? t("Status baru");
+  const teksLabelAlasan = labelAlasan ?? t("Alasan");
+  const teksLabelKirim = labelKirim ?? t("Perbarui status");
+
   const form = useForm<NilaiStatus>({
     resolver: zodResolver(skema),
     defaultValues: { status: nilaiAwal, reason: "" },
@@ -64,24 +75,24 @@ export function DialogUbahStatus({
       judul={judul}
       deskripsi={deskripsi}
       memuat={memuat}
-      labelKirim={labelKirim}
+      labelKirim={teksLabelKirim}
       onSubmit={form.handleSubmit(onKirim)}
     >
       <SelectField
         control={form.control}
         name="status"
-        label={labelStatus}
+        label={teksLabelStatus}
         opsi={opsi}
         wajib
-        placeholder="Pilih status"
+        placeholder={t("Pilih status")}
       />
       {denganAlasan ? (
         <TextareaField
           control={form.control}
           name="reason"
-          label={labelAlasan}
+          label={teksLabelAlasan}
           rows={3}
-          deskripsi="Opsional, akan dicatat pada audit log."
+          deskripsi={t("Opsional, akan dicatat pada audit log.")}
         />
       ) : null}
     </FormDialog>

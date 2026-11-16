@@ -4,6 +4,7 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { cn } from "@/lib/utils";
 
 const Sheet = DialogPrimitive.Root;
@@ -34,6 +35,7 @@ function SheetContent({
   children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & { side?: "left" | "right" }) {
+  const { t } = useBahasa();
   return (
     <DialogPrimitive.Portal>
       <SheetOverlay />
@@ -55,7 +57,7 @@ function SheetContent({
       >
         {children}
         <DialogPrimitive.Close
-          aria-label="Tutup menu"
+          aria-label={t("Tutup menu")}
           className="absolute top-5 right-4 flex size-11 items-center justify-center rounded-field text-secondary-foreground/80 transition-colors duration-150 ease-out hover:bg-white/10 hover:text-secondary-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <X className="size-5" />

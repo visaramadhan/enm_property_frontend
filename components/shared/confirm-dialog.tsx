@@ -3,6 +3,7 @@
 import * as React from "react";
 import { LoaderCircle } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,8 +25,8 @@ export function ConfirmDialog({
   onUbahTerbuka,
   judul,
   deskripsi,
-  labelKonfirmasi = "Konfirmasi",
-  labelBatal = "Batal",
+  labelKonfirmasi,
+  labelBatal,
   variant = "primary",
   memuat = false,
   onKonfirmasi,
@@ -42,6 +43,10 @@ export function ConfirmDialog({
   onKonfirmasi: () => void;
   children?: React.ReactNode;
 }) {
+  const { t } = useBahasa();
+  const teksKonfirmasi = labelKonfirmasi ?? t("Konfirmasi");
+  const teksBatal = labelBatal ?? t("Batal");
+
   return (
     <Dialog open={terbuka} onOpenChange={onUbahTerbuka}>
       <DialogContent className="max-w-md">
@@ -59,11 +64,11 @@ export function ConfirmDialog({
             onClick={() => onUbahTerbuka(false)}
             disabled={memuat}
           >
-            {labelBatal}
+            {teksBatal}
           </Button>
           <Button type="button" variant={variant} onClick={onKonfirmasi} disabled={memuat}>
             {memuat ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : null}
-            {labelKonfirmasi}
+            {teksKonfirmasi}
           </Button>
         </DialogFooter>
       </DialogContent>

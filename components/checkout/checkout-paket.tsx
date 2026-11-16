@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { CheckboxField } from "@/components/shared/form-field";
@@ -33,47 +35,61 @@ import type { PlanView } from "@/types/api";
  * dan mengonfirmasi, pembayaran dilanjutkan ke halaman pembayaran QRIS/VA.
  */
 
-const skemaKonfirmasi = z.object({
-  agree_agreement: z
-    .boolean()
-    .refine((nilai) => nilai === true, "Anda harus menyetujui perjanjian kemitraan terlebih dahulu"),
-});
+function buatSkemaKonfirmasi(t: (teks: string) => string) {
+  return z.object({
+    agree_agreement: z
+      .boolean()
+      .refine((nilai) => nilai === true, t("Anda harus menyetujui perjanjian kemitraan terlebih dahulu")),
+  });
+}
 
-type NilaiKonfirmasi = z.infer<typeof skemaKonfirmasi>;
+type NilaiKonfirmasi = z.infer<ReturnType<typeof buatSkemaKonfirmasi>>;
 
 /** Ringkasan paket yang dipilih, tanpa tombol apa pun. */
 function KartuRingkasanPaket({ paket }: { paket: PlanView }) {
+  const { t } = useBahasa();
+
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-4">
         <div className="flex flex-col gap-1">
           <CardTitle>{paket.name}</CardTitle>
-          <CardDescription>{paket.description || "Paket langganan mitra ENM Property."}</CardDescription>
+          <CardDescription>
+            {paket.description || t("Paket langganan mitra ENM Property.")}
+          </CardDescription>
         </div>
-        {paket.is_free ? <Badge variant="success">Gratis</Badge> : null}
+        {paket.is_free ? <Badge variant="success">{t("Gratis")}</Badge> : null}
       </CardHeader>
 
       <CardContent className="flex flex-col gap-6">
         <span data-numeric className="text-3xl font-semibold tracking-tight text-ink">
-          {paket.is_free ? "Gratis" : paket.price_label || formatRupiah(paket.price)}
+          {paket.is_free ? t("Gratis") : paket.price_label || formatRupiah(paket.price)}
         </span>
 
         <DaftarDeskripsi
           kolom={3}
           item={[
             {
-              label: "Durasi",
-              nilai: paket.duration_days > 0 ? `${formatAngka(paket.duration_days)} hari` : "Tanpa batas",
+              label: t("Durasi"),
+              nilai:
+                paket.duration_days > 0
+                  ? t("{n} hari", { n: formatAngka(paket.duration_days) })
+                  : t("Tanpa batas"),
             },
             {
-              label: "Kuota listing",
-              nilai: paket.is_unlimited ? "Tanpa batas" : `${formatAngka(paket.listing_quota)} listing`,
+              label: t("Kuota listing"),
+              nilai: paket.is_unlimited
+                ? t("Tanpa batas")
+                : t("{n} listing", { n: formatAngka(paket.listing_quota) }),
             },
-            { label: "Level paket", nilai: `Level ${paket.level}` },
-            { label: "Boost katalog", nilai: paket.boost_enabled ? "Aktif" : "Tidak termasuk" },
-            { label: "Akses keyword", nilai: paket.keyword_access ? "Tersedia" : "Tidak tersedia" },
-            { label: "Akses katalog", nilai: paket.catalog_access ? "Tersedia" : "Tidak tersedia" },
-            { label: "Akses nomor WA", nilai: paket.whatsapp_access ? "Tersedia" : "Tidak tersedia" },
+            { label: t("Level paket"), nilai: t("Level {level}", { level: paket.level }) },
+            {
+              label: t("Boost katalog"),
+              nilai: paket.boost_enabled ? t("Aktif") : t("Tidak termasuk"),
+            },
+            { label: t("Akses keyword"), nilai: paket.keyword_access ? t("Tersedia") : t("Tidak tersedia") },
+            { label: t("Akses katalog"), nilai: paket.catalog_access ? t("Tersedia") : t("Tidak tersedia") },
+            { label: t("Akses nomor WA"), nilai: paket.whatsapp_access ? t("Tersedia") : t("Tidak tersedia") },
           ]}
         />
 
@@ -94,6 +110,7 @@ function KartuRingkasanPaket({ paket }: { paket: PlanView }) {
 
 /** Ajakan masuk/daftar ketika tautan checkout dibuka tanpa sesi aktif. */
 function KartuAjakanMasuk({ lanjut }: { lanjut: string }) {
+  const { t } = useBahasa();
   const tujuan = encodeURIComponent(lanjut);
 
   return (
@@ -101,10 +118,12 @@ function KartuAjakanMasuk({ lanjut }: { lanjut: string }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="size-4 text-secondary" aria-hidden="true" />
-          Masuk untuk melanjutkan
+          {t("Masuk untuk melanjutkan")}
         </CardTitle>
         <CardDescription>
-          Anda perlu masuk untuk menyetujui perjanjian kemitraan dan melanjutkan pembayaran.
+          {t(
+            "Anda perlu masuk untuk menyetujui perjanjian kemitraan dan melanjutkan pembayaran.",
+          )}
         </CardDescription>
       </CardHeader>
 
@@ -112,13 +131,13 @@ function KartuAjakanMasuk({ lanjut }: { lanjut: string }) {
         <Button asChild>
           <Link href={`/login?lanjut=${tujuan}`}>
             <LogIn />
-            Masuk
+            {t("Masuk")}
           </Link>
         </Button>
         <Button variant="outline" asChild>
           <Link href={`/register?lanjut=${tujuan}`}>
             <UserPlus />
-            Daftar akun
+            {t("Daftar akun")}
           </Link>
         </Button>
       </CardContent>
@@ -128,6 +147,7 @@ function KartuAjakanMasuk({ lanjut }: { lanjut: string }) {
 
 /** Ajakan melengkapi data mitra sebelum checkout (permintaan A & 8). */
 function KartuLengkapiMitra({ lanjut }: { lanjut: string }) {
+  const { t } = useBahasa();
   const tujuan = encodeURIComponent(lanjut);
 
   return (
@@ -135,11 +155,12 @@ function KartuLengkapiMitra({ lanjut }: { lanjut: string }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Store className="size-4 text-secondary" aria-hidden="true" />
-          Lengkapi data mitra dulu
+          {t("Lengkapi data mitra dulu")}
         </CardTitle>
         <CardDescription>
-          Sebelum berlangganan, Anda perlu mengisi data badan usaha lewat pendaftaran mitra. Setelah
-          itu Anda otomatis kembali ke halaman ini untuk menyelesaikan pembayaran.
+          {t(
+            "Sebelum berlangganan, Anda perlu mengisi data badan usaha lewat pendaftaran mitra. Setelah itu Anda otomatis kembali ke halaman ini untuk menyelesaikan pembayaran.",
+          )}
         </CardDescription>
       </CardHeader>
 
@@ -147,7 +168,7 @@ function KartuLengkapiMitra({ lanjut }: { lanjut: string }) {
         <Button asChild>
           <Link href={`/daftar-mitra?lanjut=${tujuan}`}>
             <Store />
-            Daftar Sebagai Mitra
+            {t("Daftar Sebagai Mitra")}
           </Link>
         </Button>
       </CardContent>
@@ -159,16 +180,19 @@ function KartuLengkapiMitra({ lanjut }: { lanjut: string }) {
 function PanelKonfirmasi({ paket }: { paket: PlanView }) {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useBahasa();
   const { pengguna, memuat } = useAuth();
   const perjanjian = usePerjanjianAktif();
   const checkout = useCheckout();
   const siapkanSesi = useSiapkanSesi();
 
   const gratis = paket.is_free;
+  const skemaKonfirmasi = React.useMemo(() => buatSkemaKonfirmasi(t), [t]);
 
   const form = useForm<NilaiKonfirmasi>({
     resolver: zodResolver(skemaKonfirmasi),
-    defaultValues: { agree_agreement: gratis },
+    /* Persetujuan wajib dicentang mitra, termasuk untuk paket Gratis. */
+    defaultValues: { agree_agreement: false },
   });
 
   if (memuat) {
@@ -185,29 +209,29 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
     return <KartuLengkapiMitra lanjut={pathname} />;
   }
 
-  /* Paket Gratis langsung aktif tanpa perjanjian, sehingga data perjanjian
-     tidak diperlukan dan tidak boleh menahan tombol aktivasi. */
-  if (!gratis) {
-    if (perjanjian.isPending) {
-      return <Skeleton className="h-72 rounded-card" />;
-    }
-
-    if (perjanjian.isError || !perjanjian.data) {
-      return (
-        <Alert variant="danger">
-          <AlertTitle>Gagal memuat data konfirmasi</AlertTitle>
-          <AlertDescription>Muat ulang halaman untuk mencoba lagi.</AlertDescription>
-        </Alert>
-      );
-    }
+  /* Perjanjian aktif dibutuhkan baik untuk paket Gratis maupun berbayar karena
+     persetujuan mitra dicatatkan saat checkout. */
+  if (perjanjian.isPending) {
+    return <Skeleton className="h-72 rounded-card" />;
   }
+
+  if (perjanjian.isError || !perjanjian.data) {
+    return (
+      <Alert variant="danger">
+        <AlertTitle>{t("Gagal memuat data konfirmasi")}</AlertTitle>
+        <AlertDescription>{t("Muat ulang halaman untuk mencoba lagi.")}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  const detail = perjanjian.data;
 
   async function kirim(nilai: NilaiKonfirmasi) {
     try {
       const hasil = await checkout.mutateAsync({
         package_slug: paket.slug,
-        agree_agreement: gratis ? true : nilai.agree_agreement,
-        agreement_id: gratis ? undefined : perjanjian.data?.id,
+        agree_agreement: nilai.agree_agreement,
+        agreement_id: detail.id,
       });
 
       // Peran pengguna dinaikkan menjadi mitra saat checkout, jadi sesi disegarkan
@@ -215,52 +239,16 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
       await siapkanSesi().catch(() => undefined);
 
       if (hasil.free_active) {
-        toastSukses("Paket aktif", `Paket ${paket.name} langsung aktif tanpa biaya.`);
+        toastSukses(t("Paket aktif"), t("Paket {nama} langsung aktif tanpa biaya.", { nama: paket.name }));
         router.push("/mitra/langganan");
         return;
       }
 
-      toastSukses("Pesanan dibuat", "Lanjutkan pembayaran melalui QRIS atau virtual account.");
+      toastSukses(t("Pesanan dibuat"), t("Lanjutkan pembayaran melalui QRIS atau virtual account."));
       router.push(`/pembayaran/${hasil.order.code}`);
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
     }
-  }
-
-  if (gratis) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="size-4 text-secondary" aria-hidden="true" />
-            Aktifkan Paket Gratis
-          </CardTitle>
-          <CardDescription>
-            Paket Gratis langsung aktif tanpa biaya. Perjanjian kemitraan akan diminta saat Anda
-            pertama kali masuk dashboard mitra.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <div className="flex justify-end">
-            <Button
-              type="button"
-              disabled={checkout.isPending}
-              onClick={() => void kirim({ agree_agreement: true })}
-            >
-              {checkout.isPending ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
-              Aktifkan paket
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  /* Setelah guard di atas, `perjanjian.data` dijamin ada untuk paket berbayar. */
-  const detail = perjanjian.data;
-  if (!detail) {
-    return null;
   }
 
   return (
@@ -268,10 +256,12 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ShieldCheck className="size-4 text-secondary" aria-hidden="true" />
-          Perjanjian & Konfirmasi
+          {gratis ? t("Perjanjian Kemitraan") : t("Perjanjian & Konfirmasi")}
         </CardTitle>
         <CardDescription>
-          Perjanjian kemitraan wajib disetujui sebelum pembayaran paket.
+          {gratis
+            ? t("Perjanjian kemitraan wajib disetujui sebelum mengaktifkan paket Gratis.")
+            : t("Perjanjian kemitraan wajib disetujui sebelum pembayaran paket.")}
         </CardDescription>
       </CardHeader>
 
@@ -280,7 +270,7 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <span className="font-medium text-ink">{detail.title}</span>
-              <Badge variant="neutral">Versi {detail.version}</Badge>
+              <Badge variant="neutral">{t("Versi {versi}", { versi: detail.version })}</Badge>
             </div>
             <p className="max-h-40 overflow-y-auto rounded-field border border-line bg-hover/50 p-4 text-[13px] whitespace-pre-line text-ink-muted">
               {detail.content}
@@ -290,14 +280,14 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
           <CheckboxField
             control={form.control}
             name="agree_agreement"
-            label="Saya menyetujui perjanjian kemitraan ENM Property."
-            deskripsi="Perjanjian akan tercatat saat Anda melanjutkan."
+            label={t("Saya menyetujui perjanjian kemitraan ENM Property.")}
+            deskripsi={t("Perjanjian akan tercatat saat Anda melanjutkan.")}
           />
 
           <div className="flex justify-end">
             <Button type="submit" disabled={checkout.isPending}>
               {checkout.isPending ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
-              {paket.is_free ? "Aktifkan paket" : "Lanjut ke pembayaran"}
+              {gratis ? t("Aktifkan paket") : t("Lanjut ke pembayaran")}
             </Button>
           </div>
         </form>
@@ -307,14 +297,15 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
 }
 
 export function CheckoutPaket({ slug }: { slug: string }) {
+  const { t } = useBahasa();
   const paket = useDetailPaket(slug);
 
   return (
     <>
       <TombolBeranda />
       <PageHeader
-        judul="Checkout Paket"
-        deskripsi="Tinjau paket yang Anda pilih sebelum melanjutkan pembayaran."
+        judul={t("Checkout Paket")}
+        deskripsi={t("Tinjau paket yang Anda pilih sebelum melanjutkan pembayaran.")}
       />
 
       <KontenAsync
@@ -325,7 +316,7 @@ export function CheckoutPaket({ slug }: { slug: string }) {
             <Skeleton className="h-72 rounded-card" />
           </div>
         }
-        judulGagal="Gagal memuat paket"
+        judulGagal={t("Gagal memuat paket")}
       >
         {(data) => (
           <div className="flex flex-col gap-6">

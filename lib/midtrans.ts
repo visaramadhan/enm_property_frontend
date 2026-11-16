@@ -1,3 +1,5 @@
+import type { Bahasa } from "@/lib/bahasa";
+
 const SNAP_SANDBOX_URL = "https://app.sandbox.midtrans.com/snap/snap.js";
 const SNAP_PRODUCTION_URL = "https://app.midtrans.com/snap/snap.js";
 
@@ -65,8 +67,12 @@ export function loadSnap(): Promise<Snap> {
 
 /**
  * Buka popup pembayaran Midtrans Snap memakai Snap Token dari backend.
+ *
+ * `bahasa` mengikuti pilihan bahasa aplikasi sehingga teks di dalam popup Snap
+ * (tombol dan instruksi pembayaran) ikut berbahasa Inggris saat pengguna
+ * memilih English.
  */
-export async function bukaSnap(token: string, callbacks: SnapCallbacks = {}) {
+export async function bukaSnap(token: string, callbacks: SnapCallbacks = {}, bahasa: Bahasa = "id") {
   const snap = await loadSnap();
-  snap.pay(token, { language: "id", ...callbacks });
+  snap.pay(token, { language: bahasa, ...callbacks });
 }

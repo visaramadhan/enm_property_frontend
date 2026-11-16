@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Heart } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { useProfilSaya } from "@/lib/api/hooks";
 
@@ -14,6 +15,7 @@ import { useProfilSaya } from "@/lib/api/hooks";
  * apa pun sehingga tidak terjadi hydration mismatch.
  */
 export function TautanFavorit() {
+  const { t } = useBahasa();
   const profil = useProfilSaya();
 
   if (profil.data?.role !== "customer") return null;
@@ -22,7 +24,7 @@ export function TautanFavorit() {
     <Button variant="outline" asChild>
       <Link href="/akun/favorit">
         <Heart />
-        Favorit Saya
+        {t("Favorit Saya")}
       </Link>
     </Button>
   );

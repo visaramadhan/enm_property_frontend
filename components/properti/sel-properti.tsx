@@ -1,3 +1,6 @@
+"use client";
+
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { LABEL } from "@/lib/enum";
 import { formatRupiah } from "@/lib/format";
 import type { PropertySummary } from "@/types/api";
@@ -16,6 +19,8 @@ export function SelProperti({ properti }: { properti: PropertySummary }) {
 
 /** Sel harga beserta periode sewanya. */
 export function SelHarga({ properti }: { properti: PropertySummary }) {
+  const { t } = useBahasa();
+
   return (
     <span className="flex flex-col">
       <span data-numeric className="font-medium text-ink">
@@ -23,7 +28,7 @@ export function SelHarga({ properti }: { properti: PropertySummary }) {
       </span>
       <span className="text-xs text-ink-muted">
         {properti.listing_type_label}
-        {properti.price_period ? ` · ${LABEL.periodeHarga[properti.price_period]}` : ""}
+        {properti.price_period ? ` · ${t(LABEL.periodeHarga[properti.price_period])}` : ""}
       </span>
     </span>
   );

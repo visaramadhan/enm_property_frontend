@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { MetadataDinamis } from "@/components/shared/metadata-dinamis";
 import { HeaderPublik } from "@/components/layout/header-publik";
 
 /**
@@ -11,6 +12,7 @@ import { HeaderPublik } from "@/components/layout/header-publik";
 export default function PengelolaLayout(props: LayoutProps<"/pengelola">) {
   return (
     <AuthProvider>
+      <MetadataDinamis />
       <div className="flex min-h-screen flex-col bg-canvas">
         <HeaderPublik tagline="Profil Pengelola" />
 

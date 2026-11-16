@@ -6,6 +6,7 @@ import { LoaderCircle, Save } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { TextField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
@@ -30,20 +31,29 @@ import type { UserView } from "@/types/api";
  * `useProfilSaya` dan disimpan melalui `usePerbaruiProfilSaya`.
  */
 
-const skemaProfil = z.object({
-  name: z.string().trim().min(3, "Nama minimal 3 karakter").max(100, "Nama maksimal 100 karakter"),
-  phone: z
-    .string()
-    .trim()
-    .refine(
-      (nilai) => nilai === "" || (nilai.length >= 8 && nilai.length <= 20),
-      "Nomor telepon 8-20 digit",
-    ),
-});
+/** Skema validasi dibuat per pemanggil agar pesan error mengikuti bahasa aktif. */
+function buatSkemaProfil(t: (teks: string) => string) {
+  return z.object({
+    name: z
+      .string()
+      .trim()
+      .min(3, t("Nama minimal 3 karakter"))
+      .max(100, t("Nama maksimal 100 karakter")),
+    phone: z
+      .string()
+      .trim()
+      .refine(
+        (nilai) => nilai === "" || (nilai.length >= 8 && nilai.length <= 20),
+        t("Nomor telepon 8-20 digit"),
+      ),
+  });
+}
 
-type NilaiProfil = z.infer<typeof skemaProfil>;
+type NilaiProfil = z.infer<ReturnType<typeof buatSkemaProfil>>;
 
 function KartuProfil({ pengguna }: { pengguna: UserView }) {
+  const { t } = useBahasa();
+  const skemaProfil = React.useMemo(() => buatSkemaProfil(t), [t]);
   const simpan = usePerbaruiProfilSaya();
   const form = useForm<NilaiProfil>({
     resolver: zodResolver(skemaProfil),
@@ -69,8 +79,8 @@ function KartuProfil({ pengguna }: { pengguna: UserView }) {
     <div className="grid gap-6 lg:grid-cols-3">
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Identitas Akun</CardTitle>
-          <CardDescription>Perbarui nama tampilan dan nomor telepon Anda.</CardDescription>
+          <CardTitle>{t("Identitas Akun")}</CardTitle>
+          <CardDescription>{t("Perbarui nama tampilan dan nomor telepon Anda.")}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(kirim)} noValidate className="flex flex-col gap-5">
@@ -88,24 +98,24 @@ function KartuProfil({ pengguna }: { pengguna: UserView }) {
             <TextField
               control={form.control}
               name="name"
-              label="Nama lengkap"
+              label={t("Nama lengkap")}
               wajib
               autoComplete="name"
             />
             <TextField
               control={form.control}
               name="phone"
-              label="Nomor telepon"
+              label={t("Nomor telepon")}
               type="tel"
               inputMode="tel"
               autoComplete="tel"
-              deskripsi="Opsional, 8-20 digit."
+              deskripsi={t("Opsional, 8-20 digit.")}
             />
 
             <div className="flex justify-end">
               <Button type="submit" disabled={simpan.isPending || !berubah}>
                 {simpan.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Save />}
-                Simpan perubahan
+                {t("Simpan perubahan")}
               </Button>
             </div>
           </form>
@@ -114,29 +124,35 @@ function KartuProfil({ pengguna }: { pengguna: UserView }) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Informasi Akun</CardTitle>
-          <CardDescription>Data ini hanya dapat diubah oleh superadmin.</CardDescription>
+          <CardTitle>{t("Informasi Akun")}</CardTitle>
+          <CardDescription>{t("Data ini hanya dapat diubah oleh superadmin.")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="accent">{LABEL_PERAN[pengguna.role]}</Badge>
             <StatusBadge jenis="pengguna" status={pengguna.status} label={LABEL.statusPengguna[pengguna.status]} />
             {pengguna.email_verified ? (
-              <StatusBadge jenis="pengguna" status="active" label="Email terverifikasi" />
+              <StatusBadge jenis="pengguna" status="active" label={t("Email terverifikasi")} />
             ) : (
-              <StatusBadge jenis="properti" status="pending_review" label="Email belum terverifikasi" />
+              <StatusBadge
+                jenis="properti"
+                status="pending_review"
+                label={t("Email belum terverifikasi")}
+              />
             )}
           </div>
 
           <DaftarDeskripsi
             kolom={1}
             item={[
-              { label: "Email", nilai: pengguna.email },
+              { label: t("Email"), nilai: pengguna.email },
               {
-                label: "Terakhir masuk",
-                nilai: pengguna.last_login_at ? formatWib(pengguna.last_login_at) : "Belum pernah",
+                label: t("Terakhir masuk"),
+                nilai: pengguna.last_login_at
+                  ? formatWib(pengguna.last_login_at)
+                  : t("Belum pernah"),
               },
-              { label: "Terdaftar", nilai: formatWib(pengguna.created_at) },
+              { label: t("Terdaftar"), nilai: formatWib(pengguna.created_at) },
             ]}
           />
         </CardContent>
@@ -146,8 +162,8 @@ function KartuProfil({ pengguna }: { pengguna: UserView }) {
 }
 
 export function ProfilAkun({
-  judul = "Profil Saya",
-  deskripsi = "Kelola informasi akun dan keamanan Anda.",
+  judul,
+  deskripsi,
   tanpaHeader = false,
   tombolBeranda = false,
   aksi,
@@ -161,12 +177,22 @@ export function ProfilAkun({
   /** Tombol tambahan di sisi kanan judul halaman (mis. tautan favorit). */
   aksi?: React.ReactNode;
 }) {
+  const { t } = useBahasa();
   const profil = useProfilSaya();
+  const teksJudul = judul ?? t("Profil Saya");
+  /* Halaman akun publik (tombolBeranda) memakai deskripsi versi penyewa. */
+  const teksDeskripsi =
+    deskripsi ??
+    (tombolBeranda
+      ? t("Perbarui identitas akun Anda dan lihat properti yang tersimpan.")
+      : t("Kelola informasi akun dan keamanan Anda."));
 
   return (
     <>
       {tombolBeranda ? <TombolBeranda selaluTampil /> : null}
-      {tanpaHeader ? null : <PageHeader judul={judul} deskripsi={deskripsi} aksi={aksi} />}
+      {tanpaHeader ? null : (
+        <PageHeader judul={teksJudul} deskripsi={teksDeskripsi} aksi={aksi} />
+      )}
       <KontenAsync
         hasil={profil}
         skeleton={
@@ -175,7 +201,7 @@ export function ProfilAkun({
             <Skeleton className="h-96 rounded-card" />
           </div>
         }
-        judulGagal="Gagal memuat profil"
+        judulGagal={t("Gagal memuat profil")}
       >
         {(pengguna) => <KartuProfil pengguna={pengguna} />}
       </KontenAsync>

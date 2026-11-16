@@ -3,11 +3,14 @@ import type { Metadata } from "next";
 
 import { PembayaranOrder } from "@/components/mitra/pembayaran-order";
 import { Skeleton } from "@/components/ui/skeleton";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Pembayaran Langganan",
-  description: "Selesaikan pembayaran paket melalui QRIS atau virtual account.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Pembayaran Langganan",
+    "Selesaikan pembayaran paket melalui QRIS atau virtual account.",
+  );
+}
 
 /**
  * Halaman pembayaran satu order (item 6).
@@ -20,11 +23,13 @@ export const metadata: Metadata = {
  */
 export default function PembayaranOrderPage({ params }: PageProps<"/pembayaran/[orderCode]">) {
   return (
-    <Suspense fallback={<KerangkaPembayaran />}>
-      {params.then(({ orderCode }) => (
-        <PembayaranOrder orderCode={orderCode} />
-      ))}
-    </Suspense>
+    <>
+      <Suspense fallback={<KerangkaPembayaran />}>
+        {params.then(({ orderCode }) => (
+          <PembayaranOrder orderCode={orderCode} />
+        ))}
+      </Suspense>
+    </>
   );
 }
 

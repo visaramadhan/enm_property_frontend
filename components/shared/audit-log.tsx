@@ -1,7 +1,9 @@
 "use client";
 
+import * as React from "react";
 import { Download } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import type { KolomTabel } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
@@ -29,60 +31,66 @@ interface FilterAudit {
   actor_role?: Role;
 }
 
-const kolomAudit: KolomTabel<AuditView>[] = [
-  {
-    kunci: "waktu",
-    judul: "Waktu",
-    selClassName: "whitespace-nowrap text-ink-muted",
-    render: (baris) => formatWib(baris.created_at),
-  },
-  {
-    kunci: "aktor",
-    judul: "Aktor",
-    render: (baris) => (
-      <span className="flex flex-col">
-        <span className="font-medium text-ink">{baris.actor_name}</span>
-        <span className="text-xs text-ink-muted">{baris.actor_email}</span>
-      </span>
-    ),
-  },
-  {
-    kunci: "peran",
-    judul: "Peran",
-    render: (baris) => <StatusBadge jenis="peran" status={baris.actor_role} />,
-  },
-  {
-    kunci: "aksi",
-    judul: "Aksi",
-    render: (baris) => <StatusBadge jenis="audit" status={baris.action} />,
-  },
-  {
-    kunci: "entitas",
-    judul: "Entitas",
-    render: (baris) => (
-      <span className="flex flex-col">
-        <span className="text-ink">{baris.entity || "-"}</span>
-        {baris.entity_id ? <span className="text-xs text-ink-muted">{baris.entity_id}</span> : null}
-      </span>
-    ),
-  },
-  {
-    kunci: "ip",
-    judul: "IP",
-    selClassName: "text-ink-muted",
-    render: (baris) => <span data-numeric>{baris.ip_address || "-"}</span>,
-  },
-  {
-    kunci: "catatan",
-    judul: "Catatan",
-    selClassName: "max-w-xs truncate text-ink-muted",
-    render: (baris) => baris.note || "-",
-  },
-];
+function kolomAudit(t: (teks: string) => string): KolomTabel<AuditView>[] {
+  return [
+    {
+      kunci: "waktu",
+      judul: t("Waktu"),
+      selClassName: "whitespace-nowrap text-ink-muted",
+      render: (baris) => formatWib(baris.created_at),
+    },
+    {
+      kunci: "aktor",
+      judul: t("Aktor"),
+      render: (baris) => (
+        <span className="flex flex-col">
+          <span className="font-medium text-ink">{baris.actor_name}</span>
+          <span className="text-xs text-ink-muted">{baris.actor_email}</span>
+        </span>
+      ),
+    },
+    {
+      kunci: "peran",
+      judul: t("Peran"),
+      render: (baris) => <StatusBadge jenis="peran" status={baris.actor_role} />,
+    },
+    {
+      kunci: "aksi",
+      judul: t("Aksi"),
+      render: (baris) => <StatusBadge jenis="audit" status={baris.action} />,
+    },
+    {
+      kunci: "entitas",
+      judul: t("Entitas"),
+      render: (baris) => (
+        <span className="flex flex-col">
+          <span className="text-ink">{baris.entity || "-"}</span>
+          {baris.entity_id ? (
+            <span className="text-xs text-ink-muted">{baris.entity_id}</span>
+          ) : null}
+        </span>
+      ),
+    },
+    {
+      kunci: "ip",
+      judul: "IP",
+      selClassName: "text-ink-muted",
+      render: (baris) => <span data-numeric>{baris.ip_address || "-"}</span>,
+    },
+    {
+      kunci: "catatan",
+      judul: t("Catatan"),
+      selClassName: "max-w-xs truncate text-ink-muted",
+      render: (baris) => baris.note || "-",
+    },
+  ];
+}
 
 export function AuditLog() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery<FilterAudit>({ perPage: 10 });
   const daftar = useDaftarAudit(tabel.query);
+  const kolom = React.useMemo(() => kolomAudit(t), [t]);
 
   async function ekspor(format: "xlsx" | "pdf") {
     await jalankanDenganToast(
@@ -91,9 +99,9 @@ export function AuditLog() {
         unduhBerkas(blob, `audit-log.${format}`);
       },
       {
-        memuat: "Menyiapkan berkas...",
-        sukses: "Berkas audit berhasil diunduh",
-        gagal: "Gagal mengunduh berkas audit",
+        memuat: t("Menyiapkan berkas..."),
+        sukses: t("Berkas audit berhasil diunduh"),
+        gagal: t("Gagal mengunduh berkas audit"),
       },
     );
   }
@@ -101,8 +109,8 @@ export function AuditLog() {
   return (
     <>
       <PageHeader
-        judul="Audit Log"
-        deskripsi="Jejak seluruh tindakan administratif yang tercatat pada platform."
+        judul={t("Audit Log")}
+        deskripsi={t("Jejak seluruh tindakan administratif yang tercatat pada platform.")}
         aksi={
           <>
             <Button variant="outline" onClick={() => void ekspor("xlsx")}>
@@ -118,7 +126,7 @@ export function AuditLog() {
       />
 
       <TabelData
-        kolom={kolomAudit}
+        kolom={kolom}
         data={daftar.data?.items}
         meta={daftar.data?.meta}
         kunciBaris={(baris) => baris.id}
@@ -128,19 +136,19 @@ export function AuditLog() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari aktor, entitas, atau catatan..."
-        satuan="catatan"
+        placeholderCari={t("Cari aktor, entitas, atau catatan...")}
+        satuan={t("catatan")}
         filter={[
           {
             kunci: "action",
-            label: "Aksi",
+            label: t("Aksi"),
             nilai: tabel.filter.action,
             opsi: OPSI_AKSI_AUDIT,
             onUbah: (nilai) => tabel.ubahFilter("action", nilai as AuditAction | undefined),
           },
           {
             kunci: "actor_role",
-            label: "Peran",
+            label: t("Peran"),
             nilai: tabel.filter.actor_role,
             opsi: OPSI_PERAN,
             onUbah: (nilai) => tabel.ubahFilter("actor_role", nilai as Role | undefined),
@@ -148,8 +156,8 @@ export function AuditLog() {
         ]}
         kosong={
           <EmptyState
-            judul="Belum ada catatan audit"
-            deskripsi="Aktivitas administratif akan tercatat di sini secara otomatis."
+            judul={t("Belum ada catatan audit")}
+            deskripsi={t("Aktivitas administratif akan tercatat di sini secara otomatis.")}
           />
         }
       />

@@ -7,7 +7,9 @@ import { Bell, ChevronDown, LogOut, Menu, Search, Settings, UserCog } from "luci
 
 import { PageTransition } from "@/components/layout/page-transition";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { LogoMark } from "@/components/shared/logo-situs";
+import { ToggleBahasa } from "@/components/shared/toggle-bahasa";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -70,6 +72,7 @@ function SidebarContent({
 }) {
   const meta = dashboardMeta[role];
   const sections = navTerlihat(role, peranAktif);
+  const { t } = useBahasa();
 
   return (
     <>
@@ -85,7 +88,7 @@ function SidebarContent({
             {meta.brand}
           </span>
           <span className="truncate text-[10px] font-semibold tracking-[0.145em] text-ink-subtle uppercase">
-            {meta.brandTagline}
+            {t(meta.brandTagline)}
           </span>
         </span>
       </Link>
@@ -95,7 +98,7 @@ function SidebarContent({
           <div key={section.label ?? "utama"} className="flex flex-col gap-0.5">
             {section.label ? (
               <p className="px-[11px] pt-[14px] pb-2 text-[10px] font-bold tracking-[0.145em] text-ink-subtle uppercase">
-                {section.label}
+                {t(section.label)}
               </p>
             ) : null}
 
@@ -125,7 +128,7 @@ function SidebarContent({
                     className={cn("size-[17px] shrink-0", aktif ? "text-secondary" : "text-icon-muted")}
                     aria-hidden="true"
                   />
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate">{t(item.label)}</span>
                 </Link>
               );
             })}
@@ -160,6 +163,7 @@ export function DashboardShell({
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const tanggalWib = useTanggalWib();
   const { pengguna, keluar } = useAuth();
+  const { t } = useBahasa();
   const meta = dashboardMeta[role];
   const judul = cariJudulHalaman(role, pathname);
 
@@ -189,7 +193,7 @@ export function DashboardShell({
       {/* Drawer mobile dengan backdrop blur (bagian 8) */}
       <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>
         <SheetContent side="left" className="p-0">
-          <SheetTitle className="sr-only">Menu navigasi {meta.brandTagline}</SheetTitle>
+          <SheetTitle className="sr-only">{t("Menu navigasi {tagline}", { tagline: t(meta.brandTagline) })}</SheetTitle>
           <div className="flex h-full flex-col">
             <SidebarContent
               role={role}
@@ -210,13 +214,13 @@ export function DashboardShell({
             size="icon"
             className="lg:hidden"
             onClick={() => setDrawerOpen(true)}
-            aria-label="Buka menu navigasi"
+            aria-label={t("Buka menu navigasi")}
           >
             <Menu />
           </Button>
 
           <div className="flex min-w-0 flex-col">
-            <h1 className="truncate text-base font-semibold text-ink">{judul}</h1>
+            <h1 className="truncate text-base font-semibold text-ink">{t(judul)}</h1>
             <p className="hidden truncate text-xs text-ink-muted sm:block">{tanggalWib}</p>
           </div>
 
@@ -228,13 +232,15 @@ export function DashboardShell({
               />
               <Input
                 type="search"
-                placeholder="Cari properti, mitra, invoice..."
-                aria-label="Cari"
+                placeholder={t("Cari properti, mitra, invoice...")}
+                aria-label={t("Cari")}
                 className="h-10 w-56 pl-9 lg:w-72"
               />
             </div>
 
-            <Button variant="ghost" size="icon" aria-label="Notifikasi" className="relative">
+            <ToggleBahasa />
+
+            <Button variant="ghost" size="icon" aria-label={t("Notifikasi")} className="relative">
               <Bell />
               <span className="absolute top-3 right-3 size-2 rounded-full bg-accent" />
             </Button>
@@ -243,7 +249,7 @@ export function DashboardShell({
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  aria-label="Menu akun"
+                  aria-label={t("Menu akun")}
                   className="flex items-center gap-2 rounded-sm p-1 pr-2 transition-colors duration-150 ease-out hover:bg-hover"
                 >
                   <Avatar size="sm">
@@ -261,7 +267,7 @@ export function DashboardShell({
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="w-64">
-                <DropdownMenuLabel>Masuk sebagai</DropdownMenuLabel>
+                <DropdownMenuLabel>{t("Masuk sebagai")}</DropdownMenuLabel>
                 <div className="px-3 pb-1">
                   <p className="truncate text-sm font-medium text-ink">{identitas.nama}</p>
                   <p className="truncate text-xs text-ink-muted">{identitas.email}</p>
@@ -273,21 +279,21 @@ export function DashboardShell({
                 <DropdownMenuItem asChild>
                   <Link href={`/${role}/profil`}>
                     <UserCog />
-                    Profil Saya
+                    {t("Profil Saya")}
                   </Link>
                 </DropdownMenuItem>
                 {pengguna?.role === "superadmin" ? (
                   <DropdownMenuItem asChild>
                     <Link href="/admin/pengaturan">
                       <Settings />
-                      Pengaturan
+                      {t("Pengaturan")}
                     </Link>
                   </DropdownMenuItem>
                 ) : null}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem variant="danger" onSelect={() => void keluar()}>
                   <LogOut />
-                  Keluar
+                  {t("Keluar")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { EmptyState } from "@/components/shared/empty-state";
 import { kolomPartnerReport } from "@/components/shared/kolom-laporan";
 import { PageHeader } from "@/components/shared/page-header";
@@ -20,14 +21,15 @@ interface FilterMitra {
  * `meta` dapat diteruskan langsung ke `TabelData` tanpa penyusunan manual.
  */
 export function LaporanMitraOwner() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery<FilterMitra>({ perPage: 10 });
   const daftar = useLaporanMitraOwner(tabel.query);
 
   return (
     <>
       <PageHeader
-        judul="Laporan Mitra"
-        deskripsi="Kinerja katalog dan interaksi setiap mitra di platform."
+        judul={t("Laporan Mitra")}
+        deskripsi={t("Kinerja katalog dan interaksi setiap mitra di platform.")}
       />
 
       <TabelData
@@ -41,21 +43,21 @@ export function LaporanMitraOwner() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari nama bisnis, PIC, atau kota..."
-        satuan="mitra"
+        placeholderCari={t("Cari nama bisnis, PIC, atau kota...")}
+        satuan={t("mitra")}
         filter={[
           {
             kunci: "status",
-            label: "Status",
+            label: t("Status"),
             nilai: tabel.filter.status,
-            opsi: OPSI_STATUS_MITRA,
+            opsi: OPSI_STATUS_MITRA.map((o) => ({ ...o, label: t(o.label) })),
             onUbah: (nilai) => tabel.ubahFilter("status", nilai as PartnerStatus | undefined),
           },
         ]}
         kosong={
           <EmptyState
-            judul="Belum ada data mitra"
-            deskripsi="Kinerja mitra akan tampil di sini setelah ada aktivitas."
+            judul={t("Belum ada data mitra")}
+            deskripsi={t("Kinerja mitra akan tampil di sini setelah ada aktivitas.")}
           />
         }
       />

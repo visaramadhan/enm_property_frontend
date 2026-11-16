@@ -7,12 +7,9 @@
  * cadangan ketika kolom CMS belum diisi. Dengan begitu halaman `/en` tidak
  * pernah tampil kosong walau terjemahan CMS belum lengkap.
  */
-export type Bahasa = "id" | "en";
+import type { Bahasa } from "@/lib/bahasa";
 
-/** Kunci bahasa yang dikenali; selain ini selalu jatuh ke Indonesia. */
-export const BAHASA_BAWAAN: Bahasa = "id";
-/** Nama cookie penyimpan pilihan bahasa pengunjung. */
-export const COOKIE_BAHASA = "enm_bahasa";
+export { BAHASA_BAWAAN, COOKIE_BAHASA, keBahasa, type Bahasa } from "@/lib/bahasa";
 
 const ID = {
   meta: {
@@ -487,11 +484,6 @@ export const KAMUS: Record<Bahasa, Kamus> = { id: ID, en: EN };
 /** Mengambil kamus untuk satu bahasa. */
 export function kamus(bahasa: Bahasa): Kamus {
   return KAMUS[bahasa];
-}
-
-/** Menormalkan string apa pun menjadi kunci bahasa yang sah. */
-export function keBahasa(nilai: string | undefined | null): Bahasa {
-  return nilai === "en" ? "en" : BAHASA_BAWAAN;
 }
 
 /** Prefix rute untuk bahasa Inggris; bahasa Indonesia memakai akar `/`. */

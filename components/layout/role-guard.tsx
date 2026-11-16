@@ -5,16 +5,19 @@ import { usePathname, useRouter } from "next/navigation";
 import { LoaderCircle } from "lucide-react";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { dashboardPeran } from "@/lib/navigation";
 import type { Role } from "@/types/api";
 
 /** Indikator sesi penuh layar saat peran pengguna belum diketahui. */
 export function MuatSesi() {
+  const { t } = useBahasa();
+
   return (
     <div className="grid min-h-screen place-items-center bg-canvas">
       <div className="flex items-center gap-3 text-ink-muted">
         <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
-        <span className="text-sm">Memuat sesi...</span>
+        <span className="text-sm">{t("Memuat sesi...")}</span>
       </div>
     </div>
   );

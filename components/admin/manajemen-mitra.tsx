@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Eye, PencilLine } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import type { KolomTabel } from "@/components/shared/data-table";
@@ -36,6 +37,7 @@ const OPSI_FILTER_STATUS = OPSI_STATUS_MITRA.filter((opsi) => opsi.nilai !== "pe
 
 /** Rincian identitas mitra pada modal detail. */
 function RincianMitra({ mitra }: { mitra: PartnerView }) {
+  const { t } = useBahasa();
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-2">
@@ -44,26 +46,27 @@ function RincianMitra({ mitra }: { mitra: PartnerView }) {
 
       {mitra.suspended_reason ? (
         <p className="rounded-field bg-danger/8 p-3 text-[13px] text-ink-muted">
-          Alasan penangguhan: {mitra.suspended_reason}
+          {t("Alasan penangguhan: ")}
+          {mitra.suspended_reason}
         </p>
       ) : null}
 
       <DaftarDeskripsi
         item={[
-          { label: "Nama bisnis", nilai: mitra.business_name },
-          { label: "Penanggung jawab", nilai: mitra.pic_name },
-          { label: "Telepon", nilai: mitra.phone },
-          { label: "Email", nilai: mitra.email || "-" },
-          { label: "Kota", nilai: mitra.city },
-          { label: "Provinsi", nilai: mitra.province },
-          { label: "Alamat", nilai: mitra.address, penuh: true },
+          { label: t("Nama bisnis"), nilai: mitra.business_name },
+          { label: t("Penanggung jawab"), nilai: mitra.pic_name },
+          { label: t("Telepon"), nilai: mitra.phone },
+          { label: t("Email"), nilai: mitra.email || "-" },
+          { label: t("Kota"), nilai: mitra.city },
+          { label: t("Provinsi"), nilai: mitra.province },
+          { label: t("Alamat"), nilai: mitra.address, penuh: true },
           {
-            label: "Bergabung",
+            label: t("Bergabung"),
             nilai: mitra.joined_at ? formatWib(mitra.joined_at) : "-",
           },
           {
-            label: "Perjanjian disetujui",
-            nilai: mitra.agreement_accepted_at ? formatWib(mitra.agreement_accepted_at) : "Belum",
+            label: t("Perjanjian disetujui"),
+            nilai: mitra.agreement_accepted_at ? formatWib(mitra.agreement_accepted_at) : t("Belum"),
           },
         ]}
       />
@@ -72,6 +75,7 @@ function RincianMitra({ mitra }: { mitra: PartnerView }) {
 }
 
 export function ManajemenMitra() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery<FilterMitra>({ perPage: 10 });
   const daftar = useDaftarMitraAdmin(tabel.query);
   const mutasi = useUbahStatusMitra();
@@ -94,7 +98,7 @@ export function ManajemenMitra() {
   const kolom: KolomTabel<PartnerView>[] = [
     {
       kunci: "mitra",
-      judul: "Mitra",
+      judul: t("Mitra"),
       render: (baris) => (
         <span className="flex flex-col">
           <span className="font-medium text-ink">{baris.business_name}</span>
@@ -104,7 +108,7 @@ export function ManajemenMitra() {
     },
     {
       kunci: "kontak",
-      judul: "Kontak",
+      judul: t("Kontak"),
       render: (baris) => (
         <span className="flex flex-col">
           <span data-numeric className="text-ink">{baris.phone}</span>
@@ -114,20 +118,20 @@ export function ManajemenMitra() {
     },
     {
       kunci: "wilayah",
-      judul: "Wilayah",
+      judul: t("Wilayah"),
       selClassName: "text-ink-muted",
       render: (baris) => `${baris.city}, ${baris.province}`,
     },
     {
       kunci: "status",
-      judul: "Status",
+      judul: t("Status"),
       render: (baris) => (
         <StatusBadge jenis="mitra" status={baris.status} label={baris.status_label} />
       ),
     },
     {
       kunci: "bergabung",
-      judul: "Bergabung",
+      judul: t("Bergabung"),
       selClassName: "whitespace-nowrap text-ink-muted",
       render: (baris) => (baris.joined_at ? formatTanggalWib(baris.joined_at) : "-"),
     },
@@ -139,9 +143,9 @@ export function ManajemenMitra() {
       render: (baris) => (
         <AksiBaris
           aksi={[
-            { label: "Lihat detail", ikon: Eye, onPilih: () => setDetail(baris) },
+            { label: t("Lihat detail"), ikon: Eye, onPilih: () => setDetail(baris) },
             {
-              label: "Ubah status",
+              label: t("Ubah status"),
               ikon: PencilLine,
               onPilih: () => setTarget(baris),
             },
@@ -154,8 +158,8 @@ export function ManajemenMitra() {
   return (
     <>
       <PageHeader
-        judul="Manajemen Mitra"
-        deskripsi="Tangguhkan, aktifkan kembali, atau tinjau data mitra yang terdaftar."
+        judul={t("Manajemen Mitra")}
+        deskripsi={t("Tangguhkan, aktifkan kembali, atau tinjau data mitra yang terdaftar.")}
       />
 
       <TabelData
@@ -169,21 +173,21 @@ export function ManajemenMitra() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari nama bisnis, PIC, atau kota..."
-        satuan="mitra"
+        placeholderCari={t("Cari nama bisnis, PIC, atau kota...")}
+        satuan={t("mitra")}
         filter={[
           {
             kunci: "status",
-            label: "Status",
+            label: t("Status"),
             nilai: tabel.filter.status,
-            opsi: OPSI_FILTER_STATUS,
+            opsi: OPSI_FILTER_STATUS.map((o) => ({ ...o, label: t(o.label) })),
             onUbah: (nilai) => tabel.ubahFilter("status", nilai as PartnerStatus | undefined),
           },
         ]}
         kosong={
           <EmptyState
-            judul="Belum ada mitra"
-            deskripsi="Mitra yang mendaftar akan tampil di sini."
+            judul={t("Belum ada mitra")}
+            deskripsi={t("Mitra yang mendaftar akan tampil di sini.")}
           />
         }
       />
@@ -196,7 +200,7 @@ export function ManajemenMitra() {
             if (!nilai) setDetail(null);
           }}
           judul={detail.business_name}
-          deskripsi="Rincian data mitra"
+          deskripsi={t("Rincian data mitra")}
         >
           <RincianMitra mitra={detail} />
         </DetailDialog>
@@ -209,12 +213,12 @@ export function ManajemenMitra() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTarget(null);
           }}
-          judul="Ubah status mitra"
+          judul={t("Ubah status mitra")}
           deskripsi={target.business_name}
-          opsi={OPSI_UBAH_STATUS}
+          opsi={OPSI_UBAH_STATUS.map((o) => ({ ...o, label: t(o.label) }))}
           nilaiAwal={target.status === "suspended" ? "suspended" : "active"}
           denganAlasan
-          labelAlasan="Catatan (alasan penangguhan)"
+          labelAlasan={t("Catatan (alasan penangguhan)")}
           memuat={mutasi.isPending}
           onKirim={kirimStatus}
         />

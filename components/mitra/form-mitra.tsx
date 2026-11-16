@@ -3,6 +3,7 @@
 import type { Control } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { KelompokField, TextField } from "@/components/shared/form-field";
 import type { PartnerView, RegisterPartnerRequest } from "@/types/api";
 
@@ -14,33 +15,35 @@ import type { PartnerView, RegisterPartnerRequest } from "@/types/api";
  * satu kali (DRY).
  */
 
-export const skemaMitra = z.object({
-  business_name: z
-    .string()
-    .trim()
-    .min(3, "Nama bisnis minimal 3 karakter")
-    .max(150, "Nama bisnis maksimal 150 karakter"),
-  pic_name: z
-    .string()
-    .trim()
-    .min(3, "Nama penanggung jawab minimal 3 karakter")
-    .max(100, "Nama penanggung jawab maksimal 100 karakter"),
-  phone: z
-    .string()
-    .trim()
-    .min(8, "Nomor telepon minimal 8 digit")
-    .max(20, "Nomor telepon maksimal 20 digit"),
-  email: z.union([z.literal(""), z.email("Format email tidak valid")]),
-  address: z.string().trim().min(1, "Alamat wajib diisi").max(255, "Alamat maksimal 255 karakter"),
-  city: z.string().trim().min(1, "Kota wajib diisi").max(100, "Kota maksimal 100 karakter"),
-  province: z
-    .string()
-    .trim()
-    .min(1, "Provinsi wajib diisi")
-    .max(100, "Provinsi maksimal 100 karakter"),
-});
+export function buatSkemaMitra(t: (teks: string) => string) {
+  return z.object({
+    business_name: z
+      .string()
+      .trim()
+      .min(3, t("Nama bisnis minimal 3 karakter"))
+      .max(150, t("Nama bisnis maksimal 150 karakter")),
+    pic_name: z
+      .string()
+      .trim()
+      .min(3, t("Nama penanggung jawab minimal 3 karakter"))
+      .max(100, t("Nama penanggung jawab maksimal 100 karakter")),
+    phone: z
+      .string()
+      .trim()
+      .min(8, t("Nomor telepon minimal 8 digit"))
+      .max(20, t("Nomor telepon maksimal 20 digit")),
+    email: z.union([z.literal(""), z.email(t("Format email tidak valid"))]),
+    address: z.string().trim().min(1, t("Alamat wajib diisi")).max(255, t("Alamat maksimal 255 karakter")),
+    city: z.string().trim().min(1, t("Kota wajib diisi")).max(100, t("Kota maksimal 100 karakter")),
+    province: z
+      .string()
+      .trim()
+      .min(1, t("Provinsi wajib diisi"))
+      .max(100, t("Provinsi maksimal 100 karakter")),
+  });
+}
 
-export type NilaiMitra = z.infer<typeof skemaMitra>;
+export type NilaiMitra = z.infer<ReturnType<typeof buatSkemaMitra>>;
 
 export const nilaiAwalMitra: NilaiMitra = {
   business_name: "",
@@ -93,23 +96,24 @@ export function BidangMitra({
   whatsappAktif?: boolean;
   nomorSistem?: string;
 }) {
+  const { t } = useBahasa();
   const dibatasi = !whatsappAktif && nomorSistem.trim() !== "";
 
   return (
-    <KelompokField judul="Data badan usaha" kolom={2}>
+    <KelompokField judul={t("Data badan usaha")} kolom={2}>
       <TextField
         control={control}
         name="business_name"
-        label="Nama bisnis / agensi"
+        label={t("Nama bisnis / agensi")}
         wajib
-        placeholder="Contoh: Griya Utama Property"
+        placeholder={t("Contoh: Griya Utama Property")}
         className="sm:col-span-2"
       />
-      <TextField control={control} name="pic_name" label="Nama penanggung jawab" wajib />
+      <TextField control={control} name="pic_name" label={t("Nama penanggung jawab")} wajib />
       <TextField
         control={control}
         name="phone"
-        label="Nomor WhatsApp"
+        label={t("Nomor WhatsApp")}
         type="tel"
         inputMode="tel"
         wajib={!dibatasi}
@@ -117,29 +121,29 @@ export function BidangMitra({
         placeholder={dibatasi ? undefined : "0812xxxxxxx"}
         deskripsi={
           dibatasi
-            ? "Dikelola sistem. Calon penyewa/pembeli diarahkan ke nomor ini karena paket Anda belum mendukung nomor WhatsApp sendiri."
+            ? t("Dikelola sistem. Calon penyewa/pembeli diarahkan ke nomor ini karena paket Anda belum mendukung nomor WhatsApp sendiri.")
             : undefined
         }
       />
       <TextField
         control={control}
         name="email"
-        label="Email bisnis"
+        label={t("Email bisnis")}
         type="email"
         inputMode="email"
-        placeholder="opsional"
+        placeholder={t("opsional")}
         className="sm:col-span-2"
       />
       <TextField
         control={control}
         name="address"
-        label="Alamat"
+        label={t("Alamat")}
         wajib
-        placeholder="Jalan, nomor, kelurahan"
+        placeholder={t("Jalan, nomor, kelurahan")}
         className="sm:col-span-2"
       />
-      <TextField control={control} name="city" label="Kota / kabupaten" wajib />
-      <TextField control={control} name="province" label="Provinsi" wajib />
+      <TextField control={control} name="city" label={t("Kota / kabupaten")} wajib />
+      <TextField control={control} name="province" label={t("Provinsi")} wajib />
     </KelompokField>
   );
 }

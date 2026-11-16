@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { CalendarClock, Package } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ export function KartuLangganan({
   langganan: SubscriptionView;
   className?: string;
 }) {
+  const { t } = useBahasa();
   const kuotaTotal = langganan.listing_quota < 0 ? -1 : langganan.listing_quota;
   const persenKuota =
     kuotaTotal > 0 ? Math.min(100, Math.round((langganan.listings_used / kuotaTotal) * 100)) : 0;
@@ -30,11 +32,14 @@ export function KartuLangganan({
     <Card className={cn("gap-5", className)}>
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <CardTitle>Paket Aktif</CardTitle>
+          <CardTitle>{t("Paket Aktif")}</CardTitle>
           <CardDescription>
             {langganan.is_active
-              ? `Sisa ${formatAngka(langganan.days_remaining)} hari · berakhir ${formatTanggalWib(langganan.ends_at)}`
-              : `Berakhir ${formatTanggalWib(langganan.ends_at)}`}
+              ? t("Sisa {n} hari · berakhir {tgl}", {
+                  n: formatAngka(langganan.days_remaining),
+                  tgl: formatTanggalWib(langganan.ends_at),
+                })
+              : t("Berakhir {tgl}", { tgl: formatTanggalWib(langganan.ends_at) })}
           </CardDescription>
         </div>
         <div className="flex flex-col items-end gap-2">
@@ -52,11 +57,11 @@ export function KartuLangganan({
           <div className="flex items-center justify-between gap-3 text-sm">
             <span className="flex items-center gap-2 text-ink-muted">
               <Package className="size-4 text-ink-subtle" aria-hidden="true" />
-              Kuota listing
+              {t("Kuota listing")}
             </span>
             <span data-numeric className="font-semibold text-ink">
               {formatAngka(langganan.listings_used)}
-              {kuotaTotal > 0 ? `/${formatAngka(kuotaTotal)}` : " (tanpa batas)"}
+              {kuotaTotal > 0 ? `/${formatAngka(kuotaTotal)}` : t(" (tanpa batas)")}
             </span>
           </div>
           {kuotaTotal > 0 ? (
@@ -66,18 +71,20 @@ export function KartuLangganan({
 
         {langganan.show_alert ? (
           <p className="rounded-field bg-warning/10 p-4 text-[13px] text-ink-muted">
-            Masa aktif paket Anda tersisa {formatAngka(langganan.days_remaining)} hari. Perpanjang
-            sekarang agar listing tetap tayang tanpa jeda.
+            {t(
+              "Masa aktif paket Anda tersisa {n} hari. Perpanjang sekarang agar listing tetap tayang tanpa jeda.",
+              { n: formatAngka(langganan.days_remaining) },
+            )}
           </p>
         ) : (
           <p className="flex items-center gap-2 rounded-field bg-divider p-4 text-[13px] text-ink-muted">
             <CalendarClock className="size-4 shrink-0 text-ink-subtle" aria-hidden="true" />
-            Masa aktif berakhir {formatTanggalWib(langganan.ends_at)}.
+            {t("Masa aktif berakhir {tgl}.", { tgl: formatTanggalWib(langganan.ends_at) })}
           </p>
         )}
 
         <Button className="w-full" asChild>
-          <Link href="/mitra/langganan">Kelola Langganan</Link>
+          <Link href="/mitra/langganan">{t("Kelola Langganan")}</Link>
         </Button>
       </CardContent>
     </Card>

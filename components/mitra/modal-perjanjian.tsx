@@ -3,6 +3,7 @@
 import * as React from "react";
 import { LoaderCircle, ShieldCheck } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { CeklisPersetujuan } from "@/components/shared/ceklis-perjanjian";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,21 +15,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { usePerjanjianMitra, useSetujuiPerjanjianMitra } from "@/lib/api/hooks";
+import {
+  useLanggananMitra,
+  usePaketPublik,
+  usePerjanjianMitra,
+  useSetujuiPerjanjianMitra,
+} from "@/lib/api/hooks";
 import type { VendorAgreementResponse } from "@/types/api";
 
 /**
  * Modal perjanjian kemitraan yang muncul saat mitra pertama kali masuk dashboard
  * (mis. setelah paket Gratis aktif otomatis pada pendaftaran).
  *
- * Modal hanya dirender selama perjanjian aktif belum disetujui sehingga hilang
- * sendiri begitu persetujuan tercatat.
+ * Modal hanya relevan bagi mitra dengan paket aktif Gratis; mitra berbayar
+ * tidak diminta menandatangani lewat modal ini. Modal juga hilang sendiri
+ * begitu persetujuan tercatat.
  */
 export function ModalPerjanjianMitra() {
   const perjanjian = usePerjanjianMitra();
-  const data = perjanjian.data;
+  const langganan = useLanggananMitra();
+  const paket = usePaketPublik();
 
-  if (!data || data.accepted) return null;
+  const data = perjanjian.data;
+  const paketAktifGratis = Boolean(
+    langganan.data?.plan_id &&
+      paket.data?.find((item) => item.id === langganan.data?.plan_id)?.is_free,
+  );
+
+  if (!data || data.accepted || !paketAktifGratis) return null;
 
   /* `key` memastikan seluruh centang dimulai ulang saat versi perjanjian berganti. */
   return <DialogPersetujuan key={data.agreement.id} data={data} />;
@@ -40,6 +54,7 @@ export function ModalPerjanjianMitra() {
  * tidak mengisi poin ceklis, mitra cukup menyetujui melalui satu ceklis umum.
  */
 function DialogPersetujuan({ data }: { data: VendorAgreementResponse }) {
+  const { t } = useBahasa();
   const setujui = useSetujuiPerjanjianMitra();
   const poin = data.agreement.checklist;
 
@@ -75,11 +90,12 @@ function DialogPersetujuan({ data }: { data: VendorAgreementResponse }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="size-5 text-secondary" aria-hidden="true" />
-            {data.agreement.title}
+            {t(data.agreement.title)}
           </DialogTitle>
           <DialogDescription>
-            Setujui perjanjian kemitraan versi <span data-numeric>{data.agreement.version}</span>{" "}
-            untuk mulai mengelola properti.
+            {t("Setujui perjanjian kemitraan versi {versi} untuk mulai mengelola properti.", {
+              versi: data.agreement.version,
+            })}
           </DialogDescription>
         </DialogHeader>
 
@@ -91,7 +107,7 @@ function DialogPersetujuan({ data }: { data: VendorAgreementResponse }) {
           {poin.length > 0 ? (
             <div className="flex flex-col gap-3">
               <span className="text-[13px] font-semibold text-ink">
-                Centang setiap poin berikut untuk melanjutkan
+                {t("Centang setiap poin berikut untuk melanjutkan")}
               </span>
               <CeklisPersetujuan
                 poin={poin}
@@ -109,7 +125,7 @@ function DialogPersetujuan({ data }: { data: VendorAgreementResponse }) {
                 disabled={setujui.isPending}
                 onCheckedChange={(nilai) => setSetujuUmum(nilai === true)}
               />
-              <span>Saya menyetujui perjanjian kemitraan ENM Property.</span>
+              <span>{t("Saya menyetujui perjanjian kemitraan ENM Property.")}</span>
             </label>
           )}
         </div>
@@ -121,7 +137,7 @@ function DialogPersetujuan({ data }: { data: VendorAgreementResponse }) {
             onClick={() => void kirim()}
           >
             {setujui.isPending ? <LoaderCircle className="animate-spin" /> : <ShieldCheck />}
-            Setujui perjanjian
+            {t("Setujui perjanjian")}
           </Button>
         </DialogFooter>
       </DialogContent>

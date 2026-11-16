@@ -1,4 +1,5 @@
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { MetadataDinamis } from "@/components/shared/metadata-dinamis";
 import { HeaderPublik } from "@/components/layout/header-publik";
 
 /**
@@ -13,6 +14,7 @@ import { HeaderPublik } from "@/components/layout/header-publik";
 export default function CheckoutLayout(props: LayoutProps<"/checkout">) {
   return (
     <AuthProvider>
+      <MetadataDinamis />
       <div className="flex min-h-screen flex-col bg-canvas">
         <HeaderPublik tagline="Checkout Langganan" />
 

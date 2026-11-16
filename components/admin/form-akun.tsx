@@ -3,6 +3,7 @@
 import type { Control } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { KelompokField, PasswordField, SelectField, TextField } from "@/components/shared/form-field";
 import { OPSI_PERAN } from "@/lib/enum";
 import type { AdminCreateUserRequest, AdminUpdateUserRequest, Role, UserView } from "@/types/api";
@@ -17,23 +18,30 @@ import type { AdminCreateUserRequest, AdminUpdateUserRequest, Role, UserView } f
 
 const peran = z.enum(["customer", "mitra", "admin", "superadmin", "owner"]);
 
-const telepon = z
-  .string()
-  .trim()
-  .refine(
-    (nilai) => nilai === "" || (nilai.length >= 8 && nilai.length <= 20),
-    "Nomor telepon 8-20 digit",
-  );
+/** Penerjemah teks dari konteks bahasa. */
+type Terjemah = (teks: string) => string;
 
-export const skemaPenggunaBaru = z.object({
-  email: z.email("Format email tidak valid"),
-  password: z.string().min(8, "Kata sandi minimal 8 karakter"),
-  name: z.string().trim().min(3, "Nama minimal 3 karakter").max(100, "Nama maksimal 100 karakter"),
-  phone: telepon,
-  role: peran,
-});
+function buatTelepon(t: Terjemah) {
+  return z
+    .string()
+    .trim()
+    .refine(
+      (nilai) => nilai === "" || (nilai.length >= 8 && nilai.length <= 20),
+      t("Nomor telepon 8-20 digit"),
+    );
+}
 
-export type NilaiPenggunaBaru = z.infer<typeof skemaPenggunaBaru>;
+export function buatSkemaPenggunaBaru(t: Terjemah) {
+  return z.object({
+    email: z.email(t("Format email tidak valid")),
+    password: z.string().min(8, t("Kata sandi minimal 8 karakter")),
+    name: z.string().trim().min(3, t("Nama minimal 3 karakter")).max(100, t("Nama maksimal 100 karakter")),
+    phone: buatTelepon(t),
+    role: peran,
+  });
+}
+
+export type NilaiPenggunaBaru = z.infer<ReturnType<typeof buatSkemaPenggunaBaru>>;
 
 export const nilaiAwalPenggunaBaru: NilaiPenggunaBaru = {
   email: "",
@@ -55,12 +63,13 @@ export function keBuatPengguna(nilai: NilaiPenggunaBaru): AdminCreateUserRequest
 
 /** Bidang formulir pembuatan akun baru. */
 export function BidangPenggunaBaru({ control }: { control: Control<NilaiPenggunaBaru> }) {
+  const { t } = useBahasa();
   return (
-    <KelompokField judul="Akun baru" kolom={2}>
+    <KelompokField judul={t("Akun baru")} kolom={2}>
       <TextField
         control={control}
         name="name"
-        label="Nama lengkap"
+        label={t("Nama lengkap")}
         wajib
         className="sm:col-span-2"
         autoComplete="off"
@@ -68,7 +77,7 @@ export function BidangPenggunaBaru({ control }: { control: Control<NilaiPengguna
       <TextField
         control={control}
         name="email"
-        label="Email"
+        label={t("Email")}
         type="email"
         inputMode="email"
         wajib
@@ -78,25 +87,33 @@ export function BidangPenggunaBaru({ control }: { control: Control<NilaiPengguna
       <PasswordField
         control={control}
         name="password"
-        label="Kata sandi awal"
+        label={t("Kata sandi awal")}
         wajib
         autoComplete="new-password"
-        deskripsi="Minimal 8 karakter; mintalah pengguna menggantinya."
+        deskripsi={t("Minimal 8 karakter; mintalah pengguna menggantinya.")}
         className="sm:col-span-2"
       />
-      <TextField control={control} name="phone" label="Nomor telepon" type="tel" inputMode="tel" deskripsi="Opsional." />
-      <SelectField control={control} name="role" label="Peran" opsi={OPSI_PERAN} wajib />
+      <TextField control={control} name="phone" label={t("Nomor telepon")} type="tel" inputMode="tel" deskripsi={t("Opsional.")} />
+      <SelectField
+        control={control}
+        name="role"
+        label={t("Peran")}
+        opsi={OPSI_PERAN.map((o) => ({ ...o, label: t(o.label) }))}
+        wajib
+      />
     </KelompokField>
   );
 }
 
-export const skemaPenggunaUbah = z.object({
-  name: z.string().trim().min(3, "Nama minimal 3 karakter").max(100, "Nama maksimal 100 karakter"),
-  phone: telepon,
-  role: peran,
-});
+export function buatSkemaPenggunaUbah(t: Terjemah) {
+  return z.object({
+    name: z.string().trim().min(3, t("Nama minimal 3 karakter")).max(100, t("Nama maksimal 100 karakter")),
+    phone: buatTelepon(t),
+    role: peran,
+  });
+}
 
-export type NilaiPenggunaUbah = z.infer<typeof skemaPenggunaUbah>;
+export type NilaiPenggunaUbah = z.infer<ReturnType<typeof buatSkemaPenggunaUbah>>;
 
 /** Membentuk nilai awal form ubah dari data pengguna. */
 export function nilaiDariPengguna(pengguna: UserView): NilaiPenggunaUbah {
@@ -117,11 +134,18 @@ export function keUpdatePengguna(nilai: NilaiPenggunaUbah): AdminUpdateUserReque
 
 /** Bidang formulir penyuntingan akun (tanpa email & kata sandi). */
 export function BidangPenggunaUbah({ control }: { control: Control<NilaiPenggunaUbah> }) {
+  const { t } = useBahasa();
   return (
-    <KelompokField judul="Data akun" kolom={2}>
-      <TextField control={control} name="name" label="Nama lengkap" wajib className="sm:col-span-2" />
-      <TextField control={control} name="phone" label="Nomor telepon" type="tel" inputMode="tel" deskripsi="Opsional." />
-      <SelectField control={control} name="role" label="Peran" opsi={OPSI_PERAN} wajib />
+    <KelompokField judul={t("Data akun")} kolom={2}>
+      <TextField control={control} name="name" label={t("Nama lengkap")} wajib className="sm:col-span-2" />
+      <TextField control={control} name="phone" label={t("Nomor telepon")} type="tel" inputMode="tel" deskripsi={t("Opsional.")} />
+      <SelectField
+        control={control}
+        name="role"
+        label={t("Peran")}
+        opsi={OPSI_PERAN.map((o) => ({ ...o, label: t(o.label) }))}
+        wajib
+      />
     </KelompokField>
   );
 }

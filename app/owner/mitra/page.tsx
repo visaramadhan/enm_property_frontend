@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 
 import { LaporanMitraOwner } from "@/components/owner/laporan-mitra-owner";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Laporan Mitra",
-  description: "Kinerja katalog dan interaksi setiap mitra.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman("Laporan Mitra", "Kinerja katalog dan interaksi setiap mitra.");
+}
 
 export default function OwnerMitraPage() {
-  return <LaporanMitraOwner />;
+  return (
+    <>
+      <LaporanMitraOwner />
+    </>
+  );
 }

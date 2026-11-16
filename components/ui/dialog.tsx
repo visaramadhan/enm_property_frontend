@@ -4,6 +4,7 @@ import * as React from "react";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { cn } from "@/lib/utils";
 
 function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -42,6 +43,7 @@ function DialogContent({
   showClose = true,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & { showClose?: boolean }) {
+  const { t } = useBahasa();
   return (
     <DialogPrimitive.Portal>
       <DialogOverlay />
@@ -59,7 +61,7 @@ function DialogContent({
         {children}
         {showClose ? (
           <DialogPrimitive.Close
-            aria-label="Tutup"
+            aria-label={t("Tutup")}
             className="absolute top-4 right-4 grid size-8 place-items-center rounded-field text-ink-subtle transition-colors duration-150 ease-out hover:bg-hover hover:text-ink"
           >
             <X className="size-4" aria-hidden="true" />

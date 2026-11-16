@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 
 import { LaporanLangganan } from "@/components/admin/laporan-langganan";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Laporan Langganan",
-  description: "Rekapitulasi transaksi langganan paket mitra.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman("Laporan Langganan", "Rekapitulasi transaksi langganan paket mitra.");
+}
 
 export default function AdminLaporanPage() {
-  return <LaporanLangganan />;
+  return (
+    <>
+      <LaporanLangganan />
+    </>
+  );
 }

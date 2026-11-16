@@ -7,11 +7,11 @@ import { useForm } from "react-hook-form";
 
 import {
   BidangPaket,
+  buatSkemaPaket,
   keCreatePlan,
   keUpdatePlan,
   nilaiAwalPaket,
   nilaiDariPaket,
-  skemaPaket,
   type NilaiPaket,
 } from "@/components/admin/form-paket";
 import { AksiBaris, type AksiBarisItem } from "@/components/shared/aksi-baris";
@@ -22,6 +22,7 @@ import { FormDialog } from "@/components/shared/form-dialog";
 import { PageHeader } from "@/components/shared/page-header";
 import { TabelData } from "@/components/shared/tabel-data";
 import { useAuth } from "@/components/providers/auth-provider";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useBuatPaket, useDaftarPaketAdmin, usePerbaruiPaket, useUbahStatusPaket } from "@/lib/api/hooks";
@@ -44,10 +45,12 @@ function tautanCheckout(slug: string): string {
 
 /** Dialog buat/ubah paket; menerima `paket` kosong untuk mode pembuatan. */
 function FormPaket({ paket, onTutup }: { paket?: PlanView; onTutup: () => void }) {
+  const { t } = useBahasa();
   const buat = useBuatPaket();
   const ubah = usePerbaruiPaket();
+  const skema = React.useMemo(() => buatSkemaPaket(t), [t]);
   const form = useForm<NilaiPaket>({
-    resolver: zodResolver(skemaPaket),
+    resolver: zodResolver(skema),
     defaultValues: paket ? nilaiDariPaket(paket) : nilaiAwalPaket,
   });
 
@@ -67,13 +70,13 @@ function FormPaket({ paket, onTutup }: { paket?: PlanView; onTutup: () => void }
       onUbahTerbuka={(nilai) => {
         if (!nilai) onTutup();
       }}
-      judul={paket ? "Ubah paket" : "Paket langganan baru"}
+      judul={paket ? t("Ubah paket") : t("Paket langganan baru")}
       deskripsi={
-        paket ? "Perubahan berlaku untuk pembelian berikutnya." : "Tentukan harga, kuota, dan fasilitas paket."
+        paket ? t("Perubahan berlaku untuk pembelian berikutnya.") : t("Tentukan harga, kuota, dan fasilitas paket.")
       }
       ukuran="max-w-2xl"
       memuat={buat.isPending || ubah.isPending}
-      labelKirim={paket ? "Simpan perubahan" : "Buat paket"}
+      labelKirim={paket ? t("Simpan perubahan") : t("Buat paket")}
       onSubmit={form.handleSubmit(kirim)}
     >
       <div className="max-h-[62vh] overflow-y-auto pr-1">
@@ -84,6 +87,7 @@ function FormPaket({ paket, onTutup }: { paket?: PlanView; onTutup: () => void }
 }
 
 export function KatalogPaket() {
+  const { t } = useBahasa();
   const { pengguna } = useAuth();
   const bolehKelola = pengguna?.role === "superadmin";
 
@@ -95,7 +99,7 @@ export function KatalogPaket() {
   const [targetStatus, setTargetStatus] = React.useState<PlanView | null>(null);
 
   async function salinLinkCheckout(slug: string) {
-    await salinDenganToast(tautanCheckout(slug), "Link checkout disalin");
+    await salinDenganToast(tautanCheckout(slug), t("Link checkout disalin"));
   }
 
   function bukaCheckout(slug: string) {
@@ -115,7 +119,7 @@ export function KatalogPaket() {
   const kolom: KolomTabel<PlanView>[] = [
     {
       kunci: "paket",
-      judul: "Paket",
+      judul: t("Paket"),
       render: (baris) => (
         <span className="flex flex-col">
           <span className="font-medium text-ink">{baris.name}</span>
@@ -125,39 +129,39 @@ export function KatalogPaket() {
     },
     {
       kunci: "harga",
-      judul: "Harga",
+      judul: t("Harga"),
       selClassName: "whitespace-nowrap",
       render: (baris) => (
         <span data-numeric className="font-medium text-ink">
-          {baris.is_free ? "Gratis" : baris.price_label}
+          {baris.is_free ? t("Gratis") : baris.price_label}
         </span>
       ),
     },
     {
       kunci: "durasi",
-      judul: "Durasi",
+      judul: t("Durasi"),
       selClassName: "whitespace-nowrap text-ink-muted",
-      render: (baris) => `${formatAngka(baris.duration_days)} hari`,
+      render: (baris) => t("{n} hari", { n: formatAngka(baris.duration_days) }),
     },
     {
       kunci: "kuota",
-      judul: "Kuota",
+      judul: t("Kuota"),
       selClassName: "text-ink-muted",
-      render: (baris) => (baris.is_unlimited ? "Tanpa batas" : formatAngka(baris.listing_quota)),
+      render: (baris) => (baris.is_unlimited ? t("Tanpa batas") : formatAngka(baris.listing_quota)),
     },
     {
       kunci: "urutan",
-      judul: "Urutan",
+      judul: t("Urutan"),
       kepalaClassName: "text-right",
       selClassName: "text-right text-ink-muted",
       render: (baris) => <span data-numeric>{baris.sort_order}</span>,
     },
     {
       kunci: "status",
-      judul: "Status",
+      judul: t("Status"),
       render: (baris) => (
         <Badge variant={baris.is_active ? "success" : "neutral"}>
-          {baris.is_active ? "Aktif" : "Nonaktif"}
+          {baris.is_active ? t("Aktif") : t("Nonaktif")}
         </Badge>
       ),
     },
@@ -168,19 +172,19 @@ export function KatalogPaket() {
       selClassName: "text-right",
       render: (baris) => {
         const aksi: AksiBarisItem[] = [
-          { label: "Salin link checkout", ikon: Link2, onPilih: () => void salinLinkCheckout(baris.slug) },
-          { label: "Buka checkout", ikon: ExternalLink, onPilih: () => bukaCheckout(baris.slug) },
+          { label: t("Salin link checkout"), ikon: Link2, onPilih: () => void salinLinkCheckout(baris.slug) },
+          { label: t("Buka checkout"), ikon: ExternalLink, onPilih: () => bukaCheckout(baris.slug) },
         ];
 
         if (bolehKelola) {
           aksi.push(
             {
-              label: "Ubah paket",
+              label: t("Ubah paket"),
               ikon: PencilLine,
               onPilih: () => setEditor({ terbuka: true, paket: baris }),
             },
             {
-              label: baris.is_active ? "Nonaktifkan" : "Aktifkan",
+              label: baris.is_active ? t("Nonaktifkan") : t("Aktifkan"),
               ikon: Power,
               onPilih: () => setTargetStatus(baris),
             },
@@ -195,13 +199,13 @@ export function KatalogPaket() {
   return (
     <>
       <PageHeader
-        judul="Katalog Paket"
-        deskripsi="Daftar paket langganan yang ditawarkan kepada mitra."
+        judul={t("Katalog Paket")}
+        deskripsi={t("Daftar paket langganan yang ditawarkan kepada mitra.")}
         aksi={
           bolehKelola ? (
             <Button onClick={() => setEditor({ terbuka: true })}>
               <Plus />
-              Tambah Paket
+              {t("Tambah Paket")}
             </Button>
           ) : null
         }
@@ -218,12 +222,12 @@ export function KatalogPaket() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari nama atau slug paket..."
-        satuan="paket"
+        placeholderCari={t("Cari nama atau slug paket...")}
+        satuan={t("paket")}
         kosong={
           <EmptyState
-            judul="Belum ada paket"
-            deskripsi="Tambahkan paket langganan agar mitra dapat berlangganan."
+            judul={t("Belum ada paket")}
+            deskripsi={t("Tambahkan paket langganan agar mitra dapat berlangganan.")}
           />
         }
       />
@@ -243,13 +247,13 @@ export function KatalogPaket() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetStatus(null);
           }}
-          judul={targetStatus.is_active ? "Nonaktifkan paket" : "Aktifkan paket"}
+          judul={targetStatus.is_active ? t("Nonaktifkan paket") : t("Aktifkan paket")}
           deskripsi={
             targetStatus.is_active
-              ? `Paket "${targetStatus.name}" tidak akan tampil di katalog publik.`
-              : `Paket "${targetStatus.name}" akan tampil di katalog publik.`
+              ? t('Paket "{nama}" tidak akan tampil di katalog publik.', { nama: targetStatus.name })
+              : t('Paket "{nama}" akan tampil di katalog publik.', { nama: targetStatus.name })
           }
-          labelKonfirmasi={targetStatus.is_active ? "Nonaktifkan" : "Aktifkan"}
+          labelKonfirmasi={targetStatus.is_active ? t("Nonaktifkan") : t("Aktifkan")}
           variant={targetStatus.is_active ? "danger" : "primary"}
           memuat={ubahStatus.isPending}
           onKonfirmasi={() => void konfirmasiStatus()}

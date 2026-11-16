@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { useSudahTerpasang } from "@/lib/hooks/use-sudah-terpasang";
 
 /**
@@ -25,6 +26,7 @@ export function KodeQr({
   kelas?: string;
   ukuran?: number;
 }) {
+  const { t } = useBahasa();
   const sudahTerpasang = useSudahTerpasang();
   const [gambar, setGambar] = React.useState("");
 
@@ -52,6 +54,6 @@ export function KodeQr({
 
   return (
     /* eslint-disable-next-line @next/next/no-img-element */
-    <img src={gambar} alt="Kode QR pembayaran" className={kelas} />
+    <img src={gambar} alt={t("Kode QR pembayaran")} className={kelas} />
   );
 }

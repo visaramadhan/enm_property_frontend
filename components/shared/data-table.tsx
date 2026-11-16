@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ErrorState } from "@/components/shared/error-state";
 import { TabelSkeleton } from "@/components/shared/tabel-skeleton";
@@ -28,7 +29,9 @@ export interface KolomTabel<T> {
  *
  * Menangani empat keadaan sekaligus — gagal, memuat, kosong, dan berisi — agar
  * setiap halaman hanya mendefinisikan kolom dan tidak mengulang logika
- * penyajian (DRY).
+ * penyajian (DRY). Judul kolom diterjemahkan di sini (`t`) sehingga definisi
+ * kolom bersama (mis. `kolom-laporan.tsx`) cukup menulis teks Indonesia dan
+ * otomatis mengikuti bahasa aktif.
  */
 export function DataTable<T>({
   kolom,
@@ -54,6 +57,7 @@ export function DataTable<T>({
   const baris = data ?? [];
   const belumAdaData = memuat && baris.length === 0;
   const idPeran = React.useId();
+  const { t } = useBahasa();
 
   return (
     <Table className={className}>
@@ -61,7 +65,7 @@ export function DataTable<T>({
         <TableRow className="hover:bg-transparent">
           {kolom.map((item) => (
             <TableHead key={item.kunci} className={item.kepalaClassName}>
-              {item.judul}
+              {t(item.judul)}
             </TableHead>
           ))}
         </TableRow>
@@ -83,7 +87,7 @@ export function DataTable<T>({
         ) : baris.length === 0 ? (
           <TableRow className="hover:bg-transparent">
             <TableCell colSpan={kolom.length} className="p-0">
-              {kosong ?? <EmptyState judul="Belum ada data" />}
+              {kosong ?? <EmptyState judul={t("Belum ada data")} />}
             </TableCell>
           </TableRow>
         ) : (

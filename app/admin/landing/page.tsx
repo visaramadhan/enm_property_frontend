@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
 
 import { LandingCmsEditor } from "@/components/admin/landing-cms";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Landing Page",
-  description: "Kelola konten halaman utama ENMProperty: hero, metadata SEO, dan wilayah unggulan.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman(
+    "Landing Page",
+    "Kelola konten halaman utama ENMProperty: hero, metadata SEO, dan wilayah unggulan.",
+  );
+}
 
 export default function AdminLandingPage() {
-  return <LandingCmsEditor />;
+  return (
+    <>
+      <LandingCmsEditor />
+    </>
+  );
 }

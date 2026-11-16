@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 
 import { LaporanLanggananOwner } from "@/components/owner/laporan-langganan-owner";
+import { metadataHalaman } from "@/lib/metadata-halaman";
 
-export const metadata: Metadata = {
-  title: "Laporan Langganan",
-  description: "Rekapitulasi transaksi langganan paket mitra.",
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadataHalaman("Laporan Langganan", "Rekapitulasi transaksi langganan paket mitra.");
+}
 
 export default function OwnerLaporanPage() {
-  return <LaporanLanggananOwner />;
+  return (
+    <>
+      <LaporanLanggananOwner />
+    </>
+  );
 }

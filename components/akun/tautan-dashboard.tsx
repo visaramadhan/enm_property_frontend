@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { LayoutDashboard } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
 import { useProfilSaya } from "@/lib/api/hooks";
 
@@ -15,6 +16,7 @@ import { useProfilSaya } from "@/lib/api/hooks";
  * menampilkan apa pun agar tidak terjadi hydration mismatch.
  */
 export function TautanDashboard() {
+  const { t } = useBahasa();
   const profil = useProfilSaya();
 
   if (!profil.data?.partner) return null;
@@ -23,7 +25,7 @@ export function TautanDashboard() {
     <Button asChild>
       <Link href="/mitra">
         <LayoutDashboard />
-        Dashboard
+        {t("Dashboard")}
       </Link>
     </Button>
   );

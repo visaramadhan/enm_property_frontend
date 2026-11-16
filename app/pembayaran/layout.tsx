@@ -1,5 +1,6 @@
 import { HeaderPublik } from "@/components/layout/header-publik";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { MetadataDinamis } from "@/components/shared/metadata-dinamis";
 
 /**
  * Tata letak halaman pembayaran langganan di luar dashboard (item 6).
@@ -13,6 +14,7 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 export default function PembayaranLayout(props: LayoutProps<"/pembayaran">) {
   return (
     <AuthProvider>
+      <MetadataDinamis />
       <div className="flex min-h-screen flex-col bg-canvas">
         <HeaderPublik tagline="Pembayaran Langganan" />
 

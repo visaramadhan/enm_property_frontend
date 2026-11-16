@@ -4,6 +4,7 @@ import * as React from "react";
 import { ImageUp, LoaderCircle, Save } from "lucide-react";
 import { useForm, useWatch, type Path, type UseFormReturn } from "react-hook-form";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
 import { PasswordField, TextField } from "@/components/shared/form-field";
@@ -45,6 +46,7 @@ function FieldWarna({
   label: string;
   deskripsi?: string;
 }) {
+  const { t } = useBahasa();
   const nilai = useWatch({ control: form.control, name }) ?? "";
   const nilaiPratinjau = /^#[0-9a-fA-F]{6}$/.test(nilai) ? nilai : "#1f6f4a";
 
@@ -54,7 +56,7 @@ function FieldWarna({
       <div className="flex flex-wrap items-center gap-3">
         <input
           type="color"
-          aria-label={`Pilih ${label}`}
+          aria-label={t("Pilih {label}", { label })}
           value={nilaiPratinjau}
           onChange={(event) => form.setValue(name, event.target.value, { shouldDirty: true })}
           className="h-10 w-14 shrink-0 cursor-pointer rounded-sm border border-line bg-canvas"
@@ -72,7 +74,7 @@ function FieldWarna({
           size="sm"
           onClick={() => form.setValue(name, "", { shouldDirty: true })}
         >
-          Bawaan
+          {t("Bawaan")}
         </Button>
       </div>
       {deskripsi ? <span className="text-xs text-ink-muted">{deskripsi}</span> : null}
@@ -97,6 +99,7 @@ function FieldGambarPengaturan({
   label: string;
   judul: string;
 }) {
+  const { t } = useBahasa();
   const unggah = useUnggahGambarPengaturan();
   const berkasRef = React.useRef<HTMLInputElement>(null);
   const nilai = useWatch({ control: form.control, name });
@@ -123,7 +126,7 @@ function FieldGambarPengaturan({
           />
         ) : (
           <span className="grid h-16 w-24 shrink-0 place-items-center rounded-sm border border-dashed border-line text-[10px] text-ink-subtle">
-            Kosong
+            {t("Kosong")}
           </span>
         )}
 
@@ -152,7 +155,7 @@ function FieldGambarPengaturan({
             ) : (
               <ImageUp aria-hidden="true" />
             )}
-            {unggah.isPending ? "Mengunggah..." : "Unggah gambar"}
+            {unggah.isPending ? t("Mengunggah...") : t("Unggah gambar")}
           </Button>
           <span className="text-xs text-ink-muted">{judul}</span>
         </div>
@@ -163,6 +166,7 @@ function FieldGambarPengaturan({
 
 /** Formulir nilai pengaturan; bidang dibentuk dari daftar kunci dari backend. */
 function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
+  const { t } = useBahasa();
   const simpan = usePerbaruiPengaturan();
   const form = useForm<NilaiPengaturan>({
     defaultValues: Object.fromEntries(pengaturan.map((item) => [item.key, item.value])),
@@ -182,9 +186,9 @@ function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pengaturan Platform</CardTitle>
+        <CardTitle>{t("Pengaturan Platform")}</CardTitle>
         <CardDescription>
-          Nilai tersimpan langsung di basis data. Kolom bertanda rahasia disembunyikan saat ditampilkan.
+          {t("Nilai tersimpan langsung di basis data. Kolom bertanda rahasia disembunyikan saat ditampilkan.")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -200,7 +204,7 @@ function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
                   name={item.key as Path<NilaiPengaturan>}
                   kind={gambar.kind}
                   label={label}
-                  judul={gambar.judul}
+                  judul={t(gambar.judul)}
                 />
               );
             }
@@ -238,7 +242,7 @@ function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
           <div className="flex justify-end">
             <Button type="submit" disabled={simpan.isPending}>
               {simpan.isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Save />}
-              Simpan pengaturan
+              {t("Simpan pengaturan")}
             </Button>
           </div>
         </form>
@@ -248,19 +252,20 @@ function FormPengaturan({ pengaturan }: { pengaturan: SettingView[] }) {
 }
 
 export function PengaturanSistem() {
+  const { t } = useBahasa();
   const pengaturan = usePengaturan();
 
   return (
     <>
       <PageHeader
-        judul="Pengaturan Sistem"
-        deskripsi="Konfigurasi global platform yang dapat disesuaikan tanpa perubahan kode."
+        judul={t("Pengaturan Sistem")}
+        deskripsi={t("Konfigurasi global platform yang dapat disesuaikan tanpa perubahan kode.")}
       />
 
       <KontenAsync
         hasil={pengaturan}
         skeleton={<Skeleton className="h-96 rounded-card" />}
-        judulGagal="Gagal memuat pengaturan"
+        judulGagal={t("Gagal memuat pengaturan")}
       >
         {(data) => <FormPengaturan pengaturan={data} />}
       </KontenAsync>

@@ -2,6 +2,7 @@
 
 import { Receipt, TrendingUp } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { kolomLaporanLangganan } from "@/components/shared/kolom-laporan";
@@ -25,6 +26,7 @@ interface FilterLaporan {
  * tombol ekspor karena owner tidak memiliki endpoint unduh.
  */
 export function LaporanLanggananOwner() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery<FilterLaporan>({ perPage: 10 });
   const daftar = useLaporanLanggananOwner(tabel.query);
 
@@ -40,23 +42,23 @@ export function LaporanLanggananOwner() {
   return (
     <>
       <PageHeader
-        judul="Laporan Langganan"
-        deskripsi="Rekapitulasi transaksi pembayaran paket dari seluruh mitra."
+        judul={t("Laporan Langganan")}
+        deskripsi={t("Rekapitulasi transaksi pembayaran paket dari seluruh mitra.")}
       />
 
       {daftar.data ? (
         <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
           <StatCard
-            label="Total Transaksi"
+            label={t("Total Transaksi")}
             value={formatAngka(daftar.data.total)}
             icon={Receipt}
-            keterangan="Seluruh order tercatat"
+            keterangan={t("Seluruh order tercatat")}
           />
           <StatCard
-            label="Total Pendapatan"
+            label={t("Total Pendapatan")}
             value={daftar.data.total_amount_label}
             icon={TrendingUp}
-            keterangan="Akumulasi nilai order"
+            keterangan={t("Akumulasi nilai order")}
           />
         </div>
       ) : null}
@@ -72,21 +74,21 @@ export function LaporanLanggananOwner() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari kode order atau nama mitra..."
-        satuan="transaksi"
+        placeholderCari={t("Cari kode order atau nama mitra...")}
+        satuan={t("transaksi")}
         filter={[
           {
             kunci: "status",
-            label: "Status",
+            label: t("Status"),
             nilai: tabel.filter.status,
-            opsi: OPSI_STATUS_ORDER,
+            opsi: OPSI_STATUS_ORDER.map((o) => ({ ...o, label: t(o.label) })),
             onUbah: (nilai) => tabel.ubahFilter("status", nilai as OrderStatus | undefined),
           },
         ]}
         kosong={
           <EmptyState
-            judul="Belum ada transaksi"
-            deskripsi="Transaksi langganan mitra akan tampil di sini."
+            judul={t("Belum ada transaksi")}
+            deskripsi={t("Transaksi langganan mitra akan tampil di sini.")}
           />
         }
       />

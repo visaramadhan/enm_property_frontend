@@ -1,9 +1,11 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { Building2, LogIn, UserPlus } from "lucide-react";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { KartuProperti } from "@/components/properti/kartu-properti";
 import { TombolBeranda } from "@/components/shared/asal-beranda";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -45,6 +47,7 @@ function KerangkaKatalog() {
 }
 
 export function KatalogPublik() {
+  const { t } = useBahasa();
   const tabel = useTabelQuery<FilterKatalog>({ perPage: 9 });
   const properti = usePropertiPublik(tabel.query);
   const kategori = useKategoriPublik();
@@ -55,6 +58,15 @@ export function KatalogPublik() {
     label: item.name,
   }));
 
+  const opsiPenawaran = React.useMemo(
+    () => OPSI_TIPE_PENAWARAN.map((opsi) => ({ ...opsi, label: t(opsi.label) })),
+    [t],
+  );
+  const opsiTipe = React.useMemo(
+    () => OPSI_TIPE_PROPERTI.map((opsi) => ({ ...opsi, label: t(opsi.label) })),
+    [t],
+  );
+
   const daftar = properti.data?.items ?? [];
 
   return (
@@ -62,21 +74,21 @@ export function KatalogPublik() {
       <TombolBeranda selaluTampil />
 
       <PageHeader
-        judul="Katalog Properti"
-        deskripsi="Jelajahi properti yang tayang, lalu hubungi mitra untuk informasi lebih lanjut."
+        judul={t("Katalog Properti")}
+        deskripsi={t("Jelajahi properti yang tayang, lalu hubungi mitra untuk informasi lebih lanjut.")}
         aksi={
           pengguna ? null : (
             <>
               <Button variant="outline" asChild>
                 <Link href="/register">
                   <UserPlus />
-                  Daftar akun
+                  {t("Daftar akun")}
                 </Link>
               </Button>
               <Button asChild>
                 <Link href="/login">
                   <LogIn />
-                  Masuk
+                  {t("Masuk")}
                 </Link>
               </Button>
             </>
@@ -88,27 +100,27 @@ export function KatalogPublik() {
         <FilterBar
           nilaiCari={tabel.cari}
           onCari={tabel.ubahCari}
-          placeholder="Cari judul, kota, atau kata kunci..."
+          placeholder={t("Cari judul, kota, atau kata kunci...")}
           filter={[
             {
               kunci: "category_id",
-              label: "Kategori",
+              label: t("Kategori"),
               nilai: tabel.filter.category_id,
               opsi: opsiKategori,
               onUbah: (nilai) => tabel.ubahFilter("category_id", nilai),
             },
             {
               kunci: "listing_type",
-              label: "Penawaran",
+              label: t("Penawaran"),
               nilai: tabel.filter.listing_type,
-              opsi: OPSI_TIPE_PENAWARAN,
+              opsi: opsiPenawaran,
               onUbah: (nilai) => tabel.ubahFilter("listing_type", nilai),
             },
             {
               kunci: "property_type",
-              label: "Tipe",
+              label: t("Tipe"),
               nilai: tabel.filter.property_type,
-              opsi: OPSI_TIPE_PROPERTI,
+              opsi: opsiTipe,
               onUbah: (nilai) => tabel.ubahFilter("property_type", nilai),
             },
           ]}
@@ -119,14 +131,14 @@ export function KatalogPublik() {
         ) : properti.isError ? (
           <ErrorState
             error={properti.error}
-            judul="Gagal memuat katalog"
+            judul={t("Gagal memuat katalog")}
             onCobaLagi={() => void properti.refetch()}
           />
         ) : daftar.length === 0 ? (
           <EmptyState
             ikon={Building2}
-            judul="Belum ada properti"
-            deskripsi="Properti yang tayang akan tampil di sini. Coba ubah kata kunci atau filter."
+            judul={t("Belum ada properti")}
+            deskripsi={t("Properti yang tayang akan tampil di sini. Coba ubah kata kunci atau filter.")}
           />
         ) : (
           <>
@@ -139,7 +151,7 @@ export function KatalogPublik() {
             <Pagination
               meta={properti.data?.meta}
               onUbahHalaman={tabel.aturHalaman}
-              satuan="properti"
+              satuan={t("properti")}
             />
           </>
         )}

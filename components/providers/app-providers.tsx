@@ -4,6 +4,8 @@ import * as React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 
+import { BahasaProvider } from "@/components/providers/bahasa-provider";
+
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
     () =>
@@ -20,7 +22,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      {/* Bahasa dipasang di akar agar autentikasi, checkout, dan dashboard mitra
+          memakai preferensi bahasa yang sama tanpa penyedia tambahan per rute. */}
+      <BahasaProvider>{children}</BahasaProvider>
       {/* Bagian 10 - Toast: border kiri 4px sesuai semantik warna */}
       <Toaster
         position="top-right"

@@ -4,7 +4,9 @@ import type { Control } from "react-hook-form";
 import { useWatch } from "react-hook-form";
 import { z } from "zod";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { CheckboxField, KelompokField, TextField, TextareaField } from "@/components/shared/form-field";
+import type { NilaiTerjemah } from "@/lib/app-i18n";
 import type { CreatePlanRequest, PlanView, UpdatePlanRequest } from "@/types/api";
 
 /**
@@ -16,41 +18,49 @@ import type { CreatePlanRequest, PlanView, UpdatePlanRequest } from "@/types/api
  * pada `keCreatePlan`/`keUpdatePlan`.
  */
 
-function bilangan(label: string, min: number, maks?: number) {
+/** Penerjemah teks dari konteks bahasa. */
+type Terjemah = (teks: string, nilai?: NilaiTerjemah) => string;
+
+function bilangan(t: Terjemah, label: string, min: number, maks?: number) {
+  const nama = t(label);
   return z
     .string()
     .trim()
-    .min(1, `${label} wajib diisi`)
-    .refine((nilai) => /^-?\d+$/.test(nilai), `${label} harus berupa angka`)
+    .min(1, t("{label} wajib diisi", { label: nama }))
+    .refine((nilai) => /^-?\d+$/.test(nilai), t("{label} harus berupa angka", { label: nama }))
     .refine(
       (nilai) => Number(nilai) >= min && (maks === undefined || Number(nilai) <= maks),
-      `${label} harus antara ${min}${maks === undefined ? "" : ` dan ${maks}`}`,
+      maks === undefined
+        ? t("{label} harus antara {min}", { label: nama, min })
+        : t("{label} harus antara {min} dan {maks}", { label: nama, min, maks }),
     );
 }
 
-export const skemaPaket = z.object({
-  name: z.string().trim().min(3, "Nama paket minimal 3 karakter").max(100, "Nama paket maksimal 100 karakter"),
-  slug: z
-    .string()
-    .trim()
-    .max(60, "Slug maksimal 60 karakter")
-    .refine((nilai) => nilai === "" || /^[a-z0-9-]+$/.test(nilai), "Slug hanya huruf kecil, angka, dan tanda hubung"),
-  description: z.string().trim().max(500, "Deskripsi maksimal 500 karakter"),
-  price: bilangan("Harga", 0),
-  duration_days: bilangan("Durasi", 1, 3650),
-  listing_quota: bilangan("Kuota listing", -1, 100000),
-  sort_order: bilangan("Urutan", 0, 9999),
-  features: z.string().max(2000, "Fasilitas terlalu panjang"),
-  is_free: z.boolean(),
-  is_active: z.boolean(),
-  level: bilangan("Level", 1, 99),
-  boost_enabled: z.boolean(),
-  keyword_access: z.boolean(),
-  catalog_access: z.boolean(),
-  whatsapp_access: z.boolean(),
-});
+export function buatSkemaPaket(t: Terjemah) {
+  return z.object({
+    name: z.string().trim().min(3, t("Nama paket minimal 3 karakter")).max(100, t("Nama paket maksimal 100 karakter")),
+    slug: z
+      .string()
+      .trim()
+      .max(60, t("Slug maksimal 60 karakter"))
+      .refine((nilai) => nilai === "" || /^[a-z0-9-]+$/.test(nilai), t("Slug hanya huruf kecil, angka, dan tanda hubung")),
+    description: z.string().trim().max(500, t("Deskripsi maksimal 500 karakter")),
+    price: bilangan(t, "Harga", 0),
+    duration_days: bilangan(t, "Durasi", 1, 3650),
+    listing_quota: bilangan(t, "Kuota listing", -1, 100000),
+    sort_order: bilangan(t, "Urutan", 0, 9999),
+    features: z.string().max(2000, t("Fasilitas terlalu panjang")),
+    is_free: z.boolean(),
+    is_active: z.boolean(),
+    level: bilangan(t, "Level", 1, 99),
+    boost_enabled: z.boolean(),
+    keyword_access: z.boolean(),
+    catalog_access: z.boolean(),
+    whatsapp_access: z.boolean(),
+  });
+}
 
-export type NilaiPaket = z.infer<typeof skemaPaket>;
+export type NilaiPaket = z.infer<ReturnType<typeof buatSkemaPaket>>;
 
 export const nilaiAwalPaket: NilaiPaket = {
   name: "",
@@ -138,114 +148,115 @@ export function BidangPaket({
   /** Slug hanya dapat ditentukan saat pembuatan paket. */
   modeUbah?: boolean;
 }) {
+  const { t } = useBahasa();
   const gratis = Boolean(useWatch({ control, name: "is_free" }));
 
   return (
     <div className="flex flex-col gap-6">
-      <KelompokField judul="Identitas paket" kolom={2}>
+      <KelompokField judul={t("Identitas paket")} kolom={2}>
         <TextField
           control={control}
           name="name"
-          label="Nama paket"
+          label={t("Nama paket")}
           wajib
-          placeholder="Contoh: Paket Pro"
+          placeholder={t("Contoh: Paket Pro")}
           className="sm:col-span-2"
         />
         {modeUbah ? null : (
           <TextField
             control={control}
             name="slug"
-            label="Slug"
-            placeholder="opsional, dibuat otomatis bila kosong"
+            label={t("Slug")}
+            placeholder={t("opsional, dibuat otomatis bila kosong")}
             className="sm:col-span-2"
           />
         )}
         <TextareaField
           control={control}
           name="description"
-          label="Deskripsi"
+          label={t("Deskripsi")}
           rows={3}
           className="sm:col-span-2"
         />
       </KelompokField>
 
-      <KelompokField judul="Harga & masa aktif" kolom={2}>
+      <KelompokField judul={t("Harga & masa aktif")} kolom={2}>
         <TextField
           control={control}
           name="price"
-          label="Harga"
+          label={t("Harga")}
           wajib
           inputMode="numeric"
-          deskripsi="Tanpa tanda titik atau koma. Diabaikan bila paket gratis."
+          deskripsi={t("Tanpa tanda titik atau koma. Diabaikan bila paket gratis.")}
         />
-        <TextField control={control} name="duration_days" label="Durasi (hari)" wajib inputMode="numeric" />
+        <TextField control={control} name="duration_days" label={t("Durasi (hari)")} wajib inputMode="numeric" />
         <TextField
           control={control}
           name="listing_quota"
-          label="Kuota listing"
+          label={t("Kuota listing")}
           wajib
           inputMode="numeric"
-          deskripsi="Isi -1 untuk kuota tanpa batas."
+          deskripsi={t("Isi -1 untuk kuota tanpa batas.")}
         />
-        <TextField control={control} name="sort_order" label="Urutan tampil" inputMode="numeric" />
+        <TextField control={control} name="sort_order" label={t("Urutan tampil")} inputMode="numeric" />
       </KelompokField>
 
-      <KelompokField judul="Fasilitas" deskripsi="Pisahkan tiap fasilitas dengan koma atau baris baru.">
-        <TextareaField control={control} name="features" label="Fasilitas" rows={4} />
+      <KelompokField judul={t("Fasilitas")} deskripsi={t("Pisahkan tiap fasilitas dengan koma atau baris baru.")}>
+        <TextareaField control={control} name="features" label={t("Fasilitas")} rows={4} />
       </KelompokField>
 
       <KelompokField
-        judul="Level & boost"
+        judul={t("Level & boost")}
         kolom={2}
-        deskripsi="Level menentukan prioritas tampil di katalog; boost hanya berlaku bila paket mengizinkan."
+        deskripsi={t("Level menentukan prioritas tampil di katalog; boost hanya berlaku bila paket mengizinkan.")}
       >
         <TextField
           control={control}
           name="level"
-          label="Level paket"
+          label={t("Level paket")}
           wajib
           inputMode="numeric"
-          deskripsi="1 terendah. Makin tinggi makin diprioritaskan (1, 2, 3, ...)."
+          deskripsi={t("1 terendah. Makin tinggi makin diprioritaskan (1, 2, 3, ...).")}
         />
         <CheckboxField
           control={control}
           name="boost_enabled"
-          label="Boost listing aktif"
-          deskripsi="Mitra dapat menaikkan peringkat listing sesuai level paket."
+          label={t("Boost listing aktif")}
+          deskripsi={t("Mitra dapat menaikkan peringkat listing sesuai level paket.")}
           disabled={gratis}
         />
       </KelompokField>
 
       <KelompokField
-        judul="Akses pengaturan mitra"
-        deskripsi="Paket gratis tidak memperoleh akses keyword, katalog, maupun nomor WhatsApp."
+        judul={t("Akses pengaturan mitra")}
+        deskripsi={t("Paket gratis tidak memperoleh akses keyword, katalog, maupun nomor WhatsApp.")}
       >
         <CheckboxField
           control={control}
           name="keyword_access"
-          label="Akses pengaturan keyword"
-          deskripsi="Mitra dapat mengatur kata kunci pencarian listing."
+          label={t("Akses pengaturan keyword")}
+          deskripsi={t("Mitra dapat mengatur kata kunci pencarian listing.")}
           disabled={gratis}
         />
         <CheckboxField
           control={control}
           name="catalog_access"
-          label="Akses pengaturan katalog"
-          deskripsi="Mitra dapat mengatur tampilan katalog propertinya."
+          label={t("Akses pengaturan katalog")}
+          deskripsi={t("Mitra dapat mengatur tampilan katalog propertinya.")}
           disabled={gratis}
         />
         <CheckboxField
           control={control}
           name="whatsapp_access"
-          label="Akses pengaturan nomor WhatsApp"
-          deskripsi="Mitra dapat mengatur nomor WhatsApp untuk lead."
+          label={t("Akses pengaturan nomor WhatsApp")}
+          deskripsi={t("Mitra dapat mengatur nomor WhatsApp untuk lead.")}
           disabled={gratis}
         />
       </KelompokField>
 
-      <KelompokField judul="Status">
-        <CheckboxField control={control} name="is_free" label="Paket gratis" deskripsi="Mitra dapat mengaktifkan paket ini tanpa pembayaran." />
-        <CheckboxField control={control} name="is_active" label="Aktifkan paket" deskripsi="Paket aktif akan tampil pada halaman katalog publik." />
+      <KelompokField judul={t("Status")}>
+        <CheckboxField control={control} name="is_free" label={t("Paket gratis")} deskripsi={t("Mitra dapat mengaktifkan paket ini tanpa pembayaran.")} />
+        <CheckboxField control={control} name="is_active" label={t("Aktifkan paket")} deskripsi={t("Paket aktif akan tampil pada halaman katalog publik.")} />
       </KelompokField>
     </div>
   );

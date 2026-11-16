@@ -1,6 +1,7 @@
 import { HeaderPublik } from "@/components/layout/header-publik";
 import { RoleGuard } from "@/components/layout/role-guard";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { MetadataDinamis } from "@/components/shared/metadata-dinamis";
 import type { Role } from "@/types/api";
 
 /**
@@ -21,6 +22,7 @@ const SEMUA_PERAN = [
 export default function AkunLayout(props: LayoutProps<"/akun">) {
   return (
     <AuthProvider>
+      <MetadataDinamis />
       <RoleGuard peran={SEMUA_PERAN}>
         <div className="flex min-h-screen flex-col bg-canvas">
           <HeaderPublik tagline="Akun Saya" />

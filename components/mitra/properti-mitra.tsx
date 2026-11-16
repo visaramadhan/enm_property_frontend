@@ -19,6 +19,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { SelHarga, SelProperti } from "@/components/properti/sel-properti";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { KolomTabel } from "@/components/shared/data-table";
@@ -62,15 +63,16 @@ const OPSI_STATUS_MITRA = OPSI_STATUS_PROPERTI.filter(
   (opsi) => opsi.nilai === "draft" || opsi.nilai === "active" || opsi.nilai === "inactive",
 );
 
-const skemaKetersediaan = z.object({
-  units_available: z
-    .string()
-    .trim()
-    .min(1, "Jumlah unit wajib diisi")
-    .refine((nilai) => /^\d+$/.test(nilai), "Harus berupa angka"),
-});
+const buatSkemaKetersediaan = (t: (teks: string) => string) =>
+  z.object({
+    units_available: z
+      .string()
+      .trim()
+      .min(1, t("Jumlah unit wajib diisi"))
+      .refine((nilai) => /^\d+$/.test(nilai), t("Harus berupa angka")),
+  });
 
-type NilaiKetersediaan = z.infer<typeof skemaKetersediaan>;
+type NilaiKetersediaan = z.infer<ReturnType<typeof buatSkemaKetersediaan>>;
 
 function DialogKetersediaan({
   properti,
@@ -79,9 +81,11 @@ function DialogKetersediaan({
   properti: PropertySummary;
   onTutup: () => void;
 }) {
+  const { t } = useBahasa();
   const simpan = useUbahKetersediaanProperti();
+  const skema = React.useMemo(() => buatSkemaKetersediaan(t), [t]);
   const form = useForm<NilaiKetersediaan>({
-    resolver: zodResolver(skemaKetersediaan),
+    resolver: zodResolver(skema),
     defaultValues: { units_available: String(properti.units_available) },
   });
 
@@ -103,19 +107,19 @@ function DialogKetersediaan({
       onUbahTerbuka={(nilai) => {
         if (!nilai) onTutup();
       }}
-      judul="Ubah ketersediaan unit"
+      judul={t("Ubah ketersediaan unit")}
       deskripsi={properti.title}
       memuat={simpan.isPending}
-      labelKirim="Simpan"
+      labelKirim={t("Simpan")}
       onSubmit={form.handleSubmit(kirim)}
     >
       <TextField
         control={form.control}
         name="units_available"
-        label="Unit tersedia"
+        label={t("Unit tersedia")}
         wajib
         inputMode="numeric"
-        deskripsi="Jumlah unit yang masih dapat dipasarkan."
+        deskripsi={t("Jumlah unit yang masih dapat dipasarkan.")}
       />
     </FormDialog>
   );
@@ -137,8 +141,9 @@ function DialogLead({
   channel: KanalLead;
   onTutup: () => void;
 }) {
+  const { t } = useBahasa();
   const leads = useLeadProperti(properti.id, channel);
-  const judul = channel === "whatsapp" ? "Klik WhatsApp" : "Isi Form";
+  const judul = channel === "whatsapp" ? t("Klik WhatsApp") : t("Isi Form");
 
   return (
     <DetailDialog
@@ -158,16 +163,16 @@ function DialogLead({
             ))}
           </div>
         }
-        judulGagal="Gagal memuat lead"
+        judulGagal={t("Gagal memuat lead")}
       >
         {(data) =>
           data.length === 0 ? (
             <EmptyState
-              judul="Belum ada lead"
+              judul={t("Belum ada lead")}
               deskripsi={
                 channel === "whatsapp"
-                  ? "Belum ada pengunjung yang menekan tombol WhatsApp pada properti ini."
-                  : "Belum ada pengunjung yang mengirim form kontak pada properti ini."
+                  ? t("Belum ada pengunjung yang menekan tombol WhatsApp pada properti ini.")
+                  : t("Belum ada pengunjung yang mengirim form kontak pada properti ini.")
               }
             />
           ) : (
@@ -185,19 +190,22 @@ function DialogLead({
 
 /** Satu baris catatan lead di dalam dialog. */
 function BarisLead({ lead }: { lead: LeadView }) {
-  const nama = lead.user_name || lead.name || "Pengunjung";
+  const { t } = useBahasa();
+  const nama = lead.user_name || lead.name || t("Pengunjung");
 
   return (
     <div className="flex flex-col gap-1 rounded-field border border-line p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="flex items-center gap-2 text-sm font-medium text-ink">
           {nama}
-          {lead.user_id ? <Badge variant="neutral">Login</Badge> : null}
+          {lead.user_id ? <Badge variant="neutral">{t("Login")}</Badge> : null}
         </span>
         <span className="text-[12px] text-ink-subtle">{formatTanggalWib(lead.created_at)}</span>
       </div>
       {lead.user_email ? <span className="text-[13px] text-ink-muted">{lead.user_email}</span> : null}
-      {lead.phone ? <span className="text-[13px] text-ink-muted">Telp: {lead.phone}</span> : null}
+      {lead.phone ? (
+        <span className="text-[13px] text-ink-muted">{t("Telp: {nomor}", { nomor: lead.phone })}</span>
+      ) : null}
       {lead.message ? (
         <p className="text-[13px] whitespace-pre-line text-ink-muted">{lead.message}</p>
       ) : null}
@@ -225,6 +233,7 @@ function RingkasanBoost({
 
 export function PropertiMitra() {
   const router = useRouter();
+  const { t } = useBahasa();
   const tabel = useTabelQuery<FilterProperti>({ perPage: 10 });
   const daftar = useDaftarPropertiMitra(tabel.query);
   const langganan = useLanggananMitra();
@@ -240,6 +249,21 @@ export function PropertiMitra() {
     properti: PropertySummary;
     channel: KanalLead;
   } | null>(null);
+
+  /* Label opsi filter/dialog diterjemahkan saat render tanpa mengubah
+     `nilai`-nya agar logika filter tetap memakai kode asli. */
+  const opsiStatusFilter = React.useMemo(
+    () => OPSI_STATUS_PROPERTI.map((opsi) => ({ ...opsi, label: t(opsi.label) })),
+    [t],
+  );
+  const opsiPenawaranFilter = React.useMemo(
+    () => OPSI_TIPE_PENAWARAN.map((opsi) => ({ ...opsi, label: t(opsi.label) })),
+    [t],
+  );
+  const opsiStatusMitra = React.useMemo(
+    () => OPSI_STATUS_MITRA.map((opsi) => ({ ...opsi, label: t(opsi.label) })),
+    [t],
+  );
 
   const boostQuota = langganan.data?.boost_quota ?? 0;
   /* Bila data langganan belum termuat, tombol boost tetap aktif agar backend
@@ -279,11 +303,11 @@ export function PropertiMitra() {
   }
 
   const kolom: KolomTabel<PropertySummary>[] = [
-    { kunci: "properti", judul: "Properti", render: (baris) => <SelProperti properti={baris} /> },
-    { kunci: "harga", judul: "Harga", render: (baris) => <SelHarga properti={baris} /> },
+    { kunci: "properti", judul: t("Properti"), render: (baris) => <SelProperti properti={baris} /> },
+    { kunci: "harga", judul: t("Harga"), render: (baris) => <SelHarga properti={baris} /> },
     {
       kunci: "status",
-      judul: "Status",
+      judul: t("Status"),
       render: (baris) => (
         <StatusBadge jenis="properti" status={baris.status} label={baris.status_label} />
       ),
@@ -296,11 +320,11 @@ export function PropertiMitra() {
           <div className="flex flex-col gap-1">
             <Badge variant="accent">
               <Sparkles />
-              Unggulan
+              {t("Unggulan")}
             </Badge>
             {baris.boost_until ? (
               <span className="text-[12px] text-ink-subtle">
-                s.d. {formatTanggalWib(baris.boost_until)}
+                {t("s.d. {tanggal}", { tanggal: formatTanggalWib(baris.boost_until) })}
               </span>
             ) : null}
           </div>
@@ -317,14 +341,14 @@ export function PropertiMitra() {
     },
     {
       kunci: "tayangan",
-      judul: "Tayangan",
+      judul: t("Tayangan"),
       kepalaClassName: "text-right",
       selClassName: "text-right",
       render: (baris) => <span data-numeric>{formatAngka(baris.views)}</span>,
     },
     {
       kunci: "wa",
-      judul: "Klik WA",
+      judul: t("Klik WA"),
       kepalaClassName: "text-right",
       selClassName: "text-right",
       render: (baris) => (
@@ -341,7 +365,7 @@ export function PropertiMitra() {
     },
     {
       kunci: "form",
-      judul: "Isi Form",
+      judul: t("Isi Form"),
       kepalaClassName: "text-right",
       selClassName: "text-right",
       render: (baris) => (
@@ -358,7 +382,7 @@ export function PropertiMitra() {
     },
     {
       kunci: "dibuat",
-      judul: "Diajukan",
+      judul: t("Diajukan"),
       selClassName: "whitespace-nowrap text-ink-muted",
       render: (baris) => formatTanggalWib(baris.created_at),
     },
@@ -371,23 +395,28 @@ export function PropertiMitra() {
         <AksiBaris
           aksi={[
             {
-              label: "Ubah properti",
+              label: t("Ubah properti"),
               ikon: PencilLine,
               onPilih: () => router.push(`/mitra/properti/${baris.id}`),
             },
             {
-              label: baris.boost_active ? "Nonaktifkan boost" : "Aktifkan boost",
+              label: baris.boost_active ? t("Nonaktifkan boost") : t("Aktifkan boost"),
               ikon: Rocket,
               disabled: !baris.boost_active && !boostTersedia,
               onPilih: () => void ubahBoostProperti(baris),
             },
-            { label: "Ubah status", ikon: PencilLine, onPilih: () => setTargetStatus(baris) },
+            { label: t("Ubah status"), ikon: PencilLine, onPilih: () => setTargetStatus(baris) },
             {
-              label: "Ubah ketersediaan",
+              label: t("Ubah ketersediaan"),
               ikon: Boxes,
               onPilih: () => setTargetKetersediaan(baris),
             },
-            { label: "Hapus", ikon: Trash2, variant: "danger", onPilih: () => setTargetHapus(baris) },
+            {
+              label: t("Hapus"),
+              ikon: Trash2,
+              variant: "danger",
+              onPilih: () => setTargetHapus(baris),
+            },
           ]}
         />
       ),
@@ -397,8 +426,10 @@ export function PropertiMitra() {
   return (
     <>
       <PageHeader
-        judul="Properti Saya"
-        deskripsi="Kelola listing properti, boost unggulan, status tayang, dan ketersediaan unit."
+        judul={t("Properti Saya")}
+        deskripsi={t(
+          "Kelola listing properti, boost unggulan, status tayang, dan ketersediaan unit.",
+        )}
         aksi={
           <div className="flex flex-wrap items-center gap-2">
             <RingkasanBoost kuota={boostQuota} terpakai={langganan.data?.boost_used ?? 0} />
@@ -406,14 +437,14 @@ export function PropertiMitra() {
               <Button variant="outline" asChild>
                 <Link href={`/pengelola/${profil.data.id}?dari=dashboard`}>
                   <Eye />
-                  Review katalog
+                  {t("Review katalog")}
                 </Link>
               </Button>
             ) : null}
             <Button asChild>
               <Link href="/mitra/properti/baru">
                 <Plus />
-                Tambah Properti
+                {t("Tambah Properti")}
               </Link>
             </Button>
           </div>
@@ -431,33 +462,33 @@ export function PropertiMitra() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari judul atau kota..."
-        satuan="properti"
+        placeholderCari={t("Cari judul atau kota...")}
+        satuan={t("properti")}
         filter={[
           {
             kunci: "status",
-            label: "Status",
+            label: t("Status"),
             nilai: tabel.filter.status,
-            opsi: OPSI_STATUS_PROPERTI,
+            opsi: opsiStatusFilter,
             onUbah: (nilai) => tabel.ubahFilter("status", nilai as PropertyStatus | undefined),
           },
           {
             kunci: "listing_type",
-            label: "Penawaran",
+            label: t("Penawaran"),
             nilai: tabel.filter.listing_type,
-            opsi: OPSI_TIPE_PENAWARAN,
+            opsi: opsiPenawaranFilter,
             onUbah: (nilai) => tabel.ubahFilter("listing_type", nilai as ListingType | undefined),
           },
         ]}
         kosong={
           <EmptyState
-            judul="Belum ada properti"
-            deskripsi="Tambahkan properti pertama Anda untuk mulai menayangkan listing."
+            judul={t("Belum ada properti")}
+            deskripsi={t("Tambahkan properti pertama Anda untuk mulai menayangkan listing.")}
             aksi={
               <Button asChild size="sm">
                 <Link href="/mitra/properti/baru">
                   <Plus />
-                  Tambah Properti
+                  {t("Tambah Properti")}
                 </Link>
               </Button>
             }
@@ -472,9 +503,9 @@ export function PropertiMitra() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetStatus(null);
           }}
-          judul="Ubah status properti"
+          judul={t("Ubah status properti")}
           deskripsi={targetStatus.title}
-          opsi={OPSI_STATUS_MITRA}
+          opsi={opsiStatusMitra}
           nilaiAwal={OPSI_STATUS_MITRA.some((opsi) => opsi.nilai === targetStatus.status) ? targetStatus.status : "draft"}
           memuat={ubahStatus.isPending}
           onKirim={kirimStatus}
@@ -505,9 +536,12 @@ export function PropertiMitra() {
           onUbahTerbuka={(nilai) => {
             if (!nilai) setTargetHapus(null);
           }}
-          judul="Hapus properti"
-          deskripsi={`Properti "${targetHapus.title}" akan dihapus dari katalog. Tindakan ini tidak dapat dibatalkan.`}
-          labelKonfirmasi="Hapus"
+          judul={t("Hapus properti")}
+          deskripsi={t(
+            'Properti "{judul}" akan dihapus dari katalog. Tindakan ini tidak dapat dibatalkan.',
+            { judul: targetHapus.title },
+          )}
+          labelKonfirmasi={t("Hapus")}
           variant="danger"
           memuat={hapus.isPending}
           onKonfirmasi={() => void konfirmasiHapus()}

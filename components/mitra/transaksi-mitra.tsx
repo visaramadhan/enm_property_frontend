@@ -1,9 +1,11 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CreditCard, Eye, Receipt } from "lucide-react";
 
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
 import type { KolomTabel } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -23,12 +25,14 @@ interface FilterTransaksi {
 }
 
 /** Opsi jenis order memakai label yang dikirim backend (`kind_label`). */
-const OPSI_JENIS_ORDER = [
-  { nilai: "new", label: "Baru" },
-  { nilai: "renewal", label: "Perpanjangan" },
-  { nilai: "upgrade", label: "Peningkatan" },
-  { nilai: "free", label: "Gratis" },
-];
+function opsiJenisOrder(t: (teks: string) => string) {
+  return [
+    { nilai: "new", label: t("Baru") },
+    { nilai: "renewal", label: t("Perpanjangan") },
+    { nilai: "upgrade", label: t("Peningkatan") },
+    { nilai: "free", label: t("Gratis") },
+  ] as { nilai: string; label: string }[];
+}
 
 /**
  * Halaman Transaksi mitra (item 9).
@@ -37,14 +41,21 @@ const OPSI_JENIS_ORDER = [
  * Dapat diakses dari halaman Paket & Langganan maupun dari halaman pembayaran.
  */
 export function TransaksiMitra() {
+  const { t } = useBahasa();
   const router = useRouter();
   const tabel = useTabelQuery<FilterTransaksi>({ perPage: 10 });
   const daftar = useDaftarTransaksiMitra(tabel.query);
 
+  const opsiJenis = React.useMemo(() => opsiJenisOrder(t), [t]);
+  const opsiStatus = React.useMemo(
+    () => OPSI_STATUS_ORDER.map((o) => ({ ...o, label: t(o.label) })),
+    [t],
+  );
+
   const kolom: KolomTabel<OrderView>[] = [
     {
       kunci: "kode",
-      judul: "Kode Order",
+      judul: t("Kode Order"),
       render: (baris) => (
         <span data-numeric className="font-medium text-ink">
           {baris.code}
@@ -53,7 +64,7 @@ export function TransaksiMitra() {
     },
     {
       kunci: "paket",
-      judul: "Paket",
+      judul: t("Paket"),
       render: (baris) => (
         <span className="flex flex-col">
           <span className="text-ink">{baris.plan_name}</span>
@@ -63,7 +74,7 @@ export function TransaksiMitra() {
     },
     {
       kunci: "jumlah",
-      judul: "Jumlah",
+      judul: t("Jumlah"),
       selClassName: "whitespace-nowrap",
       render: (baris) => (
         <span data-numeric className="font-medium text-ink">
@@ -73,14 +84,14 @@ export function TransaksiMitra() {
     },
     {
       kunci: "status",
-      judul: "Status Pembayaran",
+      judul: t("Status Pembayaran"),
       render: (baris) => (
         <StatusBadge jenis="order" status={baris.status} label={baris.status_label} />
       ),
     },
     {
       kunci: "dibuat",
-      judul: "Dibuat",
+      judul: t("Dibuat"),
       selClassName: "whitespace-nowrap text-ink-muted",
       render: (baris) => formatTanggalWib(baris.created_at),
     },
@@ -93,14 +104,14 @@ export function TransaksiMitra() {
         <AksiBaris
           aksi={[
             {
-              label: "Lihat detail",
+              label: t("Lihat detail"),
               ikon: Eye,
               onPilih: () => router.push(`/mitra/transaksi/${baris.code}`),
             },
             ...(baris.status === "pending"
               ? [
                   {
-                    label: "Bayar sekarang",
+                    label: t("Bayar sekarang"),
                     ikon: CreditCard,
                     onPilih: () => router.push(`/pembayaran/${baris.code}`),
                   },
@@ -115,13 +126,13 @@ export function TransaksiMitra() {
   return (
     <>
       <PageHeader
-        judul="Transaksi"
-        deskripsi="Riwayat transaksi langganan beserta status pembayarannya."
+        judul={t("Transaksi")}
+        deskripsi={t("Riwayat transaksi langganan beserta status pembayarannya.")}
         aksi={
           <Button variant="outline" asChild>
             <Link href="/mitra/langganan">
               <Receipt />
-              Paket &amp; Langganan
+              {t("Paket & Langganan")}
             </Link>
           </Button>
         }
@@ -138,29 +149,29 @@ export function TransaksiMitra() {
         onUbahHalaman={tabel.aturHalaman}
         nilaiCari={tabel.cari}
         onCari={tabel.ubahCari}
-        placeholderCari="Cari kode order atau paket..."
-        satuan="transaksi"
+        placeholderCari={t("Cari kode order atau paket...")}
+        satuan={t("transaksi")}
         filter={[
           {
             kunci: "status",
-            label: "Status",
+            label: t("Status"),
             nilai: tabel.filter.status,
-            opsi: OPSI_STATUS_ORDER,
+            opsi: opsiStatus,
             onUbah: (nilai) => tabel.ubahFilter("status", nilai as OrderStatus | undefined),
           },
           {
             kunci: "kind",
-            label: "Jenis",
+            label: t("Jenis"),
             nilai: tabel.filter.kind,
-            opsi: OPSI_JENIS_ORDER,
+            opsi: opsiJenis,
             onUbah: (nilai) => tabel.ubahFilter("kind", nilai as OrderKind | undefined),
           },
         ]}
         kosong={
           <EmptyState
             ikon={Receipt}
-            judul="Belum ada transaksi"
-            deskripsi="Transaksi langganan akan muncul setelah Anda melakukan pembayaran paket."
+            judul={t("Belum ada transaksi")}
+            deskripsi={t("Transaksi langganan akan muncul setelah Anda melakukan pembayaran paket.")}
           />
         }
       />

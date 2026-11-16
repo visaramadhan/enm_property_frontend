@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useAuth } from "@/components/providers/auth-provider";
+import { useBahasa } from "@/components/providers/bahasa-provider";
 import { TombolFavorit } from "@/components/properti/tombol-favorit";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { TextField, TextareaField } from "@/components/shared/form-field";
@@ -54,6 +55,7 @@ import type { ContactFormRequest, PropertyDetail } from "@/types/api";
 
 /** Galeri foto utama dengan pemilih gambar kecil di bawahnya. */
 function Galeri({ properti }: { properti: PropertyDetail }) {
+  const { t } = useBahasa();
   const [aktif, setAktif] = React.useState(0);
   const foto = properti.photos;
   const utama = foto[aktif]?.url ?? properti.cover_url;
@@ -65,7 +67,7 @@ function Galeri({ properti }: { properti: PropertyDetail }) {
           <img src={utama} alt={properti.title} className="size-full object-cover" />
         ) : (
           <span className="grid size-full place-items-center text-[13px] text-ink-subtle">
-            Tanpa foto
+            {t("Tanpa foto")}
           </span>
         )}
       </div>
@@ -77,7 +79,7 @@ function Galeri({ properti }: { properti: PropertyDetail }) {
               key={item.id}
               type="button"
               onClick={() => setAktif(indeks)}
-              aria-label={`Foto ${indeks + 1}`}
+              aria-label={t("Foto {n}", { n: indeks + 1 })}
               aria-current={indeks === aktif}
               className={cn(
                 "size-20 shrink-0 overflow-hidden rounded-field border-2 transition-colors",
@@ -95,6 +97,7 @@ function Galeri({ properti }: { properti: PropertyDetail }) {
 
 /** Panel harga dan kontak WhatsApp mitra. */
 function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: string }) {
+  const { t } = useBahasa();
   const { pengguna, memuat } = useAuth();
   const kontak = useKontakProperti();
   const router = useRouter();
@@ -109,14 +112,14 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
       window.open(hasil.whatsapp_url, "_blank", "noopener,noreferrer");
       if (hasil.is_fallback) {
         toastInfo(
-          "Diteruskan ke admin",
-          "Mitra belum mengisi nomor WhatsApp, permintaan Anda diteruskan ke admin.",
+          t("Diteruskan ke admin"),
+          t("Mitra belum mengisi nomor WhatsApp, permintaan Anda diteruskan ke admin."),
         );
       }
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
     }
-  }, [kontak, slug]);
+  }, [kontak, slug, t]);
 
   /* Setelah pengunjung masuk lewat gerbang tombol hubungi, mereka kembali ke
      halaman ini dengan penanda `?wa=1`. Panggilan WhatsApp dijalankan otomatis
@@ -144,7 +147,9 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
   return (
     <Card>
       <CardHeader className="gap-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-ink-subtle">Harga</span>
+        <span className="text-xs font-medium uppercase tracking-wide text-ink-subtle">
+          {t("Harga")}
+        </span>
         <CardTitle data-numeric className="text-2xl">
           {properti.price_label}
         </CardTitle>
@@ -158,7 +163,7 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
           disabled={kontak.isPending || memuat}
         >
           {kontak.isPending ? <LoaderCircle className="animate-spin" /> : <MessageCircle />}
-          Hubungi via WhatsApp
+          {t("Hubungi via WhatsApp")}
         </Button>
 
         <TombolFavorit properti={properti} variasi="tombol" />
@@ -166,7 +171,7 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
         {properti.partner ? (
           <div className="flex flex-col gap-1 rounded-field border border-line bg-hover/40 p-4">
             <span className="text-xs font-medium uppercase tracking-wide text-ink-subtle">
-              Dikelola oleh
+              {t("Dikelola oleh")}
             </span>
             <Link
               href={`/pengelola/${properti.partner.id}`}
@@ -180,7 +185,7 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
                 {properti.partner.province ? `, ${properti.partner.province}` : ""}
               </span>
             ) : null}
-            <span className="text-xs text-ink-subtle">Lihat seluruh katalog pengelola ini</span>
+            <span className="text-xs text-ink-subtle">{t("Lihat seluruh katalog pengelola ini")}</span>
           </div>
         ) : null}
 
@@ -188,21 +193,21 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
 
         <dl className="grid grid-cols-3 gap-3 text-center">
           <div className="flex flex-col gap-1">
-            <dt className="text-xs text-ink-subtle">Tayangan</dt>
+            <dt className="text-xs text-ink-subtle">{t("Tayangan")}</dt>
             <dd data-numeric className="flex items-center justify-center gap-1 text-sm font-medium text-ink">
               <Eye className="size-4" aria-hidden="true" />
               {formatAngka(properti.views)}
             </dd>
           </div>
           <div className="flex flex-col gap-1">
-            <dt className="text-xs text-ink-subtle">Rating</dt>
+            <dt className="text-xs text-ink-subtle">{t("Rating")}</dt>
             <dd data-numeric className="flex items-center justify-center gap-1 text-sm font-medium text-ink">
               <Star className="size-4" aria-hidden="true" />
               {properti.rating_count > 0 ? properti.rating_avg.toFixed(1) : "-"}
             </dd>
           </div>
           <div className="flex flex-col gap-1">
-            <dt className="text-xs text-ink-subtle">Favorit</dt>
+            <dt className="text-xs text-ink-subtle">{t("Favorit")}</dt>
             <dd data-numeric className="flex items-center justify-center gap-1 text-sm font-medium text-ink">
               <Heart className="size-4" aria-hidden="true" />
               {formatAngka(properti.favorite_count)}
@@ -215,15 +220,17 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
 }
 
 /** Skema form kontak publik; selaras dengan validasi backend. */
-const skemaKontak = z.object({
-  name: z.string().trim().min(2, "Nama minimal 2 karakter").max(80, "Nama terlalu panjang"),
-  phone: z
-    .string()
-    .trim()
-    .min(8, "Nomor telepon minimal 8 digit")
-    .max(20, "Nomor telepon terlalu panjang"),
-  message: z.string().trim().min(5, "Tuliskan pesan singkat").max(1000, "Pesan terlalu panjang"),
-});
+function buatSkemaKontak(t: (teks: string) => string) {
+  return z.object({
+    name: z.string().trim().min(2, t("Nama minimal 2 karakter")).max(80, t("Nama terlalu panjang")),
+    phone: z
+      .string()
+      .trim()
+      .min(8, t("Nomor telepon minimal 8 digit"))
+      .max(20, t("Nomor telepon terlalu panjang")),
+    message: z.string().trim().min(5, t("Tuliskan pesan singkat")).max(1000, t("Pesan terlalu panjang")),
+  });
+}
 
 /**
  * Form kontak publik pada detail properti.
@@ -232,8 +239,10 @@ const skemaKontak = z.object({
  * ikut tercatat pada lead di backend (kanal "form").
  */
 function FormKontak({ slug }: { slug: string }) {
+  const { t } = useBahasa();
   const { pengguna } = useAuth();
   const kirim = useKirimKontakProperti();
+  const skemaKontak = React.useMemo(() => buatSkemaKontak(t), [t]);
   const form = useForm<ContactFormRequest>({
     resolver: zodResolver(skemaKontak),
     defaultValues: {
@@ -246,7 +255,7 @@ function FormKontak({ slug }: { slug: string }) {
   async function kirimPesan(nilai: ContactFormRequest) {
     try {
       await kirim.mutateAsync({ slug, body: nilai });
-      toastSukses("Pesan terkirim", "Pengelola akan menghubungi Anda.");
+      toastSukses(t("Pesan terkirim"), t("Pengelola akan menghubungi Anda."));
       form.reset({ name: nilai.name, phone: nilai.phone, message: "" });
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
@@ -256,9 +265,9 @@ function FormKontak({ slug }: { slug: string }) {
   return (
     <Card>
       <CardHeader className="gap-1">
-        <CardTitle className="text-base">Tinggalkan pesan</CardTitle>
+        <CardTitle className="text-base">{t("Tinggalkan pesan")}</CardTitle>
         <span className="text-[13px] text-ink-muted">
-          Isi data Anda, pengelola akan menghubungi kembali.
+          {t("Isi data Anda, pengelola akan menghubungi kembali.")}
         </span>
       </CardHeader>
       <CardContent>
@@ -266,28 +275,28 @@ function FormKontak({ slug }: { slug: string }) {
           <TextField
             control={form.control}
             name="name"
-            label="Nama"
-            placeholder="Nama lengkap"
+            label={t("Nama")}
+            placeholder={t("Nama lengkap")}
             wajib
           />
           <TextField
             control={form.control}
             name="phone"
-            label="Nomor telepon"
+            label={t("Nomor telepon")}
             placeholder="08xxxxxxxxxx"
             wajib
           />
           <TextareaField
             control={form.control}
             name="message"
-            label="Pesan"
-            placeholder="Saya tertarik dengan properti ini..."
+            label={t("Pesan")}
+            placeholder={t("Saya tertarik dengan properti ini...")}
             rows={3}
             wajib
           />
           <Button type="submit" variant="outline" disabled={kirim.isPending}>
             {kirim.isPending ? <LoaderCircle className="animate-spin" /> : <Send />}
-            Kirim pesan
+            {t("Kirim pesan")}
           </Button>
         </form>
       </CardContent>
@@ -309,6 +318,7 @@ function KerangkaDetail() {
 }
 
 export function DetailPropertiPublik({ slug }: { slug: string }) {
+  const { t } = useBahasa();
   const properti = useDetailPropertiPublik(slug);
 
   return (
@@ -318,13 +328,13 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
         className="flex w-fit items-center gap-2 rounded-field text-[13px] font-medium text-primary hover:underline"
       >
         <ArrowLeft className="size-4" aria-hidden="true" />
-        Kembali ke katalog
+        {t("Kembali ke katalog")}
       </Link>
 
       <KontenAsync
         hasil={properti}
         skeleton={<KerangkaDetail />}
-        judulGagal="Properti tidak dapat dimuat"
+        judulGagal={t("Properti tidak dapat dimuat")}
       >
         {(data) => (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -342,7 +352,7 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                     {data.boost_active ? (
                       <Badge variant="accent">
                         <Sparkles />
-                        Unggulan
+                        {t("Unggulan")}
                       </Badge>
                     ) : null}
                   </div>
@@ -359,14 +369,17 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                   <DaftarDeskripsi
                     kolom={3}
                     item={[
-                      { label: "Tipe properti", nilai: data.property_type_label },
-                      { label: "Luas tanah", nilai: `${formatAngka(data.land_area)} m²` },
-                      { label: "Luas bangunan", nilai: `${formatAngka(data.building_area)} m²` },
-                      { label: "Kamar tidur", nilai: formatAngka(data.bedrooms) },
-                      { label: "Kamar mandi", nilai: formatAngka(data.bathrooms) },
+                      { label: t("Tipe properti"), nilai: data.property_type_label },
+                      { label: t("Luas tanah"), nilai: `${formatAngka(data.land_area)} m²` },
+                      { label: t("Luas bangunan"), nilai: `${formatAngka(data.building_area)} m²` },
+                      { label: t("Kamar tidur"), nilai: formatAngka(data.bedrooms) },
+                      { label: t("Kamar mandi"), nilai: formatAngka(data.bathrooms) },
                       {
-                        label: "Ketersediaan",
-                        nilai: data.units_available > 0 ? `${formatAngka(data.units_available)} unit` : "Tidak tersedia",
+                        label: t("Ketersediaan"),
+                        nilai:
+                          data.units_available > 0
+                            ? t("{n} unit", { n: formatAngka(data.units_available) })
+                            : t("Tidak tersedia"),
                       },
                     ]}
                   />
@@ -374,7 +387,7 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                   <Separator />
 
                   <div className="flex flex-col gap-2">
-                    <h3 className="text-sm font-semibold text-ink">Deskripsi</h3>
+                    <h3 className="text-sm font-semibold text-ink">{t("Deskripsi")}</h3>
                     <p className="text-sm whitespace-pre-line text-ink-muted">{data.description}</p>
                   </div>
 
@@ -382,7 +395,7 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                     <>
                       <Separator />
                       <div className="flex flex-col gap-3">
-                        <h3 className="text-sm font-semibold text-ink">Fasilitas</h3>
+                        <h3 className="text-sm font-semibold text-ink">{t("Fasilitas")}</h3>
                         <div className="flex flex-wrap gap-2">
                           {data.facilities.map((fasilitas) => (
                             <Badge key={fasilitas} variant="outline">
@@ -400,13 +413,13 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                     {data.bedrooms > 0 ? (
                       <span className="flex items-center gap-1.5">
                         <Bed className="size-4" aria-hidden="true" />
-                        {formatAngka(data.bedrooms)} kamar tidur
+                        {t("{n} kamar tidur", { n: formatAngka(data.bedrooms) })}
                       </span>
                     ) : null}
                     {data.bathrooms > 0 ? (
                       <span className="flex items-center gap-1.5">
                         <Bath className="size-4" aria-hidden="true" />
-                        {formatAngka(data.bathrooms)} kamar mandi
+                        {t("{n} kamar mandi", { n: formatAngka(data.bathrooms) })}
                       </span>
                     ) : null}
                     {data.building_area > 0 ? (
@@ -418,7 +431,7 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                     {data.published_at ? (
                       <span className="flex items-center gap-1.5">
                         <Clock className="size-4" aria-hidden="true" />
-                        Terbit {formatTanggalWib(data.published_at)}
+                        {t("Terbit {tgl}", { tgl: formatTanggalWib(data.published_at) })}
                       </span>
                     ) : null}
                   </div>
