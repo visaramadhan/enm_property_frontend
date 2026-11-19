@@ -2,7 +2,6 @@ import { Suspense } from "react";
 
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { MuatSesi, RoleGuard } from "@/components/layout/role-guard";
-import { ModalPerjanjianMitra } from "@/components/mitra/modal-perjanjian";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { MetadataDinamis } from "@/components/shared/metadata-dinamis";
 import { peranDashboard } from "@/lib/navigation";
@@ -24,8 +23,6 @@ export default function MitraLayout({ children }: LayoutProps<"/mitra">) {
       <Suspense fallback={<MuatSesi />}>
         <RoleGuard peran={peranDashboard.mitra}>
           <DashboardShell role="mitra">{children}</DashboardShell>
-          {/* Modal perjanjian tampil otomatis sampai mitra menyetujuinya. */}
-          <ModalPerjanjianMitra />
         </RoleGuard>
       </Suspense>
     </AuthProvider>

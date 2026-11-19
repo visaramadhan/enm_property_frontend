@@ -2,9 +2,20 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, CreditCard, LoaderCircle, LogOut, QrCode, Receipt, UserCog } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  CheckCircle2,
+  CreditCard,
+  LoaderCircle,
+  LogOut,
+  QrCode,
+  Receipt,
+  UserCog,
+  XCircle,
+} from "lucide-react";
 
 import { useBahasa } from "@/components/providers/bahasa-provider";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KodeQr } from "@/components/shared/kode-qr";
 import { KontenAsync } from "@/components/shared/konten-async";
@@ -23,9 +34,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useChargeLangganan, usePembayaranOrder } from "@/lib/api/hooks";
+import { useBatalkanOrder, useChargeLangganan, usePembayaranOrder } from "@/lib/api/hooks";
 import { formatRupiah, formatWib } from "@/lib/format";
-import { toastSukses } from "@/lib/toast";
+import { bukaSnap } from "@/lib/midtrans";
+import { toastGagal, toastInfo, toastSukses } from "@/lib/toast";
 import type { PaymentChannel, PaymentView } from "@/types/api";
 
 /**
@@ -50,12 +62,52 @@ function opsiMetode(t: (teks: string) => string): { nilai: PaymentChannel; label
 }
 
 /** Pemilih metode pembayaran sebelum kode/instruksi dibuat. */
-function PilihMetodePembayaran({ orderCode }: { orderCode: string }) {
-  const { t } = useBahasa();
+function PilihMetodePembayaran({
+  orderCode,
+  snapToken,
+  onSukses,
+}: {
+  orderCode: string;
+  snapToken?: string;
+  onSukses: () => void;
+}) {
+  const { t, bahasa } = useBahasa();
   const charge = useChargeLangganan();
   const [metode, setMetode] = React.useState<PaymentChannel>("qris");
+  const [snapMemuat, setSnapMemuat] = React.useState(false);
 
   const opsiMetodePembayaran = React.useMemo(() => opsiMetode(t), [t]);
+
+  /* Opsi bayar lewat popup Snap memakai kanal yang sama dengan halaman Paket &
+     Langganan, sehingga pembayaran tetap dapat diselesaikan bila kanal QRIS/VA
+     Core API belum diaktifkan di akun Midtrans. */
+  async function bayarSnap() {
+    if (!snapToken) return;
+    setSnapMemuat(true);
+    try {
+      await bukaSnap(
+        snapToken,
+        {
+          onSuccess: () => {
+            toastSukses(t("Pembayaran berhasil"), t("Paket langganan Anda sedang diaktifkan."));
+            onSukses();
+          },
+          onPending: () => {
+            toastInfo(t("Pembayaran menunggu penyelesaian"), t("Selesaikan sesuai instruksi."));
+            onSukses();
+          },
+          onError: () => {
+            toastGagal(t("Pembayaran gagal"), new Error(t("Transaksi ditolak oleh Midtrans.")));
+          },
+        },
+        bahasa,
+      );
+    } catch (err) {
+      toastGagal(t("Pembayaran gagal"), err as Error);
+    } finally {
+      setSnapMemuat(false);
+    }
+  }
 
   async function buatKode() {
     try {
@@ -78,6 +130,20 @@ function PilihMetodePembayaran({ orderCode }: { orderCode: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
+        {snapToken ? (
+          <>
+            <Button disabled={snapMemuat} onClick={() => void bayarSnap()}>
+              {snapMemuat ? <LoaderCircle className="animate-spin" /> : <CreditCard />}
+              {t("Bayar dengan Midtrans")}
+            </Button>
+            <div className="flex items-center gap-3 text-xs text-ink-subtle">
+              <span className="h-px flex-1 bg-line" />
+              {t("atau pilih metode manual")}
+              <span className="h-px flex-1 bg-line" />
+            </div>
+          </>
+        ) : null}
+
         <div className="flex flex-col gap-2">
           <Label htmlFor="metode-pembayaran">{t("Metode")}</Label>
           <Select value={metode} onValueChange={(nilai) => setMetode(nilai as PaymentChannel)}>
@@ -94,7 +160,7 @@ function PilihMetodePembayaran({ orderCode }: { orderCode: string }) {
           </Select>
         </div>
 
-        <Button disabled={charge.isPending} onClick={() => void buatKode()}>
+        <Button variant={snapToken ? "outline" : "primary"} disabled={charge.isPending} onClick={() => void buatKode()}>
           {charge.isPending ? <LoaderCircle className="animate-spin" /> : <QrCode />}
           {t("Buat kode pembayaran")}
         </Button>
@@ -217,6 +283,55 @@ function InstruksiPembayaran({ data }: { data: PaymentView }) {
   );
 }
 
+/** Aksi pembatalan pembayaran beserta konfirmasi (memungkinkan ganti metode). */
+function PanelBatalPembayaran({ orderCode }: { orderCode: string }) {
+  const { t } = useBahasa();
+  const router = useRouter();
+  const batal = useBatalkanOrder();
+  const [terbuka, setTerbuka] = React.useState(false);
+
+  async function konfirmasi() {
+    try {
+      await batal.mutateAsync(orderCode);
+      setTerbuka(false);
+      router.push("/mitra/langganan");
+    } catch {
+      // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
+    }
+  }
+
+  return (
+    <Card>
+      <CardContent className="flex flex-wrap items-center justify-between gap-4">
+        <p className="text-[13px] text-ink-muted">
+          {t(
+            "Ingin mengganti metode pembayaran atau memilih paket lain? Batalkan pesanan ini lalu pilih kembali.",
+          )}
+        </p>
+        <Button variant="outline" disabled={batal.isPending} onClick={() => setTerbuka(true)}>
+          <XCircle />
+          {t("Batalkan pembayaran")}
+        </Button>
+      </CardContent>
+
+      <ConfirmDialog
+        terbuka={terbuka}
+        onUbahTerbuka={(nilai) => {
+          if (!batal.isPending) setTerbuka(nilai);
+        }}
+        judul={t("Batalkan pembayaran?")}
+        deskripsi={t(
+          "Pesanan yang dibatalkan tidak dapat dilanjutkan. Anda dapat memilih paket dan metode pembayaran lagi dari halaman Paket & Langganan.",
+        )}
+        labelKonfirmasi={t("Batalkan pembayaran")}
+        variant="danger"
+        memuat={batal.isPending}
+        onKonfirmasi={() => void konfirmasi()}
+      />
+    </Card>
+  );
+}
+
 export function PembayaranOrder({ orderCode }: { orderCode: string }) {
   const { t } = useBahasa();
   const pembayaran = usePembayaranOrder(orderCode, true, 5000);
@@ -309,10 +424,19 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
                 </div>
               </CardContent>
             </Card>
-          ) : data.method ? (
-            <InstruksiPembayaran data={data} />
           ) : (
-            <PilihMetodePembayaran orderCode={orderCode} />
+            <div className="flex flex-col gap-6">
+              {data.method ? (
+                <InstruksiPembayaran data={data} />
+              ) : (
+                <PilihMetodePembayaran
+                  orderCode={orderCode}
+                  snapToken={data.snap_token}
+                  onSukses={() => void pembayaran.refetch()}
+                />
+              )}
+              <PanelBatalPembayaran orderCode={orderCode} />
+            </div>
           )
         }
       </KontenAsync>

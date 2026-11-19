@@ -3,17 +3,18 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CreditCard, Eye, Receipt } from "lucide-react";
+import { CreditCard, Eye, Receipt, XCircle } from "lucide-react";
 
 import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { KolomTabel } from "@/components/shared/data-table";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { TabelData } from "@/components/shared/tabel-data";
 import { Button } from "@/components/ui/button";
-import { useDaftarTransaksiMitra } from "@/lib/api/hooks";
+import { useBatalkanOrder, useDaftarTransaksiMitra } from "@/lib/api/hooks";
 import { OPSI_STATUS_ORDER } from "@/lib/enum";
 import { formatTanggalWib } from "@/lib/format";
 import { useTabelQuery } from "@/lib/hooks/use-tabel-query";
@@ -45,6 +46,18 @@ export function TransaksiMitra() {
   const router = useRouter();
   const tabel = useTabelQuery<FilterTransaksi>({ perPage: 10 });
   const daftar = useDaftarTransaksiMitra(tabel.query);
+  const batal = useBatalkanOrder();
+  const [targetBatal, setTargetBatal] = React.useState<OrderView | null>(null);
+
+  async function konfirmasiBatal() {
+    if (!targetBatal) return;
+    try {
+      await batal.mutateAsync(targetBatal.code);
+      setTargetBatal(null);
+    } catch {
+      // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
+    }
+  }
 
   const opsiJenis = React.useMemo(() => opsiJenisOrder(t), [t]);
   const opsiStatus = React.useMemo(
@@ -115,6 +128,12 @@ export function TransaksiMitra() {
                     ikon: CreditCard,
                     onPilih: () => router.push(`/pembayaran/${baris.code}`),
                   },
+                  {
+                    label: t("Batalkan pembayaran"),
+                    ikon: XCircle,
+                    variant: "danger" as const,
+                    onPilih: () => setTargetBatal(baris),
+                  },
                 ]
               : []),
           ]}
@@ -174,6 +193,21 @@ export function TransaksiMitra() {
             deskripsi={t("Transaksi langganan akan muncul setelah Anda melakukan pembayaran paket.")}
           />
         }
+      />
+
+      <ConfirmDialog
+        terbuka={targetBatal !== null}
+        onUbahTerbuka={(nilai) => {
+          if (!batal.isPending && !nilai) setTargetBatal(null);
+        }}
+        judul={t("Batalkan pembayaran?")}
+        deskripsi={t(
+          "Pesanan yang dibatalkan tidak dapat dilanjutkan. Anda dapat memilih paket dan metode pembayaran lagi dari halaman Paket & Langganan.",
+        )}
+        labelKonfirmasi={t("Batalkan pembayaran")}
+        variant="danger"
+        memuat={batal.isPending}
+        onKonfirmasi={() => void konfirmasiBatal()}
       />
     </>
   );

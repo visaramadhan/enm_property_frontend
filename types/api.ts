@@ -579,6 +579,10 @@ export interface CheckoutResponse {
   client_key?: string;
   simulated: boolean;
   free_active: boolean;
+  /** `true` bila checkout memakai ulang order pending yang sudah ada. */
+  reused?: boolean;
+  /** Kode order pending yang dipakai ulang (bila `reused`). */
+  order_code?: string;
 }
 
 export interface OrderStatusView {
@@ -609,6 +613,8 @@ export interface PaymentView {
   expires_at?: string;
   is_paid: boolean;
   can_retry: boolean;
+  /** Token Snap order, bila tersedia, untuk opsi bayar lewat popup Midtrans. */
+  snap_token?: string;
 }
 
 export interface InvoiceItem {

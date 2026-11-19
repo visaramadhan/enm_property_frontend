@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, KeyRound, PencilLine, Plus, Power } from "lucide-react";
+import { Check, KeyRound, PencilLine, Plus, Power, Trash2 } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -18,6 +18,7 @@ import {
   type NilaiPenggunaUbah,
 } from "@/components/admin/form-akun";
 import { AksiBaris } from "@/components/shared/aksi-baris";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import type { KolomTabel } from "@/components/shared/data-table";
 import { DetailDialog } from "@/components/shared/detail-dialog";
 import { DialogUbahStatus, type NilaiStatus } from "@/components/shared/dialog-status";
@@ -32,6 +33,7 @@ import { Input } from "@/components/ui/input";
 import {
   useBuatPengguna,
   useDaftarPengguna,
+  useHapusPengguna,
   usePerbaruiPengguna,
   useResetSandiPengguna,
   useUbahStatusPengguna,
@@ -125,10 +127,22 @@ export function ManajemenAkun() {
   const daftar = useDaftarPengguna(tabel.query);
   const ubahStatus = useUbahStatusPengguna();
   const resetSandi = useResetSandiPengguna();
+  const hapus = useHapusPengguna();
 
   const [editor, setEditor] = React.useState<{ mode: "baru" } | { mode: "ubah"; pengguna: UserView } | null>(null);
   const [targetStatus, setTargetStatus] = React.useState<UserView | null>(null);
+  const [targetHapus, setTargetHapus] = React.useState<UserView | null>(null);
   const [tautanReset, setTautanReset] = React.useState<string | null>(null);
+
+  async function konfirmasiHapus() {
+    if (!targetHapus) return;
+    try {
+      await hapus.mutateAsync(targetHapus.id);
+      setTargetHapus(null);
+    } catch {
+      // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
+    }
+  }
 
   async function kirimStatus(nilai: NilaiStatus) {
     if (!targetStatus) return;
@@ -216,6 +230,12 @@ export function ManajemenAkun() {
               onPilih: () => setTargetStatus(baris),
             },
             { label: t("Reset kata sandi"), ikon: KeyRound, onPilih: () => void mintaReset(baris) },
+            {
+              label: t("Hapus akun"),
+              ikon: Trash2,
+              variant: "danger" as const,
+              onPilih: () => setTargetHapus(baris),
+            },
           ]}
         />
       ),
@@ -313,6 +333,21 @@ export function ManajemenAkun() {
           <Input readOnly value={tautanReset} className="font-mono text-xs" />
         </DetailDialog>
       ) : null}
+
+      <ConfirmDialog
+        terbuka={targetHapus !== null}
+        onUbahTerbuka={(nilai) => {
+          if (!hapus.isPending && !nilai) setTargetHapus(null);
+        }}
+        judul={t("Hapus akun ini secara permanen?")}
+        deskripsi={t(
+          "Seluruh data pengguna ini—profil, properti, foto, langganan, dan transaksi—akan dihapus permanen dan tidak dapat dikembalikan.",
+        )}
+        labelKonfirmasi={t("Hapus akun")}
+        variant="danger"
+        memuat={hapus.isPending}
+        onKonfirmasi={() => void konfirmasiHapus()}
+      />
     </>
   );
 }

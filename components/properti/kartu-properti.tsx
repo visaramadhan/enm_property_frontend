@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatAngka } from "@/lib/format";
+import { LABEL, labelHargaProperti } from "@/lib/enum";
 import type { PropertySummary } from "@/types/api";
 
 /**
@@ -46,7 +47,7 @@ export function KartuProperti({ properti }: { properti: PropertySummary }) {
         )}
 
         <div className="pointer-events-none absolute top-3 left-3 flex flex-wrap gap-2">
-          <Badge variant="primary">{properti.listing_type_label}</Badge>
+          <Badge variant="primary">{t(LABEL.tipePenawaran[properti.listing_type])}</Badge>
           {properti.boost_active ? (
             <Badge variant="accent">
               <Sparkles />
@@ -93,7 +94,7 @@ export function KartuProperti({ properti }: { properti: PropertySummary }) {
 
         <div className="mt-auto flex flex-col gap-3 pt-1">
           <span data-numeric className="text-lg font-semibold tracking-tight text-ink">
-            {properti.price_label}
+            {labelHargaProperti(properti.price, properti.price_period, t)}
           </span>
 
           <Button asChild variant="outline" className="relative z-10 w-full">

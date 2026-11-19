@@ -117,6 +117,20 @@ export function usePerbaruiProfilSaya() {
   });
 }
 
+/**
+ * Menghapus akun pengguna beserta seluruh katalog mitranya.
+ *
+ * Tanpa notifikasi sukses bawaan karena pemanggil memuat ulang dokumen menuju
+ * halaman utama setelah berhasil (pesan dititipkan lewat `sessionStorage`).
+ */
+export function useHapusAkun() {
+  return useMutasi<void, void>({
+    mutasi: () => api.hapusAkun(),
+    pesanSukses: null,
+    pesanGagal: "Gagal menghapus akun",
+  });
+}
+
 /* ================================================================ Admin */
 
 export function useDashboardAdmin(): UseQueryResult<AdminDashboard> {
@@ -374,6 +388,16 @@ export function useResetSandiPengguna() {
     kunciInvalidasi: [awalan.audit],
     pesanSukses: "Tautan reset kata sandi dibuat",
     pesanGagal: "Gagal membuat tautan reset",
+  });
+}
+
+/** Menghapus akun pengguna beserta seluruh data terkait (oleh superadmin). */
+export function useHapusPengguna() {
+  return useMutasi<void, string>({
+    mutasi: api.hapusPengguna,
+    kunciInvalidasi: [awalan.pengguna, awalan.audit],
+    pesanSukses: "Akun dihapus",
+    pesanGagal: "Gagal menghapus akun",
   });
 }
 
@@ -680,6 +704,21 @@ export function useChargeLangganan() {
     kunciInvalidasi: [awalan.pembayaranOrder, awalan.transaksiMitra],
     pesanSukses: null,
     pesanGagal: "Gagal memulai pembayaran",
+  });
+}
+
+/** Membatalkan order langganan yang masih pending agar dapat memilih ulang. */
+export function useBatalkanOrder() {
+  return useMutasi<OrderView, string>({
+    mutasi: (orderCode) => api.batalkanOrder(orderCode),
+    kunciInvalidasi: [
+      awalan.statusOrder,
+      awalan.pembayaranOrder,
+      awalan.transaksiMitra,
+      awalan.langgananMitra,
+    ],
+    pesanSukses: "Pembayaran dibatalkan",
+    pesanGagal: "Gagal membatalkan pembayaran",
   });
 }
 

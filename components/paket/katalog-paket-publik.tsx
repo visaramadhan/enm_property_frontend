@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePaketPublik } from "@/lib/api/hooks";
+import { labelFiturPaket } from "@/lib/enum";
 import { formatAngka, formatRupiah } from "@/lib/format";
 import { dashboardPeran } from "@/lib/navigation";
 import type { PlanView } from "@/types/api";
@@ -37,7 +38,7 @@ function KartuPaket({ paket }: { paket: PlanView }) {
         <div className="flex flex-col gap-1">
           <CardTitle>{paket.name}</CardTitle>
           <CardDescription>
-            {paket.description || t("Paket langganan mitra ENM Property.")}
+            {paket.description ? t(paket.description) : t("Paket langganan mitra ENM Property.")}
           </CardDescription>
         </div>
         {paket.is_free ? <Badge variant="success">{t("Gratis")}</Badge> : null}
@@ -72,7 +73,7 @@ function KartuPaket({ paket }: { paket: PlanView }) {
             {paket.features.map((fitur) => (
               <li key={fitur} className="flex items-start gap-2 text-[13px] text-ink-muted">
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
-                {fitur}
+                {labelFiturPaket(fitur, t)}
               </li>
             ))}
           </ul>

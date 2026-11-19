@@ -5,6 +5,7 @@
  * daftar pilihan hanya ditulis satu kali (DRY).
  */
 
+import { formatRupiah } from "@/lib/format";
 import type {
   AuditAction,
   ListingType,
@@ -203,3 +204,39 @@ export const LABEL = {
   statusOrder: LABEL_STATUS_ORDER,
   aksiAudit: LABEL_AKSI_AUDIT,
 } as const;
+
+/**
+ * Label harga properti yang sudah diterjemahkan, mis. "Rp 5.000.000 / Per bulan".
+ *
+ * Dipakai agar satuan periode (bulan/tahun) ikut berganti bahasa; nilai
+ * `price_label` dari API selalu berbahasa Indonesia sehingga tidak dipakai.
+ */
+export function labelHargaProperti(
+  price: number,
+  period: PricePeriod | undefined,
+  t: (teks: string) => string,
+): string {
+  const nominal = formatRupiah(price);
+  if (!period) return nominal;
+  return `${nominal} / ${t(LABEL_PERIODE_HARGA[period])}`;
+}
+
+/**
+ * Label satu fasilitas paket langganan.
+ *
+ * Fasilitas disimpan sebagai teks bebas di basis data, sehingga pola berangka
+ * (mis. "15 listing aktif") diterjemahkan lebih dulu, lalu sisanya dicocokkan
+ * dengan kamus (teks yang belum punya padanan tampil apa adanya).
+ */
+export function labelFiturPaket(
+  fitur: string,
+  t: (teks: string, nilai?: Record<string, string | number>) => string,
+): string {
+  const listing = /^(\d+)\s+listing aktif$/i.exec(fitur);
+  if (listing) return t("{n} listing aktif", { n: listing[1] });
+
+  const masa = /^masa aktif (\d+)\s+hari$/i.exec(fitur);
+  if (masa) return t("Masa aktif {n} hari", { n: masa[1] });
+
+  return t(fitur);
+}

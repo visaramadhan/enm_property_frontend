@@ -300,6 +300,8 @@ const EN: Record<string, string> = {
   "Selesaikan sesuai instruksi.": "Complete it as instructed.",
   "Pembayaran gagal": "Payment failed",
   "Transaksi ditolak oleh Midtrans.": "The transaction was rejected by Midtrans.",
+  "Bayar dengan Midtrans": "Pay with Midtrans",
+  "atau pilih metode manual": "or choose a manual method",
   "Gagal membuka halaman pembayaran": "Failed to open the payment page",
 
   /* ---------------------------------------------------- Dialog & modal -- */
@@ -867,6 +869,20 @@ const EN: Record<string, string> = {
   "Belum ada paket": "No plans yet",
   "Paket langganan belum tersedia saat ini. Silakan coba lagi nanti.":
     "Subscription plans are not available at the moment. Please try again later.",
+  /* Deskripsi & fasilitas paket bawaan (teks bebas dari basis data). */
+  "Paket uji coba untuk mitra baru.": "Trial plan for new partners.",
+  "Cocok untuk agen properti perorangan.": "Suitable for individual property agents.",
+  "Untuk agensi dengan banyak listing.": "For agencies with many listings.",
+  "Dukungan email": "Email support",
+  "Dukungan WhatsApp": "WhatsApp support",
+  "Dukungan prioritas": "Priority support",
+  "Statistik tayangan": "View statistics",
+  "Statistik lanjutan": "Advanced statistics",
+  "Prioritas review": "Priority review",
+  "Boost listing level 3": "Level 3 listing boost",
+  "Akses pengaturan nomor WA": "WhatsApp number settings access",
+  "{n} listing aktif": "{n} active listings",
+  "Masa aktif {n} hari": "Active for {n} days",
 
   /* --- Favorit akun --- */
   "Kembali ke profil": "Back to profile",
@@ -1376,6 +1392,44 @@ const EN: Record<string, string> = {
     "Complete the new property details, then save as draft or submit for listing.",
   "Tinjau paket langganan yang Anda pilih sebelum melanjutkan pembayaran.":
     "Review the subscription plan you selected before proceeding to payment.",
+
+  /* ------------------------------------------------------- Zona Berbahaya -- */
+  "Zona Berbahaya": "Danger Zone",
+  "Tindakan pada bagian ini bersifat permanen dan tidak dapat dibatalkan.":
+    "Actions in this section are permanent and cannot be undone.",
+  "Hapus akun permanen": "Permanently delete account",
+  "Menghapus akun akan menghapus profil mitra, SELURUH katalog properti aktif maupun nonaktif, foto, riwayat pesanan, dan akses akun Anda secara permanen.":
+    "Deleting your account will permanently remove your partner profile, ALL active and inactive property listings, photos, order history, and your account access.",
+  "Hapus akun saya": "Delete my account",
+  "Tindakan ini tidak dapat dibatalkan. Seluruh data akun dan katalog mitra akan hilang selamanya.":
+    "This action cannot be undone. All account data and the partner catalog will be lost forever.",
+  "Profil mitra, SELURUH katalog properti aktif/nonaktif, foto, riwayat pesanan, dan akses akun akan dihapus permanen.":
+    "Your partner profile, ALL active/inactive property listings, photos, order history, and account access will be permanently deleted.",
+  "Masukkan kata sandi untuk memverifikasi ulang akun Anda.":
+    "Enter your password to re-verify your account.",
+  "Ketik {frasa} untuk mengonfirmasi.": "Type {frasa} to confirm.",
+  "Akun dihapus permanen": "Account permanently deleted",
+  "Akun Anda beserta seluruh katalog properti, foto, dan riwayat pesanan telah dihapus secara permanen.":
+    "Your account along with the entire property catalog, photos, and order history has been permanently deleted.",
+  "Hapus akun": "Delete account",
+  "Hapus akun ini secara permanen?": "Permanently delete this account?",
+  "Seluruh data pengguna ini—profil, properti, foto, langganan, dan transaksi—akan dihapus permanen dan tidak dapat dikembalikan.":
+    "All of this user's data—profile, properties, photos, subscriptions, and transactions—will be permanently deleted and cannot be restored.",
+  "Akun dihapus": "Account deleted",
+  "Gagal menghapus akun": "Failed to delete account",
+
+  /* ------------------------------------------------------ Batalkan order -- */
+  "Melanjutkan pembayaran": "Continuing payment",
+  "Anda dialihkan ke halaman pembayaran pesanan yang belum selesai.":
+    "You are being redirected to the payment page for your unfinished order.",
+  "Popup pembayaran tidak dapat dibuka. Anda dialihkan ke halaman pembayaran QRIS/VA.":
+    "The payment popup could not be opened. You are being redirected to the QRIS/VA payment page.",
+  "Ingin mengganti metode pembayaran atau memilih paket lain? Batalkan pesanan ini lalu pilih kembali.":
+    "Want to change your payment method or choose another plan? Cancel this order and choose again.",
+  "Batalkan pembayaran": "Cancel payment",
+  "Batalkan pembayaran?": "Cancel payment?",
+  "Pesanan yang dibatalkan tidak dapat dilanjutkan. Anda dapat memilih paket dan metode pembayaran lagi dari halaman Paket & Langganan.":
+    "A cancelled order cannot be continued. You can choose a plan and payment method again from the Plans & Subscription page.",
 };
 
 /** Menyisipkan nilai ke placeholder `{kunci}` bila ada. */

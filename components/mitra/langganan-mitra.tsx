@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircle2,
@@ -36,6 +37,7 @@ import {
   usePerjanjianMitra,
   useStatusOrder,
 } from "@/lib/api/hooks";
+import { labelFiturPaket } from "@/lib/enum";
 import { formatAngka, formatRupiah, formatTanggalWib } from "@/lib/format";
 import { bukaSnap } from "@/lib/midtrans";
 import { toastGagal, toastInfo, toastSukses } from "@/lib/toast";
@@ -54,6 +56,7 @@ import type { CheckoutResponse, PlanView, SubscriptionView, VendorAgreementRespo
  */
 export function LanggananMitra() {
   const { t, bahasa } = useBahasa();
+  const router = useRouter();
   const langganan = useLanggananMitra();
   const perjanjian = usePerjanjianMitra();
   const paket = usePaketPublik();
@@ -74,19 +77,29 @@ export function LanggananMitra() {
   /** Menindaklanjuti respons checkout: gratis, simulasi, atau Snap nyata. */
   async function tanganiSukses(paketDipilih: PlanView, hasil: CheckoutResponse) {
     setDialogPaket(null);
+    void langganan.refetch();
 
     if (hasil.free_active) {
       toastSukses(
         t("Paket aktif"),
         t("Paket {nama} langsung aktif tanpa biaya.", { nama: paketDipilih.name }),
       );
-      void langganan.refetch();
       void perjanjian.refetch();
       return;
     }
 
+    /* Order pending yang dipakai ulang: jangan buka Snap baru, cukup
+       arahkan mitra ke halaman pembayaran pesanan yang belum selesai. */
+    if (hasil.reused) {
+      toastInfo(
+        t("Melanjutkan pembayaran"),
+        t("Anda dialihkan ke halaman pembayaran pesanan yang belum selesai."),
+      );
+      router.push(`/pembayaran/${hasil.order_code ?? hasil.order.code}`);
+      return;
+    }
+
     setPesanan({ response: hasil, paket: paketDipilih });
-    void langganan.refetch();
 
     if (hasil.simulated) {
       toastInfo(
@@ -104,6 +117,20 @@ export function LanggananMitra() {
       return;
     }
 
+    const kodeOrder = hasil.order_code ?? hasil.order.code;
+
+    /* Popup Snap memerlukan koneksi ke Midtrans. Bila popup gagal dibuka
+       (mis. gangguan koneksi ke Midtrans), mitra tidak dibiarkan buntu:
+       arahkan ke halaman pembayaran QRIS/VA yang memakai Core API sehingga
+       pembayaran tetap dapat diselesaikan. */
+    const alihkanKePembayaran = () => {
+      toastInfo(
+        t("Melanjutkan pembayaran"),
+        t("Popup pembayaran tidak dapat dibuka. Anda dialihkan ke halaman pembayaran QRIS/VA."),
+      );
+      router.push(`/pembayaran/${kodeOrder}`);
+    };
+
     try {
       await bukaSnap(hasil.snap_token, {
         onSuccess: () => {
@@ -112,11 +139,10 @@ export function LanggananMitra() {
         },
         onPending: () =>
           toastInfo(t("Pembayaran menunggu penyelesaian"), t("Selesaikan sesuai instruksi.")),
-        onError: () =>
-          toastGagal(t("Pembayaran gagal"), new Error(t("Transaksi ditolak oleh Midtrans."))),
+        onError: alihkanKePembayaran,
       }, bahasa);
-    } catch (error) {
-      toastGagal(t("Gagal membuka halaman pembayaran"), error);
+    } catch {
+      alihkanKePembayaran();
     }
   }
 
@@ -327,7 +353,9 @@ function KartuPaket({
       <CardHeader className="flex-row items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <CardTitle>{paket.name}</CardTitle>
-          <CardDescription>{paket.description || t("Paket langganan mitra.")}</CardDescription>
+          <CardDescription>
+            {paket.description ? t(paket.description) : t("Paket langganan mitra.")}
+          </CardDescription>
         </div>
         {aktif ? (
           <Badge variant="accent">{t("Paket Anda")}</Badge>
@@ -357,7 +385,7 @@ function KartuPaket({
             {paket.features.map((fitur) => (
               <li key={fitur} className="flex items-start gap-2 text-[13px] text-ink-muted">
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
-                {fitur}
+                {labelFiturPaket(fitur, t)}
               </li>
             ))}
           </ul>
@@ -564,7 +592,9 @@ function KartuStatusPesanan({
   onSelesai: () => void;
 }) {
   const { t } = useBahasa();
-  const status = useStatusOrder(awal.order.code, true);
+  /* Polling otomatis agar status terbaru tampil begitu Snap melaporkan
+     pembayaran berhasil (berhenti sendiri saat status sudah final). */
+  const status = useStatusOrder(awal.order.code, true, 5000);
   const order = status.data?.order ?? awal.order;
   const lunas = order.status === "paid";
 

@@ -22,6 +22,7 @@ import { PenandaAsalBeranda } from "@/components/shared/asal-beranda";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { kontenLandingAman, paketPublikAman, propertiUnggulanAman } from "@/lib/api/server";
+import { terjemah } from "@/lib/app-i18n";
 import { formatAngka, formatRupiah } from "@/lib/format";
 import { kamus, type Bahasa, type Kamus } from "@/lib/landing-i18n";
 import { NAMA_SITUS, SITE_URL } from "@/lib/seo";
@@ -191,7 +192,7 @@ export async function LandingHalaman({ bahasa }: { bahasa: Bahasa }) {
         <Hero konten={konten} t={t} k={k} properti={properti} area={area} areaUtama={areaUtama} />
         <Keunggulan t={t} k={k} />
         <PropertiPilihan daftar={properti} t={t} k={k} />
-        <PaketMitra daftar={paket} t={t} k={k} />
+        <PaketMitra daftar={paket} t={t} k={k} bahasa={bahasa} />
         <PanduanMitra t={t} k={k} />
         <Faq t={t} k={k} />
         <CtaMitra t={t} k={k} />
@@ -536,7 +537,17 @@ function barisPerbandingan(
  * sehingga kartu dan tabel perbandingan di bawahnya selalu seragam
  * (`standar_cms.txt` bagian 1 — satu sumber data).
  */
-function PaketMitra({ daftar, t, k }: { daftar: PlanView[]; t: KontenTerpilih; k: Kamus }) {
+function PaketMitra({
+  daftar,
+  t,
+  k,
+  bahasa,
+}: {
+  daftar: PlanView[];
+  t: KontenTerpilih;
+  k: Kamus;
+  bahasa: Bahasa;
+}) {
   const unggulanId = daftar
     .filter((paket) => !paket.is_free)
     .reduce<PlanView | null>(
@@ -582,7 +593,9 @@ function PaketMitra({ daftar, t, k }: { daftar: PlanView[]; t: KontenTerpilih; k
                   </h3>
 
                   <p className="mb-4 min-h-[60px] text-[13px] leading-[1.55] text-ink-muted">
-                    {paket.description || k.paket.deskripsiBawaan}
+                    {paket.description
+                      ? terjemah(bahasa, paket.description)
+                      : k.paket.deskripsiBawaan}
                   </p>
 
                   <div className="mt-auto mb-4 rounded-[10px] border border-divider bg-canvas px-3.5 py-3">

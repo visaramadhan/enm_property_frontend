@@ -109,6 +109,11 @@ export function perbaruiProfilSaya(body: UpdateMeRequest) {
   return apiPut<UserView>("/me", body);
 }
 
+/** Menghapus akun pengguna beserta seluruh katalog mitranya secara permanen. */
+export function hapusAkun() {
+  return apiDelete("/me");
+}
+
 /* -------------------------------------------------------------- Katalog -- */
 
 export function cariProperti(query: PropertyFilterQuery = {}) {
@@ -304,6 +309,11 @@ export function daftarTransaksiMitra(query: ListQuery = {}) {
   return apiGetPaginated<OrderView>(`/vendor/orders${buatQuery(query)}`);
 }
 
+/** Membatalkan order langganan yang masih berstatus pending. */
+export function batalkanOrder(orderCode: string) {
+  return apiPost<OrderView>(`/subscriptions/orders/${orderCode}/cancel`);
+}
+
 /* -------------------------------------------------------------- Invoice -- */
 
 export function ambilInvoice(orderCode: string) {
@@ -460,6 +470,11 @@ export function ubahStatusPengguna(id: string, body: SetUserStatusRequest) {
 
 export function resetSandiPengguna(id: string) {
   return apiPost<ResetPasswordResponse>(`/admin/users/${id}/reset-password`);
+}
+
+/** Menghapus akun pengguna beserta seluruh katalog mitranya secara permanen. */
+export function hapusPengguna(id: string) {
+  return apiDelete(`/admin/users/${id}`);
 }
 
 /* ---------------------------------------------------------- Pengaturan -- */

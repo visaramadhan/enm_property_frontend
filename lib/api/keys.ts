@@ -105,6 +105,7 @@ export const awalan = {
   pengelolaPublik: ["pengelola/publik"],
   pengaturanPublik: ["pengaturan/publik"],
   pembayaranOrder: ["order/pembayaran"],
+  statusOrder: ["order/status"],
   landing: ["admin/landing"],
   landingOwner: ["owner/landing"],
   landingPublik: ["landing/publik"],

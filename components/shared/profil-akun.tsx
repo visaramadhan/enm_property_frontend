@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle, Save } from "lucide-react";
+import { LoaderCircle, Save, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -11,15 +12,30 @@ import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { TextField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
+import { titipPesanSesi } from "@/components/shared/pesan-sesi";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { TombolBeranda } from "@/components/shared/asal-beranda";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { usePerbaruiProfilSaya, useProfilSaya } from "@/lib/api/hooks";
+import { useHapusAkun, usePerbaruiProfilSaya, useProfilSaya } from "@/lib/api/hooks";
+import { hapusAktivitas } from "@/lib/auth/aktivitas";
+import { hapusAkunDummy } from "@/lib/auth/akun-dummy";
 import { LABEL, LABEL_PERAN } from "@/lib/enum";
+import { pesanErrorAuth } from "@/lib/firebase/errors";
 import { formatWib, inisialDari } from "@/lib/format";
 import type { UserView } from "@/types/api";
 
@@ -161,6 +177,241 @@ function KartuProfil({ pengguna }: { pengguna: UserView }) {
   );
 }
 
+/**
+ * Re-autentikasi Firebase sesuai penyedia akun sebelum tindakan destruktif.
+ *
+ * Firebase mewajibkan login ulang terkini (`auth/requires-recent-login`) untuk
+ * operasi sensitif. Akun dengan penyedia kata sandi diverifikasi memakai
+ * `EmailAuthProvider`, sedangkan akun Google memakai popup penyedia yang sama.
+ */
+async function reautentikasiFirebase(sandi: string, emailCadangan?: string): Promise<void> {
+  const [client, authMod] = await Promise.all([
+    import("@/lib/firebase/client"),
+    import("firebase/auth"),
+  ]);
+  if (!client.isFirebaseConfigured) return;
+
+  const pengguna = client.getFirebaseAuth().currentUser;
+  // Sesi demo / tanpa akun Firebase tidak memiliki kredensial untuk diversifikasi.
+  if (!pengguna) return;
+
+  const penyedia = pengguna.providerData.map((item) => item.providerId);
+  if (penyedia.includes("password")) {
+    const email = pengguna.email ?? emailCadangan;
+    if (!email) throw new Error("Email akun tidak ditemukan untuk verifikasi.");
+    const kredensial = authMod.EmailAuthProvider.credential(email, sandi);
+    await authMod.reauthenticateWithCredential(pengguna, kredensial);
+    return;
+  }
+  if (penyedia.includes("google.com")) {
+    await authMod.reauthenticateWithPopup(pengguna, new authMod.GoogleAuthProvider());
+  }
+}
+
+/** Menyeragamkan pesan galat Firebase Auth dan galat lain agar siap ditampilkan. */
+function pesanGalatHapus(error: unknown): string {
+  if (error && typeof error === "object" && "code" in error) return pesanErrorAuth(error);
+  if (error instanceof Error) return error.message;
+  return "Terjadi kesalahan. Silakan coba lagi.";
+}
+
+/**
+ * Zona Berbahaya: penghapusan akun permanen.
+ *
+ * Tersedia bagi semua peran (termasuk mitra). Sebelum menghapus, pengguna wajib
+ * mengetik frasa konfirmasi persis dan melewati re-autentikasi Firebase bila
+ * akun memakai penyedia Google. Setelah berhasil, sesi dibersihkan dan pengguna
+ * kembali ke halaman utama dengan notifikasi tertunda.
+ */
+function ZonaBerbahaya({ pengguna }: { pengguna: UserView }) {
+  const { t } = useBahasa();
+  const queryClient = useQueryClient();
+  const hapus = useHapusAkun();
+
+  const [terbuka, setTerbuka] = React.useState(false);
+  const [konfirmasi, setKonfirmasi] = React.useState("");
+  const [sandi, setSandi] = React.useState("");
+  const [butuhSandi, setButuhSandi] = React.useState(false);
+  const [galat, setGalat] = React.useState<string | null>(null);
+
+  const frasa = "HAPUS AKUN";
+  const cocok = konfirmasi.trim() === frasa;
+  const bolehKirim = cocok && (!butuhSandi || sandi.length > 0) && !hapus.isPending;
+
+  /* Deteksi penyedia akun setiap modal dibuka untuk menyisipkan bidang sandi. */
+  React.useEffect(() => {
+    if (!terbuka) return;
+    let aktif = true;
+    void (async () => {
+      try {
+        const client = await import("@/lib/firebase/client");
+        const orang = client.isFirebaseConfigured
+          ? client.getFirebaseAuth().currentUser
+          : null;
+        const pakaiSandi = Boolean(
+          orang?.providerData.some((item) => item.providerId === "password"),
+        );
+        if (aktif) setButuhSandi(pakaiSandi);
+      } catch {
+        if (aktif) setButuhSandi(false);
+      }
+    })();
+    return () => {
+      aktif = false;
+    };
+  }, [terbuka]);
+
+  function ubahTerbuka(nilai: boolean) {
+    if (hapus.isPending) return;
+    setTerbuka(nilai);
+    if (!nilai) {
+      setKonfirmasi("");
+      setSandi("");
+      setGalat(null);
+    }
+  }
+
+  async function konfirmasiHapus() {
+    setGalat(null);
+    try {
+      await reautentikasiFirebase(sandi, pengguna.email);
+      await hapus.mutateAsync();
+
+      hapusAkunDummy();
+      hapusAktivitas();
+      try {
+        const [{ signOut }, { getFirebaseAuth }] = await Promise.all([
+          import("firebase/auth"),
+          import("@/lib/firebase/client"),
+        ]);
+        await signOut(getFirebaseAuth());
+      } catch {
+        // Firebase belum dikonfigurasi; sesi lokal tetap dibersihkan.
+      }
+      queryClient.clear();
+      titipPesanSesi(
+        "Akun dihapus permanen",
+        "Akun Anda beserta seluruh katalog properti, foto, dan riwayat pesanan telah dihapus secara permanen.",
+      );
+      window.location.replace("/");
+    } catch (error) {
+      setGalat(pesanGalatHapus(error));
+    }
+  }
+
+  return (
+    <Card className="border-danger/40">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-danger-ink">
+          <Trash2 className="size-4" aria-hidden="true" />
+          {t("Zona Berbahaya")}
+        </CardTitle>
+        <CardDescription>
+          {t("Tindakan pada bagian ini bersifat permanen dan tidak dapat dibatalkan.")}
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-4">
+        <Alert variant="danger">
+          <AlertTitle>{t("Hapus akun permanen")}</AlertTitle>
+          <AlertDescription>
+            {t(
+              "Menghapus akun akan menghapus profil mitra, SELURUH katalog properti aktif maupun nonaktif, foto, riwayat pesanan, dan akses akun Anda secara permanen.",
+            )}
+          </AlertDescription>
+        </Alert>
+
+        <div>
+          <Button variant="danger" onClick={() => ubahTerbuka(true)}>
+            <Trash2 />
+            {t("Hapus akun saya")}
+          </Button>
+        </div>
+      </CardContent>
+
+      <Dialog open={terbuka} onOpenChange={ubahTerbuka}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-danger-ink">{t("Hapus akun permanen")}</DialogTitle>
+            <DialogDescription>
+              {t(
+                "Tindakan ini tidak dapat dibatalkan. Seluruh data akun dan katalog mitra akan hilang selamanya.",
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4">
+            <Alert variant="danger" tanpaIkon>
+              <AlertDescription>
+                {t(
+                  "Profil mitra, SELURUH katalog properti aktif/nonaktif, foto, riwayat pesanan, dan akses akun akan dihapus permanen.",
+                )}
+              </AlertDescription>
+            </Alert>
+
+            {butuhSandi ? (
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="sandi-hapus-akun">{t("Kata sandi")}</Label>
+                <Input
+                  id="sandi-hapus-akun"
+                  type="password"
+                  autoComplete="current-password"
+                  value={sandi}
+                  disabled={hapus.isPending}
+                  onChange={(event) => setSandi(event.target.value)}
+                />
+                <p className="text-[13px] text-ink-muted">
+                  {t("Masukkan kata sandi untuk memverifikasi ulang akun Anda.")}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="konfirmasi-hapus-akun">
+                {t("Ketik {frasa} untuk mengonfirmasi.", { frasa })}
+              </Label>
+              <Input
+                id="konfirmasi-hapus-akun"
+                autoComplete="off"
+                value={konfirmasi}
+                disabled={hapus.isPending}
+                onChange={(event) => setKonfirmasi(event.target.value)}
+                placeholder={frasa}
+              />
+            </div>
+
+            {galat ? (
+              <p className="rounded-field border border-danger-border bg-danger-tint p-3 text-[13px] text-danger-ink">
+                {galat}
+              </p>
+            ) : null}
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={hapus.isPending}
+              onClick={() => ubahTerbuka(false)}
+            >
+              {t("Batal")}
+            </Button>
+            <Button
+              type="button"
+              variant="danger"
+              disabled={!bolehKirim}
+              onClick={() => void konfirmasiHapus()}
+            >
+              {hapus.isPending ? <LoaderCircle className="animate-spin" /> : <Trash2 />}
+              {t("Hapus akun permanen")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
+
 export function ProfilAkun({
   judul,
   deskripsi,
@@ -203,7 +454,12 @@ export function ProfilAkun({
         }
         judulGagal={t("Gagal memuat profil")}
       >
-        {(pengguna) => <KartuProfil pengguna={pengguna} />}
+        {(pengguna) => (
+          <div className="flex flex-col gap-6">
+            <KartuProfil pengguna={pengguna} />
+            <ZonaBerbahaya pengguna={pengguna} />
+          </div>
+        )}
       </KontenAsync>
     </>
   );

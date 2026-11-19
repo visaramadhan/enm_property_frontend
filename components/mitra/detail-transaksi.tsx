@@ -1,10 +1,13 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, CreditCard, Download, Receipt, XCircle } from "lucide-react";
 
 import { KartuLangganan } from "@/components/mitra/kartu-langganan";
 import { useBahasa } from "@/components/providers/bahasa-provider";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
@@ -14,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { unduhInvoicePdf } from "@/lib/api/endpoints";
-import { useStatusOrder } from "@/lib/api/hooks";
+import { useBatalkanOrder, useStatusOrder } from "@/lib/api/hooks";
 import { formatRupiah, formatWib } from "@/lib/format";
 import { jalankanDenganToast } from "@/lib/toast";
 import { unduhBerkas } from "@/lib/unduh";
@@ -28,7 +31,20 @@ import { unduhBerkas } from "@/lib/unduh";
  */
 export function DetailTransaksi({ orderCode }: { orderCode: string }) {
   const { t } = useBahasa();
+  const router = useRouter();
   const status = useStatusOrder(orderCode, true, 5000);
+  const batal = useBatalkanOrder();
+  const [konfirmasiBatal, setKonfirmasiBatal] = React.useState(false);
+
+  async function batalkanPembayaran() {
+    try {
+      await batal.mutateAsync(orderCode);
+      setKonfirmasiBatal(false);
+      router.push("/mitra/langganan");
+    } catch {
+      // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
+    }
+  }
 
   async function unduhInvoice() {
     await jalankanDenganToast(
@@ -151,6 +167,17 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                   </Button>
                 ) : null}
 
+                {menunggu ? (
+                  <Button
+                    variant="outline"
+                    disabled={batal.isPending}
+                    onClick={() => setKonfirmasiBatal(true)}
+                  >
+                    <XCircle />
+                    {t("Batalkan pembayaran")}
+                  </Button>
+                ) : null}
+
                 {lunas ? (
                   <Button variant="outline" onClick={() => void unduhInvoice()}>
                     <Download />
@@ -176,6 +203,21 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                   </p>
                 ) : null}
               </div>
+
+              <ConfirmDialog
+                terbuka={konfirmasiBatal}
+                onUbahTerbuka={(nilai) => {
+                  if (!batal.isPending) setKonfirmasiBatal(nilai);
+                }}
+                judul={t("Batalkan pembayaran?")}
+                deskripsi={t(
+                  "Pesanan yang dibatalkan tidak dapat dilanjutkan. Anda dapat memilih paket dan metode pembayaran lagi dari halaman Paket & Langganan.",
+                )}
+                labelKonfirmasi={t("Batalkan pembayaran")}
+                variant="danger"
+                memuat={batal.isPending}
+                onKonfirmasi={() => void batalkanPembayaran()}
+              />
             </div>
           );
         }}

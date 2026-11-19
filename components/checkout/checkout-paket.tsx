@@ -22,8 +22,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCheckout, useDetailPaket, usePerjanjianAktif } from "@/lib/api/hooks";
 import { useSiapkanSesi } from "@/lib/api/use-sesi";
+import { labelFiturPaket } from "@/lib/enum";
 import { formatAngka, formatRupiah } from "@/lib/format";
-import { toastSukses } from "@/lib/toast";
+import { toastInfo, toastSukses } from "@/lib/toast";
 import type { PlanView } from "@/types/api";
 
 /**
@@ -55,7 +56,7 @@ function KartuRingkasanPaket({ paket }: { paket: PlanView }) {
         <div className="flex flex-col gap-1">
           <CardTitle>{paket.name}</CardTitle>
           <CardDescription>
-            {paket.description || t("Paket langganan mitra ENM Property.")}
+            {paket.description ? t(paket.description) : t("Paket langganan mitra ENM Property.")}
           </CardDescription>
         </div>
         {paket.is_free ? <Badge variant="success">{t("Gratis")}</Badge> : null}
@@ -98,7 +99,7 @@ function KartuRingkasanPaket({ paket }: { paket: PlanView }) {
             {paket.features.map((fitur) => (
               <li key={fitur} className="flex items-start gap-2 text-[13px] text-ink-muted">
                 <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
-                {fitur}
+                {labelFiturPaket(fitur, t)}
               </li>
             ))}
           </ul>
@@ -241,6 +242,17 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
       if (hasil.free_active) {
         toastSukses(t("Paket aktif"), t("Paket {nama} langsung aktif tanpa biaya.", { nama: paket.name }));
         router.push("/mitra/langganan");
+        return;
+      }
+
+      /* Order pending yang dipakai ulang dialihkan langsung ke halaman
+         pembayarannya tanpa membuka Snap baru. */
+      if (hasil.reused) {
+        toastInfo(
+          t("Melanjutkan pembayaran"),
+          t("Anda dialihkan ke halaman pembayaran pesanan yang belum selesai."),
+        );
+        router.push(`/pembayaran/${hasil.order_code ?? hasil.order.code}`);
         return;
       }
 

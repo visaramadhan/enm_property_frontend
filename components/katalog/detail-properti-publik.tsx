@@ -39,6 +39,7 @@ import {
   useKontakProperti,
 } from "@/lib/api/hooks";
 import { formatAngka, formatTanggalWib } from "@/lib/format";
+import { LABEL, labelHargaProperti } from "@/lib/enum";
 import { toastInfo, toastSukses } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import type { ContactFormRequest, PropertyDetail } from "@/types/api";
@@ -151,7 +152,7 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
           {t("Harga")}
         </span>
         <CardTitle data-numeric className="text-2xl">
-          {properti.price_label}
+          {labelHargaProperti(properti.price, properti.price_period, t)}
         </CardTitle>
       </CardHeader>
 
@@ -344,8 +345,8 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
               <Card>
                 <CardHeader className="gap-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="primary">{data.listing_type_label}</Badge>
-                    <Badge variant="outline">{data.property_type_label}</Badge>
+                    <Badge variant="primary">{t(LABEL.tipePenawaran[data.listing_type])}</Badge>
+                    <Badge variant="outline">{t(LABEL.tipeProperti[data.property_type])}</Badge>
                     {data.category_name ? (
                       <Badge variant="neutral">{data.category_name}</Badge>
                     ) : null}
@@ -369,7 +370,7 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                   <DaftarDeskripsi
                     kolom={3}
                     item={[
-                      { label: t("Tipe properti"), nilai: data.property_type_label },
+                      { label: t("Tipe properti"), nilai: t(LABEL.tipeProperti[data.property_type]) },
                       { label: t("Luas tanah"), nilai: `${formatAngka(data.land_area)} m²` },
                       { label: t("Luas bangunan"), nilai: `${formatAngka(data.building_area)} m²` },
                       { label: t("Kamar tidur"), nilai: formatAngka(data.bedrooms) },

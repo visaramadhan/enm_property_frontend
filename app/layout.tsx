@@ -7,6 +7,8 @@ import { IndikatorNavigasi } from "@/components/layout/indikator-navigasi";
 import { PenjagaIdle } from "@/components/layout/penjaga-idle";
 import { WarnaSistem } from "@/components/layout/warna-sistem";
 import { AppProviders } from "@/components/providers/app-providers";
+import { FaviconSitus } from "@/components/shared/favicon-situs";
+import { PesanSesi } from "@/components/shared/pesan-sesi";
 
 import "./globals.css";
 
@@ -52,6 +54,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           </Suspense>
           <PenjagaIdle />
           <WarnaSistem />
+          {/* Favicon mengikuti logo tersimpan; pesan sesi menampilkan notifikasi
+              yang dititipkan sebelum pemuatan ulang dokumen. */}
+          <FaviconSitus />
+          <PesanSesi />
           {children}
         </AppProviders>
         {GA_ID ? <GoogleAnalytics gaId={GA_ID} /> : null}
