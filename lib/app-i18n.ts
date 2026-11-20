@@ -596,6 +596,9 @@ const EN: Record<string, string> = {
   Sampul: "Cover",
   "Foto {n}": "Photo {n}",
   "Foto KTP": "ID Card Photo",
+  "Foto KTP mitra": "Partner ID card photo",
+  "Unduh foto KTP": "Download ID card photo",
+  "Foto KTP belum diunggah.": "The ID card photo has not been uploaded.",
   "Unggah foto KTP pemilik atau penanggung jawab. Format JPG, PNG, atau WEBP, maksimal 5 MB.":
     "Upload the ID card photo of the owner or person in charge. JPG, PNG, or WEBP format, max 5 MB.",
   "Ganti foto": "Change photo",

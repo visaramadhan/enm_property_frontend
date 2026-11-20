@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Eye, PencilLine } from "lucide-react";
+import { Download, Eye, LoaderCircle, PencilLine } from "lucide-react";
 
 import { useBahasa } from "@/components/providers/bahasa-provider";
 import { AksiBaris } from "@/components/shared/aksi-baris";
@@ -13,10 +13,12 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { TabelData } from "@/components/shared/tabel-data";
+import { Button } from "@/components/ui/button";
 import { useDaftarMitraAdmin, useUbahStatusMitra } from "@/lib/api/hooks";
 import { OPSI_STATUS_MITRA } from "@/lib/enum";
 import { formatTanggalWib, formatWib } from "@/lib/format";
 import { useTabelQuery } from "@/lib/hooks/use-tabel-query";
+import { unduhBerkas } from "@/lib/unduh";
 import type { PartnerStatus, PartnerView, SuspendPartnerRequest } from "@/types/api";
 
 interface FilterMitra {
@@ -34,6 +36,68 @@ const OPSI_UBAH_STATUS = OPSI_STATUS_MITRA.filter(
 
 /** Status `pending` tidak pernah terjadi lagi, jadi tidak perlu difilter. */
 const OPSI_FILTER_STATUS = OPSI_STATUS_MITRA.filter((opsi) => opsi.nilai !== "pending");
+
+/**
+ * Pratinjau foto KTP mitra beserta tombol unduh pada modal detail.
+ *
+ * Berkas diambil sebagai `Blob` agar atribut `download` tetap dihormati
+ * (tautan lintas-origin mengabaikannya); bila pengambilan gagal karena CORS,
+ * berkas dibuka di tab baru sebagai fallback.
+ */
+function FotoKTP({ url, namaDasar }: { url: string; namaDasar: string }) {
+  const { t } = useBahasa();
+  const [memuat, setMemuat] = React.useState(false);
+
+  const namaBerkas = React.useMemo(() => {
+    const bersih = url.split("?")[0];
+    const cocok = /\.(jpe?g|png|webp)$/i.exec(bersih);
+    return `${namaDasar}.${cocok ? cocok[1].toLowerCase() : "jpg"}`;
+  }, [url, namaDasar]);
+
+  async function unduh() {
+    setMemuat(true);
+    try {
+      const respons = await fetch(url);
+      if (!respons.ok) throw new Error(`HTTP ${respons.status}`);
+      unduhBerkas(await respons.blob(), namaBerkas);
+    } catch {
+      window.open(url, "_blank", "noopener,noreferrer");
+    } finally {
+      setMemuat(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
+        {t("Foto KTP")}
+      </p>
+
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="overflow-hidden rounded-card border border-line bg-hover"
+      >
+        {/* Foto berasal dari penyimpanan backend; tidak melalui `next/image`. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt={t("Foto KTP mitra")} className="max-h-72 w-full object-contain" />
+      </a>
+
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="self-start"
+        onClick={() => void unduh()}
+        disabled={memuat}
+      >
+        {memuat ? <LoaderCircle className="animate-spin" /> : <Download />}
+        {t("Unduh foto KTP")}
+      </Button>
+    </div>
+  );
+}
 
 /** Rincian identitas mitra pada modal detail. */
 function RincianMitra({ mitra }: { mitra: PartnerView }) {
@@ -70,6 +134,19 @@ function RincianMitra({ mitra }: { mitra: PartnerView }) {
           },
         ]}
       />
+
+      {mitra.ktp_photo_url ? (
+        <FotoKTP
+          url={mitra.ktp_photo_url}
+          namaDasar={`ktp-${
+            mitra.business_name.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "") || mitra.id
+          }`}
+        />
+      ) : (
+        <p className="rounded-field bg-hover p-3 text-[13px] text-ink-muted">
+          {t("Foto KTP belum diunggah.")}
+        </p>
+      )}
     </div>
   );
 }
