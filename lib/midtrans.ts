@@ -76,3 +76,14 @@ export async function bukaSnap(token: string, callbacks: SnapCallbacks = {}, bah
   const snap = await loadSnap();
   snap.pay(token, { language: bahasa, ...callbacks });
 }
+
+/**
+ * Tutup popup Snap yang sedang terbuka.
+ *
+ * Dipanggil setelah pembayaran dilaporkan berhasil agar jendela pembayaran
+ * tidak menghalangi halaman; aman dipanggil walau popup sudah tertutup atau
+ * snap.js belum termuat.
+ */
+export function tutupSnap() {
+  if (typeof window !== "undefined" && window.snap) window.snap.hide();
+}

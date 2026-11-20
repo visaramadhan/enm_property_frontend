@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 /** Batas jumlah foto per listing, selaras dengan `MAX_PHOTOS_PER_PROPERTY` backend. */
-export const MAKS_FOTO_LISTING = 10;
+export const MAKS_FOTO_LISTING = 20;
 
 /**
  * Pemilih foto lokal untuk formulir tambah listing.

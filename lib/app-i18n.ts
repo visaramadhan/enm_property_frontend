@@ -151,8 +151,7 @@ const EN: Record<string, string> = {
   "Paket aktif": "Active plan",
   "Paket {nama} langsung aktif tanpa biaya.": "The {nama} plan is now active at no cost.",
   "Pesanan dibuat": "Order created",
-  "Lanjutkan pembayaran melalui QRIS atau virtual account.":
-    "Continue payment via QRIS or virtual account.",
+  "Lanjutkan pembayaran melalui Midtrans.": "Continue payment via Midtrans.",
 
   /* ------------------------------------------------------- Navigasi mitra -- */
   Ringkasan: "Overview",
@@ -596,6 +595,18 @@ const EN: Record<string, string> = {
     "No photos selected yet. Photos will be uploaded automatically after the property is saved.",
   Sampul: "Cover",
   "Foto {n}": "Photo {n}",
+  "Foto KTP": "ID Card Photo",
+  "Unggah foto KTP pemilik atau penanggung jawab. Format JPG, PNG, atau WEBP, maksimal 5 MB.":
+    "Upload the ID card photo of the owner or person in charge. JPG, PNG, or WEBP format, max 5 MB.",
+  "Ganti foto": "Change photo",
+  "Pilih foto KTP": "Choose ID card photo",
+  "Belum ada foto KTP dipilih. Foto KTP wajib diunggah saat pendaftaran mitra.":
+    "No ID card photo selected yet. An ID card photo is required when registering as a partner.",
+  "Pratinjau foto KTP": "ID card photo preview",
+  "Hapus foto KTP": "Delete ID card photo",
+  "Foto KTP wajib diunggah": "ID card photo is required",
+  "Unggah foto KTP sebelum melanjutkan pendaftaran.":
+    "Upload an ID card photo before continuing the registration.",
 
   /* --------------------------------------------------- Kartu properti -- */
   "Lihat detail {judul}": "View details {judul}",
@@ -639,8 +650,8 @@ const EN: Record<string, string> = {
   "Hubungi dukungan bila Anda merasa telah melakukan pembayaran.":
     "Contact support if you believe you have already paid.",
   "Menunggu pembayaran": "Awaiting payment",
-  "Selesaikan pembayaran melalui QRIS atau virtual account. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.":
-    "Complete the payment via QRIS or virtual account. This page will update automatically once the payment is confirmed.",
+  "Selesaikan pembayaran melalui Midtrans. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.":
+    "Complete the payment via Midtrans. This page will update automatically once the payment is confirmed.",
   "Unduh invoice": "Download invoice",
   "Pilih paket lagi": "Choose a plan again",
   "Transaksi berstatus {status}.": "The transaction has the status {status}.",
@@ -741,11 +752,20 @@ const EN: Record<string, string> = {
   "Selesaikan pembayaran sebelum": "Complete the payment before",
   "WIB. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.":
     "WIB. This page will update automatically once the payment is confirmed.",
+  "Pembayaran": "Payment",
   "Pembayaran Langganan": "Subscription Payment",
-  "Selesaikan pembayaran paket Anda melalui QRIS atau virtual account.":
-    "Complete your plan payment via QRIS or virtual account.",
+  "Selesaikan pembayaran paket Anda melalui Midtrans.":
+    "Complete your plan payment via Midtrans.",
+  "Kanal pembayaran belum tersedia. Muat ulang halaman ini beberapa saat lagi.":
+    "The payment channel is not available yet. Reload this page in a moment.",
+  "Pembayaran berhasil dikirim": "Payment successfully submitted",
+  "Kami sedang memeriksa status pembayaran Anda. Jika jendela pembayaran masih terbuka, tutup jendela tersebut untuk melihat status terbaru.":
+    "We are checking your payment status. If the payment window is still open, close it to see the latest status.",
+  "Tutup jendela pembayaran": "Close payment window",
+  "Gagal memuat data pembayaran": "Failed to load payment data",
+  "Selesaikan pembayaran paket melalui Midtrans.":
+    "Complete your plan payment via Midtrans.",
   "Lihat Transaksi": "View Transaction",
-  "Gagal memuat instruksi pembayaran": "Failed to load payment instructions",
   "Pembayaran Berhasil": "Payment Successful",
   "Paket Anda aktif": "Your plan is active",
   "Pembayaran telah terkonfirmasi. Paket langganan":
@@ -1170,7 +1190,9 @@ const EN: Record<string, string> = {
   /* --- Admin: konten landing --- */
   "Judul hero wajib diisi": "Hero title is required",
   "Maksimal 70 karakter": "At most 70 characters",
-  "Maksimal 150 karakter": "At most 150 characters",
+  "Maksimal 300 karakter": "At most 300 characters",
+  "Maksimal 8 karakter": "At most 8 characters",
+  "Maksimal {n} tautan": "At most {n} links",
   "Maksimal 40 karakter": "At most 40 characters",
   "Maksimal 500 karakter": "At most 500 characters",
   "Maksimal {n} gambar kolase": "At most {n} collage images",
@@ -1228,7 +1250,32 @@ const EN: Record<string, string> = {
   "Subjudul hero": "Hero subtitle",
   "Teks tombol CTA hero": "Hero CTA button text",
   "Maksimal 70 karakter.": "At most 70 characters.",
-  "Maksimal 150 karakter.": "At most 150 characters.",
+  "Maksimal 300 karakter.": "At most 300 characters.",
+  "Footer": "Footer",
+  "Identitas dan tautan pada kaki halaman. Kosongkan untuk memakai teks bawaan.":
+    "Identity and links in the page footer. Leave blank to use the default text.",
+  "Inisial brand": "Brand initials",
+  "Maksimal 8 karakter, mis. “EN”.": "At most 8 characters, e.g. “EN”.",
+  "Nama brand": "Brand name",
+  "Maksimal 60 karakter, mis. “ENM PROPERTY”.": "At most 60 characters, e.g. “ENM PROPERTY”.",
+  "Deskripsi footer": "Footer description",
+  "Hak cipta": "Copyright",
+  "Tautan footer (Indonesia)": "Footer links (Indonesian)",
+  "Tautan navigasi pada footer halaman Indonesia. Kosongkan untuk memakai tautan bawaan.":
+    "Navigation links in the Indonesian page footer. Leave blank to use the default links.",
+  "Label tautan {nomor}": "Link label {nomor}",
+  "URL tautan {nomor}": "Link URL {nomor}",
+  "Contoh: Properti": "Example: Properties",
+  "Contoh: #properti atau https://…": "Example: #properties or https://…",
+  "Hapus tautan": "Remove link",
+  "Tambah tautan": "Add link",
+  "Belum ada tautan khusus. Halaman memakai tautan bawaan hingga daftar ini diisi.":
+    "No custom links yet. The page uses the default links until this list is filled.",
+  "Footer description (EN)": "Footer description (EN)",
+  "Footer copyright (EN)": "Footer copyright (EN)",
+  "Footer links (EN)": "Footer links (EN)",
+  "Tautan navigasi pada footer halaman Inggris (/en). Kosongkan untuk memakai tautan bawaan.":
+    "Navigation links in the English page footer (/en). Leave blank to use the default links.",
   "Maksimal 40 karakter, mis. “Jelajahi Katalog”.":
     "At most 40 characters, e.g. “Browse Catalog”.",
   "Meta title": "Meta title",
@@ -1348,8 +1395,6 @@ const EN: Record<string, string> = {
     "Verify and manage all partners registered on the platform.",
   "Kelola versi perjanjian kerja sama mitra.":
     "Manage versions of the partner cooperation agreement.",
-  "Selesaikan pembayaran paket melalui QRIS atau virtual account.":
-    "Complete your plan payment via QRIS or virtual account.",
   "Kelola konten halaman utama ENMProperty: hero, metadata SEO, dan wilayah unggulan.":
     "Manage the ENMProperty main page content: hero, SEO metadata, and featured regions.",
   "Jejak tindakan administratif pada platform.":

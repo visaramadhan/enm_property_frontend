@@ -137,6 +137,7 @@ export interface PartnerView {
   address: string;
   city: string;
   province: string;
+  ktp_photo_url: string;
   status: PartnerStatus;
   status_label: string;
   suspended_reason?: string;
@@ -175,9 +176,24 @@ export interface RegisterPartnerRequest {
   address: string;
   city: string;
   province: string;
+  /** URL foto KTP hasil unggahan; wajib diisi saat pendaftaran mitra. */
+  ktp_photo_url?: string;
 }
 
-export type UpdatePartnerRequest = RegisterPartnerRequest;
+/** Respons POST /partners/ktp. */
+export interface UploadKtpResponse {
+  url: string;
+}
+
+export interface UpdatePartnerRequest {
+  business_name: string;
+  pic_name: string;
+  phone: string;
+  email?: string;
+  address: string;
+  city: string;
+  province: string;
+}
 
 export interface SuspendPartnerRequest {
   status: "active" | "suspended" | "expired";
@@ -967,6 +983,12 @@ export interface LandingContentView {
   faq_subtitle: string;
   /** Daftar pertanyaan umum; kosong memakai teks bawaan komponen. */
   faq_items: LandingFAQItem[];
+  /** Identitas kaki halaman (footer); kosong memakai teks bawaan komponen. */
+  footer_brand_initial: string;
+  footer_brand_name: string;
+  footer_description: string;
+  footer_copyright: string;
+  footer_links: LandingFooterLink[];
   /** Varian bahasa Inggris (khusus halaman landing `/en`). */
   hero_title_en: string;
   hero_subtitle_en: string;
@@ -986,7 +1008,17 @@ export interface LandingContentView {
   faq_title_en: string;
   faq_subtitle_en: string;
   faq_items_en: LandingFAQItem[];
+  /** Varian Inggris teks footer (nama/inisial brand bersifat tetap). */
+  footer_description_en: string;
+  footer_copyright_en: string;
+  footer_links_en: LandingFooterLink[];
   updated_at: string;
+}
+
+/** Satu tautan navigasi pada kaki halaman (footer) landing page. */
+export interface LandingFooterLink {
+  label: string;
+  href: string;
 }
 
 /** Body `PUT /admin/landing`; batas panjang mengikuti aturan SEO. */
@@ -1013,6 +1045,12 @@ export interface UpdateLandingRequest {
   faq_title: string;
   faq_subtitle: string;
   faq_items: LandingFAQItem[];
+  /** Identitas kaki halaman (footer); opsional (boleh kosong). */
+  footer_brand_initial: string;
+  footer_brand_name: string;
+  footer_description: string;
+  footer_copyright: string;
+  footer_links: LandingFooterLink[];
   /** Varian bahasa Inggris; opsional (boleh kosong). */
   hero_title_en: string;
   hero_subtitle_en: string;
@@ -1032,6 +1070,10 @@ export interface UpdateLandingRequest {
   faq_title_en: string;
   faq_subtitle_en: string;
   faq_items_en: LandingFAQItem[];
+  /** Varian Inggris teks footer (nama/inisial brand bersifat tetap). */
+  footer_description_en: string;
+  footer_copyright_en: string;
+  footer_links_en: LandingFooterLink[];
 }
 
 /** Jenis gambar landing yang dapat diunggah melalui CMS. */

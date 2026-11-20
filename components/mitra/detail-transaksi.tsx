@@ -148,7 +148,7 @@ export function DetailTransaksi({ orderCode }: { orderCode: string }) {
                 <Alert variant="warning">
                   <AlertTitle>{t("Menunggu pembayaran")}</AlertTitle>
                   <AlertDescription>
-                    {t("Selesaikan pembayaran melalui QRIS atau virtual account. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.")}
+                    {t("Selesaikan pembayaran melalui Midtrans. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.")}
                   </AlertDescription>
                 </Alert>
               ) : null}

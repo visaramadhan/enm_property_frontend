@@ -25,7 +25,7 @@ import {
 } from "@/lib/api/hooks";
 import { formatWib } from "@/lib/format";
 import type { NilaiTerjemah } from "@/lib/app-i18n";
-import type { LandingContentView, LandingFAQItem, LandingImageKind } from "@/types/api";
+import type { LandingContentView, LandingFAQItem, LandingFooterLink, LandingImageKind } from "@/types/api";
 
 /** Jumlah area prioritas yang diwajibkan skema: minimal 4, maksimal 6. */
 const AREA_MINIMAL = 4;
@@ -33,6 +33,8 @@ const AREA_MAKSIMAL = 6;
 /** Batas gambar kolase hero dan jumlah pertanyaan FAQ (selaras `backend/dto`). */
 const KOLASE_MAKSIMAL = 4;
 const FAQ_MAKSIMAL = 12;
+/** Batas jumlah tautan navigasi footer (selaras `backend/dto`). */
+const FOOTER_LINK_MAKSIMAL = 8;
 
 /**
  * Batas panjang mengikuti `backend/dto/landing.go` sekaligus aturan SEO pada
@@ -45,7 +47,7 @@ type Terjemah = (teks: string, nilai?: NilaiTerjemah) => string;
 function buatSkemaLanding(t: Terjemah) {
   return z.object({
     hero_title: z.string().trim().min(1, t("Judul hero wajib diisi")).max(70, t("Maksimal 70 karakter")),
-    hero_subtitle: z.string().trim().max(150, t("Maksimal 150 karakter")),
+    hero_subtitle: z.string().trim().max(300, t("Maksimal 300 karakter")),
     hero_cta_text: z.string().trim().max(40, t("Maksimal 40 karakter")),
     hero_image_url: z.string().trim().max(500, t("Maksimal 500 karakter")),
     hero_images: z
@@ -86,10 +88,24 @@ function buatSkemaLanding(t: Terjemah) {
         }),
       )
       .max(FAQ_MAKSIMAL, t("Maksimal {n} pertanyaan", { n: FAQ_MAKSIMAL })),
+    // Identitas kaki halaman (footer). Nilai kosong berarti halaman memakai
+    // teks bawaan komponen.
+    footer_brand_initial: z.string().trim().max(8, t("Maksimal 8 karakter")),
+    footer_brand_name: z.string().trim().max(60, t("Maksimal 60 karakter")),
+    footer_description: z.string().trim().max(300, t("Maksimal 300 karakter")),
+    footer_copyright: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    footer_links: z
+      .array(
+        z.object({
+          label: z.string().trim().max(40, t("Maksimal 40 karakter")),
+          href: z.string().trim().max(300, t("Maksimal 300 karakter")),
+        }),
+      )
+      .max(FOOTER_LINK_MAKSIMAL, t("Maksimal {n} tautan", { n: FOOTER_LINK_MAKSIMAL })),
     // Varian bahasa Inggris (khusus halaman `/en`). Semua opsional: bila
     // dikosongkan, halaman Inggris memakai teks bawaan komponen.
     hero_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
-    hero_subtitle_en: z.string().trim().max(150, t("Maksimal 150 karakter")),
+    hero_subtitle_en: z.string().trim().max(300, t("Maksimal 300 karakter")),
     hero_cta_text_en: z.string().trim().max(40, t("Maksimal 40 karakter")),
     meta_title_en: z.string().trim().max(60, t("Maksimal 60 karakter")),
     meta_description_en: z.string().trim().max(160, t("Maksimal 160 karakter")),
@@ -113,6 +129,17 @@ function buatSkemaLanding(t: Terjemah) {
         }),
       )
       .max(FAQ_MAKSIMAL, t("Maksimal {n} pertanyaan", { n: FAQ_MAKSIMAL })),
+    // Varian Inggris teks footer (nama/inisial brand bersifat tetap).
+    footer_description_en: z.string().trim().max(300, t("Maksimal 300 karakter")),
+    footer_copyright_en: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    footer_links_en: z
+      .array(
+        z.object({
+          label: z.string().trim().max(40, t("Maksimal 40 karakter")),
+          href: z.string().trim().max(300, t("Maksimal 300 karakter")),
+        }),
+      )
+      .max(FOOTER_LINK_MAKSIMAL, t("Maksimal {n} tautan", { n: FOOTER_LINK_MAKSIMAL })),
   });
 }
 
@@ -177,6 +204,11 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
     faq_title: konten.faq_title,
     faq_subtitle: konten.faq_subtitle,
     faq_items: konten.faq_items ?? [],
+    footer_brand_initial: konten.footer_brand_initial,
+    footer_brand_name: konten.footer_brand_name,
+    footer_description: konten.footer_description,
+    footer_copyright: konten.footer_copyright,
+    footer_links: konten.footer_links ?? [],
     hero_title_en: konten.hero_title_en,
     hero_subtitle_en: konten.hero_subtitle_en,
     hero_cta_text_en: konten.hero_cta_text_en,
@@ -195,6 +227,9 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
     faq_title_en: konten.faq_title_en,
     faq_subtitle_en: konten.faq_subtitle_en,
     faq_items_en: konten.faq_items_en ?? [],
+    footer_description_en: konten.footer_description_en,
+    footer_copyright_en: konten.footer_copyright_en,
+    footer_links_en: konten.footer_links_en ?? [],
   };
 }
 
@@ -543,6 +578,102 @@ function FieldFaq({
   );
 }
 
+/**
+ * Editor daftar tautan navigasi footer.
+ *
+ * Dikelola lewat `useWatch` + `setValue` (pola sama dengan `FieldFaq`). Baris
+ * yang tidak lengkap akan dibuang backend saat disimpan.
+ */
+function FieldTautanFooter({
+  form,
+  nama,
+  judul,
+  deskripsi,
+}: {
+  form: UseFormReturn<NilaiLanding>;
+  nama: "footer_links" | "footer_links_en";
+  judul: string;
+  deskripsi: string;
+}) {
+  const { t } = useBahasa();
+  const tersimpan = useWatch({ control: form.control, name: nama });
+  const daftar = (tersimpan ?? []) as LandingFooterLink[];
+
+  function simpan(berikut: LandingFooterLink[]) {
+    form.setValue(nama, berikut, { shouldDirty: true, shouldValidate: true });
+  }
+
+  return (
+    <KelompokField judul={judul} deskripsi={deskripsi}>
+      {daftar.map((item, index) => (
+        <div
+          key={index}
+          className="flex flex-col gap-4 rounded-card border border-line bg-canvas/40 p-4"
+        >
+          <FormField label={t("Label tautan {nomor}", { nomor: index + 1 })}>
+            <Input
+              value={item.label}
+              maxLength={40}
+              placeholder={t("Contoh: Properti")}
+              onChange={(event) =>
+                simpan(
+                  daftar.map((isi, i) =>
+                    i === index ? { ...isi, label: event.target.value } : isi,
+                  ),
+                )
+              }
+            />
+          </FormField>
+          <FormField label={t("URL tautan {nomor}", { nomor: index + 1 })}>
+            <Input
+              value={item.href}
+              maxLength={300}
+              placeholder={t("Contoh: #properti atau https://…")}
+              onChange={(event) =>
+                simpan(
+                  daftar.map((isi, i) =>
+                    i === index ? { ...isi, href: event.target.value } : isi,
+                  ),
+                )
+              }
+            />
+          </FormField>
+          <div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => simpan(daftar.filter((_, i) => i !== index))}
+            >
+              <Trash2 aria-hidden="true" />
+              {t("Hapus tautan")}
+            </Button>
+          </div>
+        </div>
+      ))}
+
+      <div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={daftar.length >= FOOTER_LINK_MAKSIMAL}
+          onClick={() => simpan([...daftar, { label: "", href: "" }])}
+        >
+          <Plus aria-hidden="true" />
+          {t("Tambah tautan")}
+        </Button>
+      </div>
+
+      {daftar.length === 0 ? (
+        <p className="text-xs text-ink-muted">
+          {t("Belum ada tautan khusus. Halaman memakai tautan bawaan hingga daftar ini diisi.")}
+        </p>
+      ) : null}
+    </KelompokField>
+  );
+}
+
 /** Formulir CMS lengkap untuk admin dan superadmin. */
 function FormLanding({ konten }: { konten: LandingContentView }) {
   const { t } = useBahasa();
@@ -602,7 +733,7 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             name="hero_subtitle"
             label={t("Subjudul hero")}
             rows={3}
-            deskripsi={t("Maksimal 150 karakter.")}
+            deskripsi={t("Maksimal 300 karakter.")}
           />
           <TextField
             control={form.control}
@@ -726,6 +857,48 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
 
       <Card>
         <CardHeader>
+          <CardTitle>{t("Footer")}</CardTitle>
+          <CardDescription>
+            {t("Identitas dan tautan pada kaki halaman. Kosongkan untuk memakai teks bawaan.")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-5">
+          <TextField
+            control={form.control}
+            name="footer_brand_initial"
+            label={t("Inisial brand")}
+            deskripsi={t("Maksimal 8 karakter, mis. “EN”.")}
+          />
+          <TextField
+            control={form.control}
+            name="footer_brand_name"
+            label={t("Nama brand")}
+            deskripsi={t("Maksimal 60 karakter, mis. “ENM PROPERTY”.")}
+          />
+          <TextareaField
+            control={form.control}
+            name="footer_description"
+            label={t("Deskripsi footer")}
+            rows={3}
+            deskripsi={t("Maksimal 300 karakter.")}
+          />
+          <TextField
+            control={form.control}
+            name="footer_copyright"
+            label={t("Hak cipta")}
+            deskripsi={t("Maksimal 200 karakter.")}
+          />
+          <FieldTautanFooter
+            form={form}
+            nama="footer_links"
+            judul={t("Tautan footer (Indonesia)")}
+            deskripsi={t("Tautan navigasi pada footer halaman Indonesia. Kosongkan untuk memakai tautan bawaan.")}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>{t("Bahasa Inggris (English)")}</CardTitle>
           <CardDescription>
             {t("Teks untuk halaman")} <code>/en</code>.{" "}
@@ -745,7 +918,7 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
               name="hero_subtitle_en"
               label={t("Hero subtitle (EN)")}
               rows={3}
-              deskripsi={t("Maksimal 150 karakter.")}
+              deskripsi={t("Maksimal 300 karakter.")}
             />
             <TextField
               control={form.control}
@@ -810,6 +983,29 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             nama="faq_items_en"
             judul={t("FAQ items (EN)")}
             deskripsi={t("Tampil pada halaman landing berbahasa Inggris (/en). Kosongkan untuk memakai daftar bawaan.")}
+          />
+
+          <div className="flex flex-col gap-5">
+            <TextareaField
+              control={form.control}
+              name="footer_description_en"
+              label={t("Footer description (EN)")}
+              rows={3}
+              deskripsi={t("Maksimal 300 karakter.")}
+            />
+            <TextField
+              control={form.control}
+              name="footer_copyright_en"
+              label={t("Footer copyright (EN)")}
+              deskripsi={t("Maksimal 200 karakter.")}
+            />
+          </div>
+
+          <FieldTautanFooter
+            form={form}
+            nama="footer_links_en"
+            judul={t("Footer links (EN)")}
+            deskripsi={t("Tautan navigasi pada footer halaman Inggris (/en). Kosongkan untuk memakai tautan bawaan.")}
           />
         </CardContent>
       </Card>

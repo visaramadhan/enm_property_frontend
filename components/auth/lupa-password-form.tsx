@@ -41,7 +41,13 @@ export function LupaPasswordForm() {
         import("firebase/auth"),
         import("@/lib/firebase/client"),
       ]);
-      await sendPasswordResetEmail(getFirebaseAuth(), values.email);
+      /* `ActionCodeSettings` mengarahkan tombol pada email agar kembali ke
+         halaman masuk aplikasi ini (bukan halaman bawaan Firebase) setelah
+         mitra menyelesaikan pembuatan kata sandi baru. */
+      await sendPasswordResetEmail(getFirebaseAuth(), values.email, {
+        url: `${window.location.origin}/login`,
+        handleCodeInApp: false,
+      });
       setTerkirim(values.email);
       toastSukses(t("Tautan terkirim"), t("Periksa kotak masuk atau folder spam email Anda."));
     } catch (error) {

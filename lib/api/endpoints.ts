@@ -85,6 +85,7 @@ import type {
   UpdateFacilityRequest,
   UpdateLandingRequest,
   UpdateSettingsRequest,
+  UploadKtpResponse,
   UploadPhotoResponse,
   UserView,
   VendorAgreementResponse,
@@ -381,6 +382,13 @@ export function unggahFotoMitra(propertyId: string, files: File[]) {
     `/vendor/properties/${propertyId}/photos`,
     formDataFoto(files),
   );
+}
+
+/** Mengunggah foto KTP saat pendaftaran mitra; hanya butuh sesi masuk. */
+export function unggahKtpMitra(file: File) {
+  const data = new FormData();
+  data.append("files", file);
+  return apiPost<UploadKtpResponse>("/partners/ktp", data);
 }
 
 export function hapusFotoMitra(propertyId: string, photoId: string) {

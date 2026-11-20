@@ -8,7 +8,7 @@ import { metadataHalaman } from "@/lib/metadata-halaman";
 export function generateMetadata(): Promise<Metadata> {
   return metadataHalaman(
     "Pembayaran Langganan",
-    "Selesaikan pembayaran paket melalui QRIS atau virtual account.",
+    "Selesaikan pembayaran paket melalui Midtrans.",
   );
 }
 

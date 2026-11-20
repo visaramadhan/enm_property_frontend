@@ -27,7 +27,13 @@ import { formatAngka, formatRupiah } from "@/lib/format";
 import { kamus, type Bahasa, type Kamus } from "@/lib/landing-i18n";
 import { NAMA_SITUS, SITE_URL } from "@/lib/seo";
 import { cn } from "@/lib/utils";
-import type { LandingContentView, LandingFAQItem, PlanView, PropertySummary } from "@/types/api";
+import type {
+  LandingContentView,
+  LandingFAQItem,
+  LandingFooterLink,
+  PlanView,
+  PropertySummary,
+} from "@/types/api";
 
 /** Kelas pembungkus konten agar lebar maksimum dan padding seragam (DRY). */
 const KONTAINER = "mx-auto w-full max-w-7xl px-4 lg:px-8";
@@ -76,6 +82,12 @@ interface KontenTerpilih {
   faqSubtitle: string;
   /** Daftar tanya-jawab; memakai CMS bila terisi, selain itu teks bawaan kamus. */
   faqItems: LandingFAQItem[];
+  footerBrandInitial: string;
+  footerBrandName: string;
+  footerDescription: string;
+  footerCopyright: string;
+  /** Tautan footer; memakai CMS bila terisi, selain itu teks bawaan kamus. */
+  footerLinks: LandingFooterLink[];
 }
 
 /** Memilih kolom konten CMS sesuai bahasa lalu mengisi nilai kosong dari kamus. */
@@ -85,6 +97,7 @@ function pilihKonten(konten: LandingContentView, bahasa: Bahasa): KontenTerpilih
   const inggris = bahasa === "en";
   const pilih = (id: string, en: string) => (inggris ? en : id) || "";
   const faqDariCms = inggris ? konten.faq_items_en : konten.faq_items;
+  const tautanDariCms = (inggris ? konten.footer_links_en : konten.footer_links) ?? [];
 
   return {
     heroTitle: pilih(konten.hero_title, konten.hero_title_en) || bawa.judulHero,
@@ -108,6 +121,12 @@ function pilihKonten(konten: LandingContentView, bahasa: Bahasa): KontenTerpilih
     faqTitle: pilih(konten.faq_title, konten.faq_title_en) || bawa.judulFaq,
     faqSubtitle: pilih(konten.faq_subtitle, konten.faq_subtitle_en) || bawa.deskripsiFaq,
     faqItems: faqDariCms.length > 0 ? faqDariCms : kam.faq.item,
+    footerBrandInitial: konten.footer_brand_initial || kam.footer.brandInitial,
+    footerBrandName: konten.footer_brand_name || kam.footer.brandName,
+    footerDescription:
+      pilih(konten.footer_description, konten.footer_description_en) || kam.footer.deskripsi,
+    footerCopyright: pilih(konten.footer_copyright, konten.footer_copyright_en) || kam.footer.hakCipta,
+    footerLinks: tautanDariCms.length > 0 ? tautanDariCms : kam.footer.tautan,
   };
 }
 
@@ -198,7 +217,7 @@ export async function LandingHalaman({ bahasa }: { bahasa: Bahasa }) {
         <CtaMitra t={t} k={k} />
       </main>
 
-      <FooterLanding k={k} />
+      <FooterLanding t={t} k={k} />
     </div>
   );
 }
@@ -854,7 +873,7 @@ async function TahunHakCipta() {
 }
 
 /** Kaki halaman landing: identitas ringkas, navigasi bagian, dan hak cipta. */
-function FooterLanding({ k }: { k: Kamus }) {
+function FooterLanding({ t, k }: { t: KontenTerpilih; k: Kamus }) {
   return (
     <footer className="border-t border-line bg-surface pt-9">
       <div className={KONTAINER}>
@@ -862,18 +881,22 @@ function FooterLanding({ k }: { k: Kamus }) {
           <div>
             <Link href="/" className="flex items-center gap-2.5" aria-label={k.footer.ariaBrand}>
               <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary text-[12px] font-bold text-primary-foreground">
-                EN
+                {t.footerBrandInitial}
               </span>
-              <span className="text-base font-bold tracking-tight text-ink">ENM PROPERTY</span>
+              <span className="text-base font-bold tracking-tight text-ink">{t.footerBrandName}</span>
             </Link>
             <p className="mt-2.5 max-w-[390px] text-xs leading-[1.7] text-ink-muted">
-              {k.footer.deskripsi}
+              {t.footerDescription}
             </p>
           </div>
 
           <nav className="flex flex-wrap gap-6 text-xs text-ink-muted" aria-label={k.footer.navigasi}>
-            {k.footer.tautan.map((item) => (
-              <a key={item.href} href={item.href} className="transition-colors hover:text-primary">
+            {t.footerLinks.map((item) => (
+              <a
+                key={`${item.href}-${item.label}`}
+                href={item.href}
+                className="transition-colors hover:text-primary"
+              >
                 {item.label}
               </a>
             ))}
@@ -886,7 +909,7 @@ function FooterLanding({ k }: { k: Kamus }) {
 
         <div className="border-t border-divider py-4 text-center text-[11px] text-ink-subtle">
           <span className="inline-flex items-center gap-1.5">
-            <MapPin className="size-3.5" aria-hidden="true" />© <TahunHakCipta /> {k.footer.hakCipta}
+            <MapPin className="size-3.5" aria-hidden="true" />© <TahunHakCipta /> {t.footerCopyright}
           </span>
         </div>
       </div>

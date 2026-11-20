@@ -39,7 +39,7 @@ import {
 } from "@/lib/api/hooks";
 import { labelFiturPaket } from "@/lib/enum";
 import { formatAngka, formatRupiah, formatTanggalWib } from "@/lib/format";
-import { bukaSnap } from "@/lib/midtrans";
+import { bukaSnap, tutupSnap } from "@/lib/midtrans";
 import { toastGagal, toastInfo, toastSukses } from "@/lib/toast";
 import type { CheckoutResponse, PlanView, SubscriptionView, VendorAgreementResponse } from "@/types/api";
 
@@ -134,6 +134,9 @@ export function LanggananMitra() {
     try {
       await bukaSnap(hasil.snap_token, {
         onSuccess: () => {
+          /* Tutup popup lalu periksa status terbaru agar kartu status pesanan
+             menampilkan hasil pembayaran tanpa menunggu mitra menutup jendela. */
+          tutupSnap();
           toastSukses(t("Pembayaran berhasil"), t("Paket langganan Anda sedang diaktifkan."));
           void langganan.refetch();
         },

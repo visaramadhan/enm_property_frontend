@@ -92,6 +92,12 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
   faq_title: "Informasi sebelum bergabung",
   faq_subtitle: "Ringkasan alur pendaftaran dan pengelolaan listing mitra.",
   faq_items: [],
+  // Footer dibiarkan kosong: halaman memakai teks bawaan kamus (per bahasa).
+  footer_brand_initial: "",
+  footer_brand_name: "",
+  footer_description: "",
+  footer_copyright: "",
+  footer_links: [],
   // Varian Inggris dibiarkan kosong: halaman `/en` akan memakai teks bawaan
   // kamus Inggris sehingga tetap tampil utuh saat backend belum tersedia.
   hero_title_en: "",
@@ -112,6 +118,9 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
   faq_title_en: "",
   faq_subtitle_en: "",
   faq_items_en: [],
+  footer_description_en: "",
+  footer_copyright_en: "",
+  footer_links_en: [],
   updated_at: "",
 };
 
@@ -138,6 +147,8 @@ function lengkapiKonten(konten: Partial<LandingContentView> | null): LandingCont
     highlight_areas: Array.isArray(gabung.highlight_areas) ? gabung.highlight_areas : [],
     faq_items: Array.isArray(gabung.faq_items) ? gabung.faq_items : [],
     faq_items_en: Array.isArray(gabung.faq_items_en) ? gabung.faq_items_en : [],
+    footer_links: Array.isArray(gabung.footer_links) ? gabung.footer_links : [],
+    footer_links_en: Array.isArray(gabung.footer_links_en) ? gabung.footer_links_en : [],
   };
 }
 

@@ -74,6 +74,7 @@ import type {
   UpdateFacilityRequest,
   UpdateLandingRequest,
   UpdateSettingsRequest,
+  UploadKtpResponse,
   UploadPhotoResponse,
   UserView,
   VendorAgreementResponse,
@@ -658,6 +659,15 @@ export function useCheckout() {
     kunciInvalidasi: [awalan.langgananMitra, awalan.dashboardMitra, awalan.profilMitra],
     pesanSukses: null,
     pesanGagal: "Gagal memulai pembayaran",
+  });
+}
+
+/** Mengunggah foto KTP sebelum pendaftaran mitra; mengembalikan URL tersimpan. */
+export function useUnggahKtp() {
+  return useMutasi<UploadKtpResponse, File>({
+    mutasi: api.unggahKtpMitra,
+    pesanSukses: null,
+    pesanGagal: "Gagal mengunggah foto KTP",
   });
 }
 

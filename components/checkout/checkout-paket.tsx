@@ -256,7 +256,7 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
         return;
       }
 
-      toastSukses(t("Pesanan dibuat"), t("Lanjutkan pembayaran melalui QRIS atau virtual account."));
+      toastSukses(t("Pesanan dibuat"), t("Lanjutkan pembayaran melalui Midtrans."));
       router.push(`/pembayaran/${hasil.order.code}`);
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.

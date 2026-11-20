@@ -35,7 +35,14 @@ export async function GET(request: NextRequest) {
   revalidateTag(TAG_LANDING, { expire: 0 });
   revalidateTag(TAG_PAKET, { expire: 0 });
   revalidateTag(TAG_PROPERTI, { expire: 0 });
-  revalidatePath(path);
+
+  // Landing page memiliki dua varian bahasa (`/` dan `/en`) yang berbagi tag
+  // cache yang sama. Membuang tag saja tidak selalu membuang shell statis tiap
+  // rute, sedangkan backend hanya mengirim `path=/`. Kedua rute dieksplisitkan
+  // agar konten CMS versi Inggris (`*_en`) ikut tampil terbaru.
+  revalidatePath("/");
+  revalidatePath("/en");
+  if (path !== "/" && path !== "/en") revalidatePath(path);
 
   return Response.json({ success: true, revalidated: true, path });
 }

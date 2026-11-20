@@ -14,14 +14,16 @@ import {
   nilaiAwalMitra,
   type NilaiMitra,
 } from "@/components/mitra/form-mitra";
+import { PilihKTP } from "@/components/mitra/pilih-ktp";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useBahasa } from "@/components/providers/bahasa-provider";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDaftarkanMitra } from "@/lib/api/hooks";
+import { useDaftarkanMitra, useUnggahKtp } from "@/lib/api/hooks";
 import { useSiapkanSesi } from "@/lib/api/use-sesi";
+import { toastGagal } from "@/lib/toast";
 
 /**
  * Halaman "Daftar Sebagai Mitra" (permintaan A).
@@ -132,7 +134,9 @@ function FormulirPendaftaran({ lanjut }: { lanjut?: string }) {
   const { t } = useBahasa();
   const router = useRouter();
   const daftar = useDaftarkanMitra();
+  const unggah = useUnggahKtp();
   const siapkanSesi = useSiapkanSesi();
+  const [ktp, setKtp] = React.useState<File | null>(null);
 
   const skema = React.useMemo(() => buatSkemaMitra(t), [t]);
 
@@ -141,9 +145,20 @@ function FormulirPendaftaran({ lanjut }: { lanjut?: string }) {
     defaultValues: nilaiAwalMitra,
   });
 
+  const sibuk = daftar.isPending || unggah.isPending;
+
   async function kirim(nilai: NilaiMitra) {
+    if (!ktp) {
+      toastGagal(
+        t("Foto KTP wajib diunggah"),
+        new Error(t("Unggah foto KTP sebelum melanjutkan pendaftaran.")),
+      );
+      return;
+    }
     try {
-      await daftar.mutateAsync(keRegisterPartner(nilai));
+      // Unggah KTP lebih dahulu, lalu kirim URL-nya bersama data badan usaha.
+      const { url } = await unggah.mutateAsync(ktp);
+      await daftar.mutateAsync({ ...keRegisterPartner(nilai), ktp_photo_url: url });
       // Peran pengguna naik menjadi mitra; sesi disegarkan agar area /mitra dan
       // halaman checkout mitra langsung dapat diakses tanpa masuk ulang.
       await siapkanSesi().catch(() => undefined);
@@ -154,30 +169,32 @@ function FormulirPendaftaran({ lanjut }: { lanjut?: string }) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("Data Badan Usaha")}</CardTitle>
-        <CardDescription>
-          {t("Informasi ini tampil pada halaman properti dan kontak calon penyewa.")}
-        </CardDescription>
-      </CardHeader>
+    <form onSubmit={form.handleSubmit(kirim)} noValidate className="flex flex-col gap-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("Data Badan Usaha")}</CardTitle>
+          <CardDescription>
+            {t("Informasi ini tampil pada halaman properti dan kontak calon penyewa.")}
+          </CardDescription>
+        </CardHeader>
 
-      <CardContent>
-        <form onSubmit={form.handleSubmit(kirim)} noValidate className="flex flex-col gap-6">
+        <CardContent>
           <BidangMitra control={form.control} />
+        </CardContent>
+      </Card>
 
-          <p className="text-[13px] text-ink-muted">
-            {t("Dengan melanjutkan, akun Anda langsung aktif sebagai mitra dan Anda dapat memilih paket langganan pada langkah berikutnya.")}
-          </p>
+      <PilihKTP berkas={ktp} onUbah={setKtp} />
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={daftar.isPending}>
-              {daftar.isPending ? <LoaderCircle className="animate-spin" /> : <CheckCircle2 />}
-              {t("Daftar & lanjut pilih paket")}
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+      <p className="text-[13px] text-ink-muted">
+        {t("Dengan melanjutkan, akun Anda langsung aktif sebagai mitra dan Anda dapat memilih paket langganan pada langkah berikutnya.")}
+      </p>
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={sibuk}>
+          {sibuk ? <LoaderCircle className="animate-spin" /> : <CheckCircle2 />}
+          {t("Daftar & lanjut pilih paket")}
+        </Button>
+      </div>
+    </form>
   );
 }

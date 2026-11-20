@@ -215,6 +215,8 @@ const ID = {
     ],
     katalog: "Katalog",
     ariaBrand: "ENM Property beranda",
+    brandInitial: "EN",
+    brandName: "ENM PROPERTY",
     deskripsi:
       "Platform listing properti untuk mencari properti yang sesuai atau memasarkan listing melalui akun mitra.",
     navigasi: "Navigasi footer",
@@ -452,6 +454,8 @@ const EN: Kamus = {
     ],
     katalog: "Catalog",
     ariaBrand: "ENM Property home",
+    brandInitial: "EN",
+    brandName: "ENM PROPERTY",
     deskripsi:
       "A property listing platform to find the right property or market listings through a partner account.",
     navigasi: "Footer navigation",

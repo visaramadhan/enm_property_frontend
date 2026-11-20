@@ -8,7 +8,6 @@ import {
   CreditCard,
   LoaderCircle,
   LogOut,
-  QrCode,
   Receipt,
   UserCog,
   XCircle,
@@ -17,70 +16,45 @@ import {
 import { useBahasa } from "@/components/providers/bahasa-provider";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
-import { KodeQr } from "@/components/shared/kode-qr";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { TombolSalin } from "@/components/shared/tombol-salin";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useBatalkanOrder, useChargeLangganan, usePembayaranOrder } from "@/lib/api/hooks";
+import { useBatalkanOrder, usePembayaranOrder } from "@/lib/api/hooks";
 import { formatRupiah, formatWib } from "@/lib/format";
-import { bukaSnap } from "@/lib/midtrans";
+import { bukaSnap, tutupSnap } from "@/lib/midtrans";
 import { toastGagal, toastInfo, toastSukses } from "@/lib/toast";
-import type { PaymentChannel, PaymentView } from "@/types/api";
 
 /**
  * Halaman pembayaran satu order langganan (item 8).
  *
- * Menampilkan instruksi **QRIS** atau **Virtual Account** hasil Core API
- * Midtrans (keputusan D-1). Bila belum ada metode terpilih, mitra memilih
- * kanal terlebih dahulu; setelah dibuat instruksi, halaman menampilkan kode QR
- * atau nomor VA beserta tombol salin. Status pembayaran dipantau otomatis
- * (polling) sehingga halaman berubah sendiri begitu pembayaran lunas.
+ * Pembayaran diselesaikan melalui popup **Snap** Midtrans: seluruh kanal
+ * (kartu, e-wallet, QRIS, dan virtual account) ditangani langsung oleh
+ * Midtrans sehingga halaman ini tidak lagi menampilkan instruksi pembayaran
+ * manual. Status pembayaran dipantau otomatis (polling) sehingga halaman
+ * berubah sendiri begitu pembayaran lunas.
  */
 
-/** Kanal pembayaran yang didukung backend (`ChargeRequest.method`). */
-function opsiMetode(t: (teks: string) => string): { nilai: PaymentChannel; label: string }[] {
-  return [
-    { nilai: "qris", label: t("QRIS — semua e-wallet & m-banking") },
-    { nilai: "bca", label: t("Virtual Account BCA") },
-    { nilai: "bni", label: t("Virtual Account BNI") },
-    { nilai: "bri", label: t("Virtual Account BRI") },
-    { nilai: "permata", label: t("Virtual Account Permata") },
-  ];
-}
-
-/** Pemilih metode pembayaran sebelum kode/instruksi dibuat. */
-function PilihMetodePembayaran({
-  orderCode,
+/** Tombol pembayaran Midtrans (Snap) untuk order yang belum dibayar. */
+function PanelBayar({
   snapToken,
   onSukses,
 }: {
-  orderCode: string;
   snapToken?: string;
   onSukses: () => void;
 }) {
   const { t, bahasa } = useBahasa();
-  const charge = useChargeLangganan();
-  const [metode, setMetode] = React.useState<PaymentChannel>("qris");
   const [snapMemuat, setSnapMemuat] = React.useState(false);
+  /* Diisi setelah Snap melaporkan pembayaran berhasil sehingga panel menampilkan
+     pemberitahuan untuk menutup jendela pembayaran sekaligus memicu pengecekan
+     status terbaru secara otomatis. */
+  const [terkirim, setTerkirim] = React.useState(false);
 
-  const opsiMetodePembayaran = React.useMemo(() => opsiMetode(t), [t]);
-
-  /* Opsi bayar lewat popup Snap memakai kanal yang sama dengan halaman Paket &
-     Langganan, sehingga pembayaran tetap dapat diselesaikan bila kanal QRIS/VA
-     Core API belum diaktifkan di akun Midtrans. */
+  /* Pembayaran memakai popup Snap Midtrans: seluruh kanal (kartu, e-wallet,
+     QRIS, dan virtual account) ditangani langsung oleh Midtrans. */
   async function bayarSnap() {
     if (!snapToken) return;
     setSnapMemuat(true);
@@ -89,10 +63,15 @@ function PilihMetodePembayaran({
         snapToken,
         {
           onSuccess: () => {
+            /* Tutup popup lalu periksa status pesanan agar halaman menampilkan
+               hasil pembayaran tanpa menunggu mitra menutup jendela manual. */
+            tutupSnap();
+            setTerkirim(true);
             toastSukses(t("Pembayaran berhasil"), t("Paket langganan Anda sedang diaktifkan."));
             onSukses();
           },
           onPending: () => {
+            tutupSnap();
             toastInfo(t("Pembayaran menunggu penyelesaian"), t("Selesaikan sesuai instruksi."));
             onSukses();
           },
@@ -109,175 +88,47 @@ function PilihMetodePembayaran({
     }
   }
 
-  async function buatKode() {
-    try {
-      await charge.mutateAsync({ orderCode, body: { method: metode } });
-      toastSukses(t("Kode pembayaran dibuat"), t("Selesaikan pembayaran sesuai instruksi di bawah."));
-    } catch {
-      // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
-    }
-  }
-
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CreditCard className="size-4 text-primary" aria-hidden="true" />
-          {t("Pilih Metode Pembayaran")}
+          {t("Pembayaran")}
         </CardTitle>
         <CardDescription>
-          {t("Tentukan cara pembayaran, lalu buat kode agar instruksi pembayaran muncul di halaman ini.")}
+          {t("Selesaikan pembayaran paket Anda melalui Midtrans.")}
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
+        {terkirim ? (
+          <Alert variant="success">
+            <AlertTitle>{t("Pembayaran berhasil dikirim")}</AlertTitle>
+            <AlertDescription className="flex flex-col items-start gap-3">
+              <span>
+                {t(
+                  "Kami sedang memeriksa status pembayaran Anda. Jika jendela pembayaran masih terbuka, tutup jendela tersebut untuk melihat status terbaru.",
+                )}
+              </span>
+              <Button variant="outline" size="sm" onClick={() => tutupSnap()}>
+                <XCircle />
+                {t("Tutup jendela pembayaran")}
+              </Button>
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
         {snapToken ? (
-          <>
-            <Button disabled={snapMemuat} onClick={() => void bayarSnap()}>
-              {snapMemuat ? <LoaderCircle className="animate-spin" /> : <CreditCard />}
-              {t("Bayar dengan Midtrans")}
-            </Button>
-            <div className="flex items-center gap-3 text-xs text-ink-subtle">
-              <span className="h-px flex-1 bg-line" />
-              {t("atau pilih metode manual")}
-              <span className="h-px flex-1 bg-line" />
-            </div>
-          </>
-        ) : null}
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="metode-pembayaran">{t("Metode")}</Label>
-          <Select value={metode} onValueChange={(nilai) => setMetode(nilai as PaymentChannel)}>
-            <SelectTrigger id="metode-pembayaran">
-              <SelectValue placeholder={t("Pilih metode pembayaran")} />
-            </SelectTrigger>
-            <SelectContent>
-              {opsiMetodePembayaran.map((opsi) => (
-                <SelectItem key={opsi.nilai} value={opsi.nilai}>
-                  {opsi.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Button variant={snapToken ? "outline" : "primary"} disabled={charge.isPending} onClick={() => void buatKode()}>
-          {charge.isPending ? <LoaderCircle className="animate-spin" /> : <QrCode />}
-          {t("Buat kode pembayaran")}
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-/** Instruksi pembayaran QRIS/VA yang sudah dibuat untuk order. */
-function InstruksiPembayaran({ data }: { data: PaymentView }) {
-  const { t } = useBahasa();
-  const total = data.order.amount_label || formatRupiah(data.order.amount);
-
-  return (
-    <Card>
-      <CardHeader className="flex-row items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <CardTitle>{data.method_label || t("Instruksi Pembayaran")}</CardTitle>
-          <CardDescription>
-            {t("Kode order")} <span data-numeric>{data.order.code}</span>
-          </CardDescription>
-        </div>
-        <StatusBadge jenis="order" status={data.order.status} label={data.order.status_label} />
-      </CardHeader>
-
-      <CardContent className="flex flex-col gap-6">
-        {data.method === "qris" ? (
-          <div className="flex flex-col items-center gap-4">
-            {data.qr_url ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={data.qr_url}
-                alt={t("Kode QRIS pembayaran")}
-                className="size-64 rounded-field border border-line bg-white object-contain p-3"
-              />
-            ) : data.qr_string ? (
-              /* Cadangan: gateway tidak menyediakan URL gambar QR (mis. mode
-                 simulasi) sehingga kode dibangkitkan lokal dari qr_string. */
-              <KodeQr
-                nilai={data.qr_string}
-                kelas="size-64 rounded-field border border-line bg-white object-contain p-3"
-              />
-            ) : (
-              <div className="grid size-64 place-items-center rounded-field border border-dashed border-line bg-hover/40 p-6 text-center">
-                <QrCode className="size-10 text-ink-subtle" aria-hidden="true" />
-              </div>
-            )}
-
-            {data.qr_string ? (
-              <div className="flex w-full max-w-md flex-col gap-3">
-                <p className="rounded-field bg-divider p-3 text-center text-xs break-all text-ink-muted">
-                  {data.qr_string}
-                </p>
-                <TombolSalin
-                  teks={data.qr_string}
-                  label={t("Salin kode QRIS")}
-                  judulSukses={t("Kode QRIS tersalin")}
-                  variant="outline"
-                  size="sm"
-                  className="self-center"
-                />
-              </div>
-            ) : null}
-
-            <p className="text-center text-[13px] text-ink-muted">
-              {t("Pindai kode QR di atas memakai aplikasi e-wallet atau m-banking yang mendukung QRIS.")}
-            </p>
-          </div>
+          <Button disabled={snapMemuat} onClick={() => void bayarSnap()}>
+            {snapMemuat ? <LoaderCircle className="animate-spin" /> : <CreditCard />}
+            {t("Bayar sekarang")}
+          </Button>
         ) : (
-          <DaftarDeskripsi
-            kolom={2}
-            item={[
-              { label: t("Bank"), nilai: data.channel_label || "-" },
-              {
-                label: t("Nomor Virtual Account"),
-                nilai: (
-                  <span className="flex items-center gap-2">
-                    <span data-numeric className="text-base font-semibold">
-                      {data.number || "-"}
-                    </span>
-                    {data.number ? (
-                      <TombolSalin
-                        teks={data.number}
-                        label=""
-                        judulSukses={t("Nomor VA tersalin")}
-                        variant="ghost"
-                        size="icon-sm"
-                      />
-                    ) : null}
-                  </span>
-                ),
-              },
-              { label: t("Total pembayaran"), nilai: <span data-numeric>{total}</span> },
-              {
-                label: t("Bayar sebelum"),
-                nilai: data.expires_at ? formatWib(data.expires_at) : "-",
-              },
-            ]}
-          />
+          <Alert>
+            <AlertDescription>
+              {t("Kanal pembayaran belum tersedia. Muat ulang halaman ini beberapa saat lagi.")}
+            </AlertDescription>
+          </Alert>
         )}
-
-        {data.method === "qris" ? (
-          <div className="flex items-center justify-between rounded-field bg-divider px-4 py-3 text-sm">
-            <span className="text-ink-muted">{t("Total pembayaran")}</span>
-            <span data-numeric className="font-semibold text-ink">
-              {total}
-            </span>
-          </div>
-        ) : null}
-
-        {data.expires_at ? (
-          <p className="text-[13px] text-ink-muted">
-            {t("Selesaikan pembayaran sebelum")}{" "}
-            <span className="font-medium text-ink">{formatWib(data.expires_at)}</span>{" "}
-            {t("WIB. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.")}
-          </p>
-        ) : null}
       </CardContent>
     </Card>
   );
@@ -340,7 +191,7 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
     <>
       <PageHeader
         judul={t("Pembayaran Langganan")}
-        deskripsi={t("Selesaikan pembayaran paket Anda melalui QRIS atau virtual account.")}
+        deskripsi={t("Selesaikan pembayaran paket Anda melalui Midtrans.")}
         aksi={
           <>
             <Button variant="outline" asChild>
@@ -362,7 +213,7 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
       <KontenAsync
         hasil={pembayaran}
         skeleton={<Skeleton className="h-80 rounded-card" />}
-        judulGagal={t("Gagal memuat instruksi pembayaran")}
+        judulGagal={t("Gagal memuat data pembayaran")}
       >
         {(data) =>
           data.is_paid ? (
@@ -426,15 +277,7 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
             </Card>
           ) : (
             <div className="flex flex-col gap-6">
-              {data.method ? (
-                <InstruksiPembayaran data={data} />
-              ) : (
-                <PilihMetodePembayaran
-                  orderCode={orderCode}
-                  snapToken={data.snap_token}
-                  onSukses={() => void pembayaran.refetch()}
-                />
-              )}
+              <PanelBayar snapToken={data.snap_token} onSukses={() => void pembayaran.refetch()} />
               <PanelBatalPembayaran orderCode={orderCode} />
             </div>
           )
