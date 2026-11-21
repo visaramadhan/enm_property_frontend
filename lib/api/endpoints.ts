@@ -15,6 +15,7 @@ import {
   apiPut,
   apiUnduh,
   buatQuery,
+  UPLOAD_TIMEOUT_MS,
 } from "@/lib/api/client";
 import type {
   AcceptAgreementRequest,
@@ -377,10 +378,14 @@ function formDataFoto(files: File[]) {
   return data;
 }
 
+/** Opsi unggah: batas waktu lebih panjang karena payload multipart besar. */
+const OPSI_UNGGGAH = { timeoutMs: UPLOAD_TIMEOUT_MS } as const;
+
 export function unggahFotoMitra(propertyId: string, files: File[]) {
   return apiPost<UploadPhotoResponse>(
     `/vendor/properties/${propertyId}/photos`,
     formDataFoto(files),
+    OPSI_UNGGGAH,
   );
 }
 
@@ -388,7 +393,7 @@ export function unggahFotoMitra(propertyId: string, files: File[]) {
 export function unggahKtpMitra(file: File) {
   const data = new FormData();
   data.append("files", file);
-  return apiPost<UploadKtpResponse>("/partners/ktp", data);
+  return apiPost<UploadKtpResponse>("/partners/ktp", data, OPSI_UNGGGAH);
 }
 
 export function hapusFotoMitra(propertyId: string, photoId: string) {
@@ -411,6 +416,7 @@ export function unggahFotoAdmin(propertyId: string, files: File[]) {
   return apiPost<UploadPhotoResponse>(
     `/admin/properties/${propertyId}/photos`,
     formDataFoto(files),
+    OPSI_UNGGGAH,
   );
 }
 
@@ -507,7 +513,7 @@ export function ambilPengaturanPublik() {
 export function unggahGambarPengaturan(kind: SettingImageKind, file: File) {
   const data = new FormData();
   data.append("files", file);
-  return apiPost<SettingImageResponse>(`/admin/settings/images/${kind}`, data);
+  return apiPost<SettingImageResponse>(`/admin/settings/images/${kind}`, data, OPSI_UNGGGAH);
 }
 
 /* --------------------------------------------------------------- Audit -- */
@@ -568,7 +574,7 @@ export function publikasikanLanding() {
 export function unggahGambarLanding(kind: LandingImageKind, file: File) {
   const data = new FormData();
   data.append("files", file);
-  return apiPost<LandingImageResponse>(`/admin/landing/images/${kind}`, data);
+  return apiPost<LandingImageResponse>(`/admin/landing/images/${kind}`, data, OPSI_UNGGGAH);
 }
 
 /* -------------------------------------------------------------- Favorit -- */

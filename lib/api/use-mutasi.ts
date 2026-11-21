@@ -15,6 +15,11 @@ interface OpsiMutasi<TData, TVariables> {
   pesanSukses?: string | ((data: TData, variabel: TVariables) => string) | null;
   /** Judul toast gagal, contoh: "Gagal menyimpan properti". */
   pesanGagal?: string;
+  /**
+   * Deskripsi toast gagal yang spesifik. Bila diisi, menggantikan pesan galat
+   * bawaan sehingga pengguna mendapat penjelasan sesuai penyebab kegagalan.
+   */
+  deskripsiGagal?: (error: unknown) => string;
   onSukses?: (data: TData, variabel: TVariables) => void;
   onGagal?: (error: unknown) => void;
 }
@@ -44,7 +49,11 @@ export function useMutasi<TData, TVariables>(
       opsi.onSukses?.(data, variabel);
     },
     onError: (error) => {
-      toastGagal(opsi.pesanGagal ?? "Gagal memproses permintaan", error);
+      toastGagal(
+        opsi.pesanGagal ?? "Gagal memproses permintaan",
+        error,
+        opsi.deskripsiGagal?.(error),
+      );
       opsi.onGagal?.(error);
     },
   });

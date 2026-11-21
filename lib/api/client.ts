@@ -15,6 +15,21 @@ export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080/api/v1"
 ).replace(/\/$/, "");
 
+/** Batas waktu bawaan satu permintaan data (ms). */
+const TIMEOUT_DEFAULT_MS = 20_000;
+
+/** Batas waktu khusus unggah berkas (ms); lebih panjang karena payload besar. */
+export const UPLOAD_TIMEOUT_MS = 60_000;
+
+/** Jeda dasar antar percobaan ulang GET (ms); digandakan tiap percobaan. */
+const JEDA_DASAR_MS = 500;
+
+/** Jumlah percobaan ulang maksimum untuk GET (di luar percobaan pertama). */
+const MAKS_COBA_ULANG_GET = 2;
+
+/** Status HTTP sementara yang layak dicoba ulang (server sibuk/down sementara). */
+const STATUS_SEMENTARA = new Set([502, 503, 504]);
+
 type QueryValue = string | number | boolean | undefined | null;
 
 export class ApiError extends Error {
@@ -34,6 +49,25 @@ export class ApiError extends Error {
   get butuhMasukUlang() {
     return this.status === 401;
   }
+}
+
+/**
+ * Menilai apakah sebuah galat layak dicoba ulang.
+ *
+ * Hanya galat jaringan/timeout dan status 5xx sementara (502/503/504) yang
+ * layak diulang. Galat 4xx (400/401/403/404) sengaja tidak pernah diulang
+ * karena pengulangan tidak akan mengubah hasil dan hanya membuang waktu.
+ * Dipakai klien ini maupun lapisan TanStack Query agar kebijakan retry seragam.
+ */
+export function layakDicobaLagi(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    return (
+      error.code === "network_error" ||
+      error.code === "timeout" ||
+      STATUS_SEMENTARA.has(error.status)
+    );
+  }
+  return false;
 }
 
 /**
@@ -86,11 +120,83 @@ export interface RequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
   /** Kirim tanpa header Authorization (endpoint publik). */
   publik?: boolean;
+  /** Batas waktu permintaan (ms). Bawaan 20 detik, unggah berkas 60 detik. */
+  timeoutMs?: number;
+}
+
+/** Menunda eksekusi selama `ms` milidetik (jeda antar percobaan ulang). */
+function tunggu(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Membuat sinyal yang otomatis dibatalkan setelah `durasiMs` dan tetap
+ * mengikuti pembatalan dari pemanggil (bila ada).
+ *
+ * `waktuHabis()` membedakan pembatalan karena batas waktu dari pembatalan oleh
+ * pemanggil, sehingga galat yang ditampilkan ke pengguna tetap tepat.
+ */
+function sinyalDenganBatas(durasiMs: number, luar?: AbortSignal | null) {
+  const kontrol = new AbortController();
+  let habis = false;
+  const timer = setTimeout(() => {
+    habis = true;
+    kontrol.abort();
+  }, durasiMs);
+
+  const alihkan = () => kontrol.abort();
+  if (luar) {
+    if (luar.aborted) kontrol.abort();
+    else luar.addEventListener("abort", alihkan, { once: true });
+  }
+
+  return {
+    signal: kontrol.signal,
+    waktuHabis: () => habis,
+    bersihkan: () => {
+      clearTimeout(timer);
+      luar?.removeEventListener("abort", alihkan);
+    },
+  };
+}
+
+/**
+ * Menormalkan galat `fetch` (jaringan/timeout) menjadi `ApiError` dengan pesan
+ * yang mudah dipahami. Status 0 dipakai karena permintaan tidak pernah sampai
+ * ke server, sehingga penjaga rute tidak salah mengira ini galat autentikasi.
+ */
+function normalkanGalatJaringan(batasMs: number, waktuHabis: boolean): ApiError {
+  if (waktuHabis) {
+    return new ApiError(
+      0,
+      "timeout",
+      `Server tidak merespons dalam ${Math.round(batasMs / 1000)} detik. Periksa koneksi lalu coba lagi.`,
+    );
+  }
+  return new ApiError(
+    0,
+    "network_error",
+    "Tidak dapat terhubung ke server. Periksa koneksi internet Anda lalu coba lagi.",
+  );
 }
 
 async function minta(path: string, options: RequestOptions = {}): Promise<Response> {
-  const { body, publik, headers, ...rest } = options;
+  const {
+    body,
+    publik,
+    headers,
+    method,
+    timeoutMs,
+    signal: sinyalLuar,
+    ...rest
+  } = options;
   const akhirHeaders = new Headers(headers);
+  const metode = (method ?? "GET").toUpperCase();
+  /* Percobaan ulang hanya untuk method baca (idempoten). POST/PUT/PATCH/DELETE
+     tidak pernah diulang otomatis agar tidak menduplikasi efek samping
+     (mis. membuat dua transaksi atau mengunggah berkas dua kali). */
+  const bolehCobaLagi = metode === "GET" || metode === "HEAD";
+  const batasMs = timeoutMs ?? TIMEOUT_DEFAULT_MS;
 
   let memakaiToken = false;
   if (!publik) {
@@ -103,34 +209,74 @@ async function minta(path: string, options: RequestOptions = {}): Promise<Respon
 
   let akhirBody: BodyInit | undefined;
   if (body instanceof FormData) {
+    /* Jangan set `Content-Type` manual: peramban wajib menuliskan
+       `multipart/form-data` beserta `boundary`-nya sendiri. Header manual tanpa
+       boundary membuat Chrome menolak/merusak permintaan unggah. */
     akhirBody = body;
   } else if (body !== undefined) {
     akhirHeaders.set("Content-Type", "application/json");
     akhirBody = JSON.stringify(body);
   }
 
-  const kirim = () =>
-    fetch(`${API_BASE_URL}${path}`, {
-      ...rest,
-      headers: akhirHeaders,
-      body: akhirBody,
-      cache: "no-store",
-    });
+  const percobaanMaks = bolehCobaLagi ? MAKS_COBA_ULANG_GET + 1 : 1;
+  let galatTerakhir: unknown = null;
 
-  let respon = await kirim();
+  for (let percobaan = 1; percobaan <= percobaanMaks; percobaan++) {
+    const { signal, waktuHabis, bersihkan } = sinyalDenganBatas(batasMs, sinyalLuar);
+    try {
+      let respon = await fetch(`${API_BASE_URL}${path}`, {
+        ...rest,
+        method: metode,
+        headers: akhirHeaders,
+        body: akhirBody,
+        cache: "no-store",
+        signal,
+      });
 
-  /* Token Firebase dapat kedaluwarsa saat tab dibiarkan terbuka lama; segarkan
-     paksa sekali lalu ulangi permintaan alih-alih langsung memaksa pengguna
-     masuk ulang. Sesi demo tidak dapat disegarkan sehingga dilewati. */
-  if (respon.status === 401 && memakaiToken && !tokenAkunDummy()) {
-    const tokenBaru = await ambilToken(true);
-    if (tokenBaru) {
-      akhirHeaders.set("Authorization", `Bearer ${tokenBaru}`);
-      respon = await kirim();
+      /* Token Firebase dapat kedaluwarsa saat tab dibiarkan terbuka lama;
+         segarkan paksa sekali lalu ulangi permintaan alih-alih langsung
+         memaksa pengguna masuk ulang. Sesi demo tidak dapat disegarkan. */
+      if (respon.status === 401 && memakaiToken && !tokenAkunDummy()) {
+        const tokenBaru = await ambilToken(true);
+        if (tokenBaru) {
+          akhirHeaders.set("Authorization", `Bearer ${tokenBaru}`);
+          respon = await fetch(`${API_BASE_URL}${path}`, {
+            ...rest,
+            method: metode,
+            headers: akhirHeaders,
+            body: akhirBody,
+            cache: "no-store",
+            signal,
+          });
+        }
+      }
+
+      bersihkan();
+
+      /* Status 5xx sementara (502/503/504) ditandakan server sibuk; beri jeda
+         bertahap lalu ulangi selama masih ada jatah percobaan. */
+      if (bolehCobaLagi && STATUS_SEMENTARA.has(respon.status) && percobaan < percobaanMaks) {
+        await tunggu(JEDA_DASAR_MS * 2 ** (percobaan - 1));
+        continue;
+      }
+      return respon;
+    } catch (error) {
+      bersihkan();
+      galatTerakhir = error;
+
+      // Pembatalan oleh pemanggil (mis. TanStack Query) diteruskan apa adanya.
+      if (sinyalLuar?.aborted) throw error;
+
+      // Galat jaringan/timeout diulang untuk GET selama masih ada jatah.
+      if (bolehCobaLagi && percobaan < percobaanMaks) {
+        await tunggu(JEDA_DASAR_MS * 2 ** (percobaan - 1));
+        continue;
+      }
+      throw normalkanGalatJaringan(batasMs, waktuHabis());
     }
   }
 
-  return respon;
+  throw galatTerakhir ?? normalkanGalatJaringan(batasMs, false);
 }
 
 /** Membaca amplop respons dan mengembalikan `data` (beserta `meta` bila ada). */
@@ -189,8 +335,12 @@ export async function apiGetPaginated<T>(
   };
 }
 
-export async function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  const respon = await minta(path, { method: "POST", body });
+export async function apiPost<T>(
+  path: string,
+  body?: unknown,
+  options?: RequestOptions,
+): Promise<T> {
+  const respon = await minta(path, { ...options, method: "POST", body });
   return (await bacaAmplop<T>(respon)).data;
 }
 

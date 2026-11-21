@@ -8,6 +8,8 @@
  * terbatas dengan percobaan ulang.
  */
 
+import { ApiError, pesanErrorApi } from "@/lib/api/client";
+
 /** Sisi terpanjang gambar setelah dikompresi (selaras `maxPhotoWidth` backend). */
 const MAKS_SISI = 1600;
 
@@ -214,4 +216,33 @@ export async function unggahFotoAntre(
 
   if (hasil.berhasil === 0) throw galatTerakhir ?? new Error("Gagal mengunggah foto");
   return hasil;
+}
+
+/**
+ * Menerjemahkan galat unggah menjadi pesan yang spesifik dan mudah dipahami
+ * pengguna. Ditujukan untuk deskripsi toast agar pengguna tahu apakah masalahnya
+ * koneksi, ukuran berkas, format berkas, atau sesi yang berakhir — alih-alih
+ * hanya melihat "Gagal mengunggah foto" tanpa penjelasan.
+ */
+export function pesanErrorUnggah(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.code === "timeout" || error.code === "network_error") {
+      return "Koneksi terputus saat mengunggah. Periksa jaringan lalu coba lagi.";
+    }
+    if (error.status === 413) {
+      return "Ukuran foto terlalu besar. Pilih foto dengan resolusi lebih kecil.";
+    }
+    if (error.status === 401 || error.status === 403) {
+      return "Sesi Anda berakhir. Silakan masuk kembali lalu ulangi unggah.";
+    }
+    if (error.status === 400) {
+      if (/tipe|format|mime|berkas/i.test(error.message)) {
+        return "Format file tidak didukung. Gunakan JPG, PNG, atau WebP.";
+      }
+      if (/ukuran|besar|size/i.test(error.message)) {
+        return "Ukuran file terlalu besar. Pilih foto dengan resolusi lebih kecil.";
+      }
+    }
+  }
+  return pesanErrorApi(error);
 }

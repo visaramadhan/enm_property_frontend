@@ -14,8 +14,8 @@ export function toastSukses(judul: string, deskripsi?: string) {
   toast.success(judul, { description: deskripsi });
 }
 
-export function toastGagal(judul: string, error: unknown) {
-  toast.error(judul, { description: pesanErrorApi(error) });
+export function toastGagal(judul: string, error: unknown, deskripsi?: string) {
+  toast.error(judul, { description: deskripsi ?? pesanErrorApi(error) });
 }
 
 /** Gagal pada alur Firebase Auth (kode error `auth/*` diterjemahkan). */

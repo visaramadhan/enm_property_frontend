@@ -14,7 +14,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           queries: {
             staleTime: 60_000,
             refetchOnWindowFocus: false,
-            retry: 1,
+            /* Percobaan ulang GET ditangani terpusat di klien API
+               (`lib/api/client.ts`): hanya galat jaringan/timeout dan status 5xx
+               sementara (502/503/504) yang diulang, sedangkan 4xx tidak pernah
+               diulang. Menyetel retry di sini akan menggandakan percobaan. */
+            retry: false,
           },
         },
       }),

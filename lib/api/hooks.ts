@@ -3,10 +3,9 @@
 import { useQuery, type UseQueryResult } from "@tanstack/react-query";
 
 import * as api from "@/lib/api/endpoints";
-import { ApiError } from "@/lib/api/client";
 import { awalan, kunci } from "@/lib/api/keys";
 import { useMutasi } from "@/lib/api/use-mutasi";
-import { kompresGambar, unggahFotoAntre, type HasilUnggahFoto } from "@/lib/unggah-foto";
+import { kompresGambar, pesanErrorUnggah, unggahFotoAntre, type HasilUnggahFoto } from "@/lib/unggah-foto";
 import type { Paginated } from "@/types/api";
 import type {
   AcceptAgreementRequest,
@@ -102,10 +101,9 @@ export function useProfilSaya(): UseQueryResult<UserView> {
   return useQuery({
     queryKey: kunci.profilSaya(),
     queryFn: api.ambilProfilSaya,
-    /* Pengunjung anonim memang menerima 401 dari `GET /me`; mencoba ulang
-       hanya menambah permintaan gagal pada setiap kunjungan publik. */
-    retry: (jumlah, error) =>
-      !(error instanceof ApiError && error.status === 401) && jumlah < 1,
+    /* Percobaan ulang ditangani terpusat di klien API: hanya galat jaringan/5xx
+       sementara yang diulang, sedangkan 401 (pengunjung anonim pada `GET /me`)
+       tidak pernah diulang sehingga tidak menambah permintaan gagal. */
   });
 }
 
@@ -618,6 +616,7 @@ export function useUnggahFotoMitra() {
         ? `Foto terunggah sebagian (${hasil.berhasil} berhasil, ${hasil.gagal.length} gagal)`
         : "Foto berhasil diunggah",
     pesanGagal: "Gagal mengunggah foto",
+    deskripsiGagal: pesanErrorUnggah,
   });
 }
 
@@ -682,6 +681,7 @@ export function useUnggahKtp() {
     mutasi: async (file) => api.unggahKtpMitra(await kompresGambar(file)),
     pesanSukses: null,
     pesanGagal: "Gagal mengunggah foto KTP",
+    deskripsiGagal: pesanErrorUnggah,
   });
 }
 
