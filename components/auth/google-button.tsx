@@ -6,7 +6,8 @@ import { LoaderCircle } from "lucide-react";
 
 import { useBahasa } from "@/components/providers/bahasa-provider";
 import { Button } from "@/components/ui/button";
-import { toastGagalAuth } from "@/lib/toast";
+import { kodeErrorAuth } from "@/lib/firebase/errors";
+import { toastGagalAuth, toastInfo } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 
 /** Logo Google monokrom yang mengikuti warna teks tombol. */
@@ -19,20 +20,42 @@ export function GoogleMark({ className }: { className?: string }) {
 }
 
 /**
+ * Mengambil email dari galat `auth/account-exists-with-different-credential`.
+ *
+ * Firebase menyimpan email yang bentrok pada `customData.email` sehingga
+ * formulir masuk dapat mengisinya otomatis untuk memudahkan penautan akun.
+ */
+function emailKonflik(error: unknown): string {
+  if (typeof error === "object" && error !== null && "customData" in error) {
+    const custom = (error as { customData?: { email?: unknown } }).customData;
+    if (custom && typeof custom.email === "string") return custom.email;
+  }
+  return "";
+}
+
+/**
  * Tombol masuk dengan Google yang dipakai bersama halaman masuk dan daftar.
  *
  * Komponen menangani pembukaan popup Firebase, status memuat, dan notifikasi
  * kegagalan; pemanggil hanya menentukan apa yang dilakukan setelah berhasil
  * (mis. sinkronisasi sesi lalu pengalihan rute).
+ *
+ * Bila email sudah terdaftar memakai kata sandi, Firebase menolak popup dengan
+ * galat `auth/account-exists-with-different-credential`; alih-alih pesan galat
+ * mentah, pengguna diarahkan masuk memakai metode lamanya lalu menautkan Google
+ * dari halaman Profil Saya (`onKonflikAkun` mengisi email agar cepat).
  */
 export function GoogleButton({
   label,
   onSukses,
+  onKonflikAkun,
   disabled,
   className,
 }: {
   label?: string;
   onSukses: (pengguna: User) => void | Promise<void>;
+  /** Dipanggil saat email sudah terdaftar dengan metode lain (mis. kata sandi). */
+  onKonflikAkun?: (email: string) => void;
   disabled?: boolean;
   className?: string;
 }) {
@@ -53,6 +76,16 @@ export function GoogleButton({
       const kredensial = await signInWithPopup(getFirebaseAuth(), provider);
       await onSukses(kredensial.user);
     } catch (error) {
+      if (kodeErrorAuth(error) === "auth/account-exists-with-different-credential") {
+        onKonflikAkun?.(emailKonflik(error));
+        toastInfo(
+          t("Email sudah terdaftar"),
+          t(
+            "Akun dengan email ini memakai metode masuk lain. Masuk memakai metode tersebut, lalu tautkan Google dari halaman Profil Saya.",
+          ),
+        );
+        return;
+      }
       toastGagalAuth(t("Gagal masuk dengan Google"), error);
     } finally {
       setMemuat(false);

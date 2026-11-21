@@ -44,8 +44,9 @@ function terjemahOpsi(
 /** Opsi penyimpanan dibuat lewat fungsi agar label mengikuti bahasa aktif. */
 function opsiStatusSimpan(t: (teks: string) => string): OpsiSelect[] {
   return [
+    /* Tayang lebih dulu karena menjadi pilihan bawaan pada formulir listing baru. */
+    { nilai: "active", label: t("Tayangkan sekarang") },
     { nilai: "draft", label: t("Simpan sebagai draf") },
-    { nilai: "active", label: t("Ajukan & tayangkan") },
   ];
 }
 
@@ -158,7 +159,8 @@ export const nilaiAwalProperti: NilaiProperti = {
   bathrooms: "",
   units_total: "",
   facilities: "",
-  status: "draft",
+  /* Listing baru langsung tayang secara bawaan; mitra dapat memilih "draft". */
+  status: "active",
 };
 
 function teksAngka(nilai?: number) {

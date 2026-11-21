@@ -23,6 +23,7 @@ import { FormDialog } from "@/components/shared/form-dialog";
 import { CheckboxField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
+import { ScriptSnap } from "@/components/shared/script-snap";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -151,6 +152,7 @@ export function LanggananMitra() {
 
   return (
     <>
+      <ScriptSnap />
       <PageHeader
         judul={t("Paket & Langganan")}
         deskripsi={t("Kelola paket aktif dan pilih paket baru untuk menayangkan lebih banyak properti.")}

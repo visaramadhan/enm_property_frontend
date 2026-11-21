@@ -18,6 +18,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
+import { ScriptSnap } from "@/components/shared/script-snap";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -189,6 +190,7 @@ export function PembayaranOrder({ orderCode }: { orderCode: string }) {
 
   return (
     <>
+      <ScriptSnap />
       <PageHeader
         judul={t("Pembayaran Langganan")}
         deskripsi={t("Selesaikan pembayaran paket Anda melalui Midtrans.")}

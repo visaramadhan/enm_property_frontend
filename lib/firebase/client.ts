@@ -1,5 +1,5 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+import { browserLocalPersistence, getAuth, setPersistence, type Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -27,4 +27,31 @@ export function getFirebaseApp(): FirebaseApp {
 
 export function getFirebaseAuth(): Auth {
   return getAuth(getFirebaseApp());
+}
+
+/**
+ * Menetapkan penyimpanan sesi Firebase ke `localStorage` secara eksplisit.
+ *
+ * Dipakai sebelum proses masuk agar sesi bertahan setelah halaman dimuat ulang
+ * ( nilai bawaan SDK dapat berbeda antar peramban/konteks). Halaman masuk dengan
+ * opsi "Ingat saya" nonaktif tetap boleh menimpanya dengan `sessionPersistence`.
+ */
+export async function pastikanPersistensiAuth(): Promise<Auth> {
+  const auth = getFirebaseAuth();
+  await setPersistence(auth, browserLocalPersistence);
+  return auth;
+}
+
+/**
+ * Menunggu Firebase selesai memulihkan sesi dari penyimpanan lokal.
+ *
+ * Tanpa penantian ini, pembacaan `currentUser` tepat setelah halaman dimuat
+ * ulang dapat mengembalikan `null` sesaat sehingga permintaan pertama ke backend
+ * dikirim tanpa token dan pengguna tampak keluar sendiri.
+ */
+export async function tungguSesiFirebase(): Promise<Auth | null> {
+  if (!isFirebaseConfigured) return null;
+  const auth = getFirebaseAuth();
+  await auth.authStateReady();
+  return auth;
 }

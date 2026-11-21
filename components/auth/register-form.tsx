@@ -60,10 +60,12 @@ export function RegisterForm() {
     try {
       const [
         { createUserWithEmailAndPassword, updateProfile, sendEmailVerification },
-        { getFirebaseAuth },
+        { pastikanPersistensiAuth },
       ] = await Promise.all([import("firebase/auth"), import("@/lib/firebase/client")]);
 
-      const auth = getFirebaseAuth();
+      /* Persistensi localStorage ditetapkan eksplisit agar sesi hasil pendaftaran
+         bertahan saat halaman dimuat ulang (lihat `lib/firebase/client.ts`). */
+      const auth = await pastikanPersistensiAuth();
       const kredensial = await createUserWithEmailAndPassword(auth, values.email, values.password);
 
       // Nama pengguna dipakai sebagai klaim token sehingga baris pengguna lokal

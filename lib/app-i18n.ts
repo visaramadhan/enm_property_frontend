@@ -432,6 +432,27 @@ const EN: Record<string, string> = {
   "Email belum terverifikasi": "Email not verified",
   "Kelola informasi akun dan keamanan Anda.": "Manage your account information and security.",
   "Gagal memuat profil": "Failed to load profile",
+  "Keamanan Akun": "Account Security",
+  "Kelola cara Anda masuk ke akun ini.": "Manage how you sign in to this account.",
+  "Akun ini sudah dapat masuk memakai email & kata sandi maupun Google.":
+    "This account can already sign in with email & password or Google.",
+  "Akun ini masuk melalui Google. Buat kata sandi agar Anda juga dapat masuk memakai email dan kata sandi.":
+    "This account signs in with Google. Create a password so you can also sign in with email and password.",
+  "Kata sandi baru": "New password",
+  "Ulangi kata sandi baru": "Repeat new password",
+  "Buat kata sandi": "Create password",
+  "Ulangi kata sandi tidak sama": "Password confirmation does not match",
+  "Kata sandi dibuat": "Password created",
+  "Anda kini dapat masuk memakai email dan kata sandi.":
+    "You can now sign in with email and password.",
+  "Tautkan akun Google agar Anda juga dapat masuk memakai Google.":
+    "Link a Google account so you can also sign in with Google.",
+  "Tautkan Google": "Link Google",
+  "Google tertaut": "Google linked",
+  "Anda kini dapat masuk memakai Google.": "You can now sign in with Google.",
+  "Email sudah terdaftar": "Email already registered",
+  "Akun dengan email ini memakai metode masuk lain. Masuk memakai metode tersebut, lalu tautkan Google dari halaman Profil Saya.":
+    "An account with this email uses a different sign-in method. Sign in with that method, then link Google from the My Profile page.",
 
   /* ------------------------------------------------------- Properti mitra -- */
   "Jumlah unit wajib diisi": "Number of units is required",
@@ -477,7 +498,7 @@ const EN: Record<string, string> = {
 
   /* --------------------------------------------------- Formulir properti -- */
   "Simpan sebagai draf": "Save as draft",
-  "Ajukan & tayangkan": "Submit & publish",
+  "Tayangkan sekarang": "Publish now",
   "Judul minimal 5 karakter": "Title must be at least 5 characters",
   "Judul maksimal 150 karakter": "Title must be at most 150 characters",
   "Deskripsi minimal 20 karakter": "Description must be at least 20 characters",
@@ -551,8 +572,8 @@ const EN: Record<string, string> = {
 
   /* ---------------------------------------------- Formulir properti mitra -- */
   "Ubah Properti": "Edit Property",
-  "Lengkapi data listing lalu simpan sebagai draf atau ajukan untuk tayang.":
-    "Complete the listing details then save as draft or submit to publish.",
+  "Lengkapi data listing lalu simpan. Listing baru langsung tayang di katalog.":
+    "Complete the listing details then save. New listings are published to the catalog immediately.",
   "Perbarui informasi listing, lalu simpan perubahan.":
     "Update the listing information, then save the changes.",
   Kembali: "Back",
@@ -578,6 +599,7 @@ const EN: Record<string, string> = {
   "Galeri Foto": "Photo Gallery",
   "{n} foto terunggah. Foto utama dipakai sebagai sampul listing.":
     "{n} photos uploaded. The primary photo is used as the listing cover.",
+  "Mengunggah {selesai}/{total} foto…": "Uploading {selesai}/{total} photos…",
   "Unggah foto": "Upload photo",
   "Belum ada foto": "No photos yet",
   "Unggah minimal satu foto agar listing Anda lebih menarik calon penyewa maupun pembeli.":

@@ -23,10 +23,12 @@ export function useSiapkanSesi() {
 
   return React.useCallback(async (): Promise<SessionResponse> => {
     const sesi = await kirimSesi();
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: awalan.profilSaya }),
-      queryClient.invalidateQueries({ queryKey: awalan.sesi }),
-    ]);
+    /* `POST /auth/session` sudah mengembalikan profil pengguna sehingga cache
+       `GET /me` dapat diisi langsung dari responsnya. Ini menghapus satu
+       permintaan berantai: sebelumnya dashboard memanggil ulang `/me` setelah
+       sesi disinkronkan sehingga pengalihan setelah masuk terasa lebih lambat. */
+    queryClient.setQueryData(kunci.profilSaya(), sesi.user);
+    await queryClient.invalidateQueries({ queryKey: awalan.sesi });
     return sesi;
   }, [queryClient]);
 }

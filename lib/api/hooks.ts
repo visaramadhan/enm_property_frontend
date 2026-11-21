@@ -6,6 +6,7 @@ import * as api from "@/lib/api/endpoints";
 import { ApiError } from "@/lib/api/client";
 import { awalan, kunci } from "@/lib/api/keys";
 import { useMutasi } from "@/lib/api/use-mutasi";
+import { kompresGambar, unggahFotoAntre, type HasilUnggahFoto } from "@/lib/unggah-foto";
 import type { Paginated } from "@/types/api";
 import type {
   AcceptAgreementRequest,
@@ -75,7 +76,6 @@ import type {
   UpdateLandingRequest,
   UpdateSettingsRequest,
   UploadKtpResponse,
-  UploadPhotoResponse,
   UserView,
   VendorAgreementResponse,
   VendorDashboard,
@@ -600,11 +600,23 @@ export function useLeadProperti(id: string, channel?: string, aktif = true) {
   });
 }
 
+/** Variabel unggah foto mitra: berkas dikompresi & diantre di sisi klien. */
+export interface UnggahFotoMitraVars {
+  propertyId: string;
+  files: File[];
+  /** Callback kemajuan unggahan (jumlah selesai dari total). */
+  onProgres?: (selesai: number, total: number) => void;
+}
+
 export function useUnggahFotoMitra() {
-  return useMutasi<UploadPhotoResponse, { propertyId: string; files: File[] }>({
-    mutasi: ({ propertyId, files }) => api.unggahFotoMitra(propertyId, files),
+  return useMutasi<HasilUnggahFoto, UnggahFotoMitraVars>({
+    mutasi: ({ propertyId, files, onProgres }) =>
+      unggahFotoAntre(files, (berkas) => api.unggahFotoMitra(propertyId, berkas), { onProgres }),
     kunciInvalidasi: [awalan.propertiMitra],
-    pesanSukses: "Foto berhasil diunggah",
+    pesanSukses: (hasil) =>
+      hasil.gagal.length > 0
+        ? `Foto terunggah sebagian (${hasil.berhasil} berhasil, ${hasil.gagal.length} gagal)`
+        : "Foto berhasil diunggah",
     pesanGagal: "Gagal mengunggah foto",
   });
 }
@@ -665,7 +677,9 @@ export function useCheckout() {
 /** Mengunggah foto KTP sebelum pendaftaran mitra; mengembalikan URL tersimpan. */
 export function useUnggahKtp() {
   return useMutasi<UploadKtpResponse, File>({
-    mutasi: api.unggahKtpMitra,
+    /* Foto KTP dari kamera bisa melebihi batas 5 MB sehingga dikompresi lebih
+       dahulu agar unggahan tidak gagal karena ukuran. */
+    mutasi: async (file) => api.unggahKtpMitra(await kompresGambar(file)),
     pesanSukses: null,
     pesanGagal: "Gagal mengunggah foto KTP",
   });

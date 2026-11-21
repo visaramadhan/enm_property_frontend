@@ -3,10 +3,11 @@
 import * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle, Save, Trash2 } from "lucide-react";
+import { KeyRound, LoaderCircle, Save, ShieldCheck, Trash2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { GoogleMark } from "@/components/auth/google-button";
 import { useBahasa } from "@/components/providers/bahasa-provider";
 import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { TextField } from "@/components/shared/form-field";
@@ -35,8 +36,9 @@ import { useHapusAkun, usePerbaruiProfilSaya, useProfilSaya } from "@/lib/api/ho
 import { hapusAktivitas } from "@/lib/auth/aktivitas";
 import { hapusAkunDummy } from "@/lib/auth/akun-dummy";
 import { LABEL, LABEL_PERAN } from "@/lib/enum";
-import { pesanErrorAuth } from "@/lib/firebase/errors";
+import { kodeErrorAuth, pesanErrorAuth } from "@/lib/firebase/errors";
 import { formatWib, inisialDari } from "@/lib/format";
+import { toastSukses } from "@/lib/toast";
 import type { UserView } from "@/types/api";
 
 /**
@@ -174,6 +176,188 @@ function KartuProfil({ pengguna }: { pengguna: UserView }) {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+/**
+ * Kartu keamanan akun: menautkan Google atau menetapkan kata sandi.
+ *
+ * Pengguna yang mendaftar lewat Google belum memiliki kata sandi sehingga tidak
+ * dapat masuk memakai email & kata sandi; kartu ini menambahkannya lewat
+ * `linkWithCredential`. Sebaliknya, akun email & kata sandi dapat menautkan
+ * Google lewat `linkWithPopup` sehingga saat masuk memakai Google tidak lagi
+ * muncul konflik `auth/account-exists-with-different-credential`.
+ *
+ * Kartu disembunyikan pada sesi demo/tanpa Firebase karena tidak ada kredensial
+ * untuk ditautkan.
+ */
+function KartuKeamananAkun({ pengguna }: { pengguna: UserView }) {
+  const { t } = useBahasa();
+  const [penyedia, setPenyedia] = React.useState<string[] | null>(null);
+  const [sandi, setSandi] = React.useState("");
+  const [ulangi, setUlangi] = React.useState("");
+  const [sibuk, setSibuk] = React.useState(false);
+  const [galat, setGalat] = React.useState<string | null>(null);
+
+  const muatPenyedia = React.useCallback(async () => {
+    try {
+      const client = await import("@/lib/firebase/client");
+      const orang = client.isFirebaseConfigured ? client.getFirebaseAuth().currentUser : null;
+      setPenyedia(orang ? orang.providerData.map((item) => item.providerId) : null);
+    } catch {
+      setPenyedia(null);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void muatPenyedia();
+  }, [muatPenyedia]);
+
+  if (!penyedia) return null;
+
+  const punyaSandi = penyedia.includes("password");
+  const punyaGoogle = penyedia.includes("google.com");
+
+  async function buatSandi() {
+    if (sandi.length < 8) {
+      setGalat(t("Kata sandi minimal 8 karakter"));
+      return;
+    }
+    if (sandi !== ulangi) {
+      setGalat(t("Ulangi kata sandi tidak sama"));
+      return;
+    }
+    setGalat(null);
+    setSibuk(true);
+    try {
+      const [client, authMod] = await Promise.all([
+        import("@/lib/firebase/client"),
+        import("firebase/auth"),
+      ]);
+      const orang = client.getFirebaseAuth().currentUser;
+      if (!orang) throw new Error("Sesi akun tidak ditemukan.");
+      const email = orang.email ?? pengguna.email;
+      const kredensial = authMod.EmailAuthProvider.credential(email, sandi);
+      try {
+        await authMod.linkWithCredential(orang, kredensial);
+      } catch (error) {
+        /* Menautkan kredensial butuh login terkini; verifikasi ulang lalu ulangi. */
+        if (kodeErrorAuth(error) !== "auth/requires-recent-login") throw error;
+        await reautentikasiFirebase("", email);
+        const terkini = client.getFirebaseAuth().currentUser;
+        if (!terkini) throw new Error("Sesi akun tidak ditemukan.");
+        await authMod.linkWithCredential(terkini, kredensial);
+      }
+      setSandi("");
+      setUlangi("");
+      await muatPenyedia();
+      toastSukses(t("Kata sandi dibuat"), t("Anda kini dapat masuk memakai email dan kata sandi."));
+    } catch (error) {
+      setGalat(pesanErrorAuth(error));
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  async function tautkanGoogle() {
+    setGalat(null);
+    setSibuk(true);
+    try {
+      const [client, authMod] = await Promise.all([
+        import("@/lib/firebase/client"),
+        import("firebase/auth"),
+      ]);
+      const orang = client.getFirebaseAuth().currentUser;
+      if (!orang) throw new Error("Sesi akun tidak ditemukan.");
+      await authMod.linkWithPopup(orang, new authMod.GoogleAuthProvider());
+      await muatPenyedia();
+      toastSukses(t("Google tertaut"), t("Anda kini dapat masuk memakai Google."));
+    } catch (error) {
+      /* Popup yang ditutup pengguna bukan kegagalan; jangan tampilkan galat. */
+      if (kodeErrorAuth(error) !== "auth/popup-closed-by-user") setGalat(pesanErrorAuth(error));
+    } finally {
+      setSibuk(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ShieldCheck className="size-4 text-secondary" aria-hidden="true" />
+          {t("Keamanan Akun")}
+        </CardTitle>
+        <CardDescription>{t("Kelola cara Anda masuk ke akun ini.")}</CardDescription>
+      </CardHeader>
+
+      <CardContent className="flex flex-col gap-5">
+        {punyaSandi && punyaGoogle ? (
+          <p className="text-[13px] text-ink-muted">
+            {t("Akun ini sudah dapat masuk memakai email & kata sandi maupun Google.")}
+          </p>
+        ) : null}
+
+        {!punyaSandi ? (
+          <div className="flex flex-col gap-4">
+            <p className="text-[13px] text-ink-muted">
+              {t(
+                "Akun ini masuk melalui Google. Buat kata sandi agar Anda juga dapat masuk memakai email dan kata sandi.",
+              )}
+            </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="sandi-baru">{t("Kata sandi baru")}</Label>
+                <Input
+                  id="sandi-baru"
+                  type="password"
+                  autoComplete="new-password"
+                  value={sandi}
+                  disabled={sibuk}
+                  onChange={(event) => setSandi(event.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="sandi-ulangi">{t("Ulangi kata sandi baru")}</Label>
+                <Input
+                  id="sandi-ulangi"
+                  type="password"
+                  autoComplete="new-password"
+                  value={ulangi}
+                  disabled={sibuk}
+                  onChange={(event) => setUlangi(event.target.value)}
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => void buatSandi()} disabled={sibuk}>
+                {sibuk ? <LoaderCircle className="animate-spin" /> : <KeyRound />}
+                {t("Buat kata sandi")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {!punyaGoogle ? (
+          <div className="flex flex-col gap-3 border-t border-divider pt-5">
+            <p className="text-[13px] text-ink-muted">
+              {t("Tautkan akun Google agar Anda juga dapat masuk memakai Google.")}
+            </p>
+            <div>
+              <Button variant="outline" onClick={() => void tautkanGoogle()} disabled={sibuk}>
+                {sibuk ? <LoaderCircle className="animate-spin" /> : <GoogleMark />}
+                {t("Tautkan Google")}
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {galat ? (
+          <p className="rounded-field border border-danger-border bg-danger-tint p-3 text-[13px] text-danger-ink">
+            {galat}
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -457,6 +641,7 @@ export function ProfilAkun({
         {(pengguna) => (
           <div className="flex flex-col gap-6">
             <KartuProfil pengguna={pengguna} />
+            <KartuKeamananAkun pengguna={pengguna} />
             <ZonaBerbahaya pengguna={pengguna} />
           </div>
         )}

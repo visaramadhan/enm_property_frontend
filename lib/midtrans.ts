@@ -15,8 +15,14 @@ const PREFIKS_NON_PRODUKSI = ["SB-"];
 
 let snapPromise: Promise<Snap> | null = null;
 
-function snapScriptUrl() {
-  const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ?? "";
+/** Client key Midtrans dari variabel lingkungan publik (string kosong bila belum diisi). */
+export function snapClientKey(): string {
+  return process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY ?? "";
+}
+
+/** URL snap.js sesuai lingkungan (sandbox/produksi) berdasarkan prefiks client key. */
+export function snapScriptUrl(): string {
+  const clientKey = snapClientKey();
   const nonProduksi = PREFIKS_NON_PRODUKSI.some((prefiks) => clientKey.startsWith(prefiks));
   return nonProduksi ? SNAP_SANDBOX_URL : SNAP_PRODUCTION_URL;
 }
@@ -34,7 +40,7 @@ export function loadSnap(): Promise<Snap> {
   if (snapPromise) return snapPromise;
 
   snapPromise = new Promise<Snap>((resolve, reject) => {
-    const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
+    const clientKey = snapClientKey();
 
     if (!clientKey) {
       snapPromise = null;

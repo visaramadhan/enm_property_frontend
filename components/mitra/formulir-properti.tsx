@@ -118,7 +118,7 @@ function PanelProperti({
         judul={mode === "baru" ? t("Tambah Properti") : t("Ubah Properti")}
         deskripsi={
           mode === "baru"
-            ? t("Lengkapi data listing lalu simpan sebagai draf atau ajukan untuk tayang.")
+            ? t("Lengkapi data listing lalu simpan. Listing baru langsung tayang di katalog.")
             : t("Perbarui informasi listing, lalu simpan perubahan.")
         }
         aksi={

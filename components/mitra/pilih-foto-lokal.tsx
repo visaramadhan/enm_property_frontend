@@ -23,7 +23,7 @@ export function PilihFotoLokal({
   maksimal = MAKS_FOTO_LISTING,
 }: {
   berkas: File[];
-  onUbah: (berkas: File[]) => void;
+  onUbah: React.Dispatch<React.SetStateAction<File[]>>;
   maksimal?: number;
 }) {
   const { t } = useBahasa();
@@ -38,11 +38,13 @@ export function PilihFotoLokal({
     const dipilih = Array.from(event.target.files ?? []);
     event.target.value = "";
     if (dipilih.length === 0) return;
-    onUbah([...berkas, ...dipilih].slice(0, maksimal));
+    /* Pembaruan fungsional agar pemilihan cepat berturut-turut tidak saling
+       menimpa dengan daftar berkas yang sudah usang (stale state). */
+    onUbah((sebelumnya) => [...sebelumnya, ...dipilih].slice(0, maksimal));
   }
 
   function hapus(indeks: number) {
-    onUbah(berkas.filter((_, i) => i !== indeks));
+    onUbah((sebelumnya) => sebelumnya.filter((_, i) => i !== indeks));
   }
 
   return (

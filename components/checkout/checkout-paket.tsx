@@ -15,6 +15,7 @@ import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { CheckboxField } from "@/components/shared/form-field";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
+import { ScriptSnap } from "@/components/shared/script-snap";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -196,6 +197,9 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
     defaultValues: { agree_agreement: false },
   });
 
+  /* Menjaga klik pertama sebagai satu-satunya proses checkout yang berjalan. */
+  const [mengirim, setMengirim] = React.useState(false);
+
   if (memuat) {
     return <Skeleton className="h-72 rounded-card" />;
   }
@@ -228,6 +232,10 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
   const detail = perjanjian.data;
 
   async function kirim(nilai: NilaiKonfirmasi) {
+    /* Loading state instan: menolak klik berulang sebelum mutasi ditandai
+       pending sehingga double-submit tidak menghasilkan order ganda. */
+    if (mengirim) return;
+    setMengirim(true);
     try {
       const hasil = await checkout.mutateAsync({
         package_slug: paket.slug,
@@ -260,6 +268,7 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
       router.push(`/pembayaran/${hasil.order.code}`);
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
+      setMengirim(false);
     }
   }
 
@@ -297,8 +306,8 @@ function PanelKonfirmasi({ paket }: { paket: PlanView }) {
           />
 
           <div className="flex justify-end">
-            <Button type="submit" disabled={checkout.isPending}>
-              {checkout.isPending ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
+            <Button type="submit" disabled={checkout.isPending || mengirim}>
+              {checkout.isPending || mengirim ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
               {gratis ? t("Aktifkan paket") : t("Lanjut ke pembayaran")}
             </Button>
           </div>
@@ -314,6 +323,7 @@ export function CheckoutPaket({ slug }: { slug: string }) {
 
   return (
     <>
+      <ScriptSnap />
       <TombolBeranda />
       <PageHeader
         judul={t("Checkout Paket")}

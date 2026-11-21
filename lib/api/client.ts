@@ -60,23 +60,21 @@ export function buatQuery(params?: object): string {
  * selain itu ID token Firebase pengguna yang sedang masuk.
  *
  * Sesi demo diutamakan agar pemilihan peran pada halaman masuk tidak tertimpa
- * akun Firebase yang masih aktif. Bila keduanya tidak ada, permintaan dikirim
- * tanpa header `Authorization` sehingga backend menjawab 401 dan penjaga rute
- * mengalihkan pengguna ke halaman masuk.
+ * akun Firebase yang masih aktif. Sebelum membaca pengguna Firebase, sesi yang
+ * tersimpan dipulihkan dahulu (`authStateReady`) sehingga pemuatan ulang halaman
+ * tidak mengirim permintaan tanpa token. Bila keduanya tidak ada, permintaan
+ * dikirim tanpa header `Authorization` sehingga backend menjawab 401 dan penjaga
+ * rute mengalihkan pengguna ke halaman masuk.
  */
-async function ambilToken(): Promise<string | null> {
+async function ambilToken(paksaSegarkan = false): Promise<string | null> {
   const tokenDemo = tokenAkunDummy();
   if (tokenDemo) return tokenDemo;
 
   try {
-    const [{ getFirebaseAuth }, { isFirebaseConfigured }] = await Promise.all([
-      import("@/lib/firebase/client"),
-      import("@/lib/firebase/client"),
-    ]);
-    if (isFirebaseConfigured) {
-      const pengguna = getFirebaseAuth().currentUser;
-      if (pengguna) return await pengguna.getIdToken();
-    }
+    const { tungguSesiFirebase } = await import("@/lib/firebase/client");
+    const auth = await tungguSesiFirebase();
+    const pengguna = auth?.currentUser;
+    if (pengguna) return await pengguna.getIdToken(paksaSegarkan);
   } catch {
     // Firebase belum siap; permintaan tetap dikirim tanpa token.
   }
@@ -94,9 +92,13 @@ async function minta(path: string, options: RequestOptions = {}): Promise<Respon
   const { body, publik, headers, ...rest } = options;
   const akhirHeaders = new Headers(headers);
 
+  let memakaiToken = false;
   if (!publik) {
     const token = await ambilToken();
-    if (token) akhirHeaders.set("Authorization", `Bearer ${token}`);
+    if (token) {
+      akhirHeaders.set("Authorization", `Bearer ${token}`);
+      memakaiToken = true;
+    }
   }
 
   let akhirBody: BodyInit | undefined;
@@ -107,12 +109,28 @@ async function minta(path: string, options: RequestOptions = {}): Promise<Respon
     akhirBody = JSON.stringify(body);
   }
 
-  return fetch(`${API_BASE_URL}${path}`, {
-    ...rest,
-    headers: akhirHeaders,
-    body: akhirBody,
-    cache: "no-store",
-  });
+  const kirim = () =>
+    fetch(`${API_BASE_URL}${path}`, {
+      ...rest,
+      headers: akhirHeaders,
+      body: akhirBody,
+      cache: "no-store",
+    });
+
+  let respon = await kirim();
+
+  /* Token Firebase dapat kedaluwarsa saat tab dibiarkan terbuka lama; segarkan
+     paksa sekali lalu ulangi permintaan alih-alih langsung memaksa pengguna
+     masuk ulang. Sesi demo tidak dapat disegarkan sehingga dilewati. */
+  if (respon.status === 401 && memakaiToken && !tokenAkunDummy()) {
+    const tokenBaru = await ambilToken(true);
+    if (tokenBaru) {
+      akhirHeaders.set("Authorization", `Bearer ${tokenBaru}`);
+      respon = await kirim();
+    }
+  }
+
+  return respon;
 }
 
 /** Membaca amplop respons dan mengembalikan `data` (beserta `meta` bila ada). */

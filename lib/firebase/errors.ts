@@ -22,12 +22,16 @@ const pesanError: Record<string, string> = {
 
 const pesanDefault = "Terjadi kesalahan. Silakan coba lagi.";
 
+/** Kode error Firebase Auth (`auth/*`), atau string kosong bila bukan galat auth. */
+export function kodeErrorAuth(error: unknown): string {
+  return typeof error === "object" && error !== null && "code" in error
+    ? String((error as { code: unknown }).code)
+    : "";
+}
+
 /** Terjemahkan kode error Firebase Auth menjadi pesan berbahasa Indonesia. */
 export function pesanErrorAuth(error: unknown): string {
-  const code =
-    typeof error === "object" && error !== null && "code" in error
-      ? String((error as { code: unknown }).code)
-      : "";
+  const code = kodeErrorAuth(error);
 
   if (pesanError[code]) return pesanError[code];
 

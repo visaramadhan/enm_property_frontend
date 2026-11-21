@@ -31,11 +31,28 @@ function buatSkemaMasuk(t: (teks: string) => string) {
 
 type NilaiMasuk = z.infer<ReturnType<typeof buatSkemaMasuk>>;
 
+/**
+ * Rute yang dipra-ambil saat halaman masuk dimuat.
+ *
+ * Peran pengguna belum diketahui sebelum autentikasi selesai, sehingga seluruh
+ * dashboard tujuan yang mungkin dipra-ambil agar pengalihan terasa seketika
+ * (bukan menunggu bundel halaman tujuan diunduh).
+ */
+const RUTE_PRAPERAMBAN = ["/mitra", "/admin", "/owner", "/paket", "/akun"] as const;
+
 export function LoginForm() {
   const router = useRouter();
   const { t } = useBahasa();
   const siapkanSesi = useSiapkanSesi();
   const [mengirim, setMengirim] = React.useState(false);
+
+  /* Pra-ambil rute tujuan (termasuk `?lanjut`) begitu halaman masuk dimuat agar
+     pengalihan setelah autentikasi berhasil tidak menunggu unduhan bundel. */
+  React.useEffect(() => {
+    const lanjut = tujuanLanjut();
+    if (lanjut) router.prefetch(lanjut);
+    for (const rute of RUTE_PRAPERAMBAN) router.prefetch(rute);
+  }, [router]);
 
   const skemaMasuk = React.useMemo(() => buatSkemaMasuk(t), [t]);
 
@@ -53,14 +70,17 @@ export function LoginForm() {
     setMengirim(true);
 
     try {
-      const [{ signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence }, { getFirebaseAuth }] =
+      const [{ signInWithEmailAndPassword, setPersistence, browserSessionPersistence }, { pastikanPersistensiAuth }] =
         await Promise.all([import("firebase/auth"), import("@/lib/firebase/client")]);
 
-      const auth = getFirebaseAuth();
-      await setPersistence(
-        auth,
-        values.ingatSaya ? browserLocalPersistence : browserSessionPersistence,
-      );
+      /* `pastikanPersistensiAuth` menetapkan localStorage secara eksplisit (bawaan
+         SDK dapat berbeda antar peramban/konteks) sehingga sesi bertahan saat
+         halaman dimuat ulang; opsi "Ingat saya" nonaktif menimpanya dengan
+         `sessionStorage` agar sesi berakhir saat tab ditutup. */
+      const auth = await pastikanPersistensiAuth();
+      if (!values.ingatSaya) {
+        await setPersistence(auth, browserSessionPersistence);
+      }
 
       await signInWithEmailAndPassword(auth, values.email, values.password);
     } catch (error) {
@@ -150,6 +170,11 @@ export function LoginForm() {
         <GoogleButton
           label={t("Masuk dengan Google")}
           onSukses={masukDenganGoogle}
+          /* Email dari galat "sudah terdaftar" diisikan otomatis agar pengguna
+             tinggal memasukkan kata sandi lalu menautkan Google di profil. */
+          onKonflikAkun={(email) => {
+            if (email) form.setValue("email", email, { shouldValidate: true });
+          }}
           disabled={mengirim}
         />
       </form>

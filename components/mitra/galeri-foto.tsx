@@ -28,15 +28,25 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
   const hapus = useHapusFotoMitra();
   const utama = useTetapkanFotoUtama();
   const [targetHapus, setTargetHapus] = React.useState<PhotoView | null>(null);
+  /* Kemajuan unggahan (berkas selesai dari total) untuk memberi umpan balik
+     saat antrean unggah berjalan lama. */
+  const [progres, setProgres] = React.useState<{ selesai: number; total: number } | null>(null);
 
   async function pilihBerkas(event: React.ChangeEvent<HTMLInputElement>) {
     const berkas = Array.from(event.target.files ?? []);
     event.target.value = "";
     if (berkas.length === 0) return;
+    setProgres({ selesai: 0, total: berkas.length });
     try {
-      await unggah.mutateAsync({ propertyId: propertiId, files: berkas });
+      await unggah.mutateAsync({
+        propertyId: propertiId,
+        files: berkas,
+        onProgres: (selesai, total) => setProgres({ selesai, total }),
+      });
     } catch {
       // Pesan kegagalan sudah ditampilkan oleh `useMutasi`.
+    } finally {
+      setProgres(null);
     }
   }
 
@@ -66,9 +76,14 @@ export function GaleriFoto({ propertiId, foto }: { propertiId: string; foto: Pho
         <div className="flex flex-col gap-1">
           <CardTitle>{t("Galeri Foto")}</CardTitle>
           <CardDescription>
-            {t("{n} foto terunggah. Foto utama dipakai sebagai sampul listing.", {
-              n: formatAngka(foto.length),
-            })}
+            {unggah.isPending && progres
+              ? t("Mengunggah {selesai}/{total} foto…", {
+                  selesai: formatAngka(progres.selesai),
+                  total: formatAngka(progres.total),
+                })
+              : t("{n} foto terunggah. Foto utama dipakai sebagai sampul listing.", {
+                  n: formatAngka(foto.length),
+                })}
           </CardDescription>
         </div>
         <Button
