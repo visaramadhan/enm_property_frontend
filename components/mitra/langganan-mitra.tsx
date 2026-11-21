@@ -166,7 +166,7 @@ export function LanggananMitra() {
         {(data) =>
           Boolean(data.id) && data.is_active ? (
             <div className="grid gap-6 lg:grid-cols-3">
-              <KartuLangganan langganan={data} className="lg:col-span-1" />
+              <KartuLangganan langganan={data} className="lg:col-span-1" tampilkanKelola={false} />
               <KartuRingkasanKuota langganan={data} />
             </div>
           ) : (

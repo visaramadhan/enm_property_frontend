@@ -21,14 +21,24 @@ export function KodeQr({
   nilai,
   kelas,
   ukuran = 512,
+  onGambar,
 }: {
   nilai: string;
   kelas?: string;
   ukuran?: number;
+  /** Menerima data URL hasil pembangkitan, mis. untuk tombol unduh QR. */
+  onGambar?: (gambar: string) => void;
 }) {
   const { t } = useBahasa();
   const sudahTerpasang = useSudahTerpasang();
   const [gambar, setGambar] = React.useState("");
+
+  /* Callback disimpan di ref agar identitas fungsi dari pemanggil (yang dapat
+     berubah tiap render) tidak memicu pembangkitan ulang kode QR. */
+  const simpanGambar = React.useRef(onGambar);
+  React.useEffect(() => {
+    simpanGambar.current = onGambar;
+  }, [onGambar]);
 
   React.useEffect(() => {
     if (!sudahTerpasang || !nilai) return;
@@ -39,7 +49,9 @@ export function KodeQr({
         modul.toDataURL(nilai, { width: ukuran, margin: 1, errorCorrectionLevel: "M" }),
       )
       .then((url) => {
-        if (!batal) setGambar(url);
+        if (batal) return;
+        setGambar(url);
+        simpanGambar.current?.(url);
       })
       .catch(() => {
         // Bila pembangkitan QR gagal, biarkan pemanggil menampilkan placeholder.

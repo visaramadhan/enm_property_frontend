@@ -774,6 +774,11 @@ const EN: Record<string, string> = {
   "Total pembayaran": "Total payment",
   "Bayar sebelum": "Pay before",
   "Nomor VA tersalin": "VA number copied",
+  "Unduh kode QRIS": "Download QRIS code",
+  "Gagal mengunduh kode QRIS": "Failed to download the QRIS code",
+  "Bayar lewat popup Midtrans": "Pay via Midtrans popup",
+  "Popup pembayaran Midtrans tetap tersedia bila kanal QRIS/VA belum aktif.":
+    "The Midtrans payment popup remains available if the QRIS/VA channel is not yet active.",
   "Selesaikan pembayaran sebelum": "Complete the payment before",
   "WIB. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.":
     "WIB. This page will update automatically once the payment is confirmed.",

@@ -19,9 +19,15 @@ import type { SubscriptionView } from "@/types/api";
 export function KartuLangganan({
   langganan,
   className,
+  tampilkanKelola = true,
 }: {
   langganan: SubscriptionView;
   className?: string;
+  /**
+   * Sembunyikan tautan "Kelola Langganan" saat kartu sudah berada di halaman
+   * tujuannya (`/mitra/langganan`) agar tidak menjadi tautan ke diri sendiri.
+   */
+  tampilkanKelola?: boolean;
 }) {
   const { t } = useBahasa();
   const kuotaTotal = langganan.listing_quota < 0 ? -1 : langganan.listing_quota;
@@ -83,9 +89,11 @@ export function KartuLangganan({
           </p>
         )}
 
-        <Button className="w-full" asChild>
-          <Link href="/mitra/langganan">{t("Kelola Langganan")}</Link>
-        </Button>
+        {tampilkanKelola ? (
+          <Button className="w-full" asChild>
+            <Link href="/mitra/langganan">{t("Kelola Langganan")}</Link>
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );
