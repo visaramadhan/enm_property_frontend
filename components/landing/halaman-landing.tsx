@@ -320,9 +320,9 @@ function Hero({
   return (
     <section
       id="beranda"
-      className={cn(JANGKAR, "bg-[linear-gradient(180deg,#FBF9F6,#F7F3ED)] pt-16 pb-[72px]")}
+      className={cn(JANGKAR, "bg-[linear-gradient(180deg,#FBF9F6,#F7F3ED)] pt-12 pb-14 md:pt-16 md:pb-[72px]")}
     >
-      <div className={cn(KONTAINER, "grid items-center gap-12 lg:grid-cols-[1fr_1.1fr]")}>
+      <div className={cn(KONTAINER, "grid items-center gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-12")}>
         <div>
           <Eyebrow>{k.hero.eyebrow}</Eyebrow>
 
@@ -457,7 +457,7 @@ function PropertiPilihan({
   k: Kamus;
 }) {
   return (
-    <section id="properti" className={cn(JANGKAR, "py-14 lg:py-16")}>
+    <section id="properti" className={cn(JANGKAR, "py-12 sm:py-14 lg:py-16")}>
       <div className={KONTAINER}>
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -577,7 +577,7 @@ function PaketMitra({
   const baris = barisPerbandingan(k.paket.baris, k.paket.gratis);
 
   return (
-    <section id="paket" className={cn(JANGKAR, "bg-secondary py-16")}>
+    <section id="paket" className={cn(JANGKAR, "bg-secondary py-12 sm:py-16")}>
       <div className={KONTAINER}>
         <KepalaBagian>
           <Eyebrow center gold>
@@ -642,7 +642,7 @@ function PaketMitra({
 
             <p className="mt-4.5 text-center text-[11px] text-white/70">{k.paket.catatan}</p>
 
-            <div className="mt-14">
+            <div className="mt-10 sm:mt-14">
               <h3 className="mb-4.5 text-center text-xl font-semibold text-white">
                 {k.paket.perbandingan}
               </h3>
@@ -702,7 +702,7 @@ function PaketMitra({
 /** Panduan kemitraan: empat langkah, daftar persiapan, dan alur setelah mendaftar. */
 function PanduanMitra({ t, k }: { t: KontenTerpilih; k: Kamus }) {
   return (
-    <section id="panduan" className={cn(JANGKAR, "bg-canvas py-16")}>
+    <section id="panduan" className={cn(JANGKAR, "bg-canvas py-12 sm:py-16")}>
       <div className={KONTAINER}>
         <KepalaBagian>
           <Eyebrow center>{k.panduan.eyebrow}</Eyebrow>
@@ -735,7 +735,7 @@ function PanduanMitra({ t, k }: { t: KontenTerpilih; k: Kamus }) {
           ))}
         </div>
 
-        <div className="mt-16 grid items-start gap-10 lg:grid-cols-[1fr_1.2fr]">
+        <div className="mt-12 grid items-start gap-10 lg:mt-16 lg:grid-cols-[1fr_1.2fr]">
           <div>
             <Eyebrow>{k.panduan.sebelumEyebrow}</Eyebrow>
             <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink">
@@ -794,7 +794,7 @@ function PanduanMitra({ t, k }: { t: KontenTerpilih; k: Kamus }) {
  */
 function Faq({ t, k }: { t: KontenTerpilih; k: Kamus }) {
   return (
-    <section id="faq" className={cn(JANGKAR, "border-t border-line bg-surface py-16")}>
+    <section id="faq" className={cn(JANGKAR, "border-t border-line bg-surface py-12 sm:py-16")}>
       <div className={KONTAINER}>
         <KepalaBagian>
           <Eyebrow center>{k.faq.eyebrow}</Eyebrow>
@@ -830,9 +830,9 @@ function Faq({ t, k }: { t: KontenTerpilih; k: Kamus }) {
 /** Ajakan mendaftar sebagai mitra; teksnya berasal dari modul CTA Mitra di CMS. */
 function CtaMitra({ t, k }: { t: KontenTerpilih; k: Kamus }) {
   return (
-    <section id="kemitraan" className={cn(JANGKAR, "bg-canvas py-16")}>
+    <section id="kemitraan" className={cn(JANGKAR, "bg-canvas py-12 sm:py-16")}>
       <div className={KONTAINER}>
-        <div className="rounded-[20px] bg-[linear-gradient(101deg,#203E34,#2E4A3E)] px-8 py-14 text-center shadow-md">
+        <div className="rounded-[20px] bg-[linear-gradient(101deg,#203E34,#2E4A3E)] px-5 py-12 text-center shadow-md sm:px-8 sm:py-14">
           <Eyebrow center gold>
             {k.cta.eyebrow}
           </Eyebrow>

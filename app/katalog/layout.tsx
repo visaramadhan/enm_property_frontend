@@ -16,8 +16,8 @@ export default function KatalogLayout(props: LayoutProps<"/katalog">) {
       <div className="flex min-h-screen flex-col bg-canvas">
         <HeaderPublik tagline="Katalog Properti" />
 
-        <main className="flex flex-1 justify-center px-4 py-[30px] lg:px-8">
-          <div className="flex w-full max-w-7xl flex-col gap-6">{props.children}</div>
+        <main className="flex flex-1 justify-center px-4 py-6 sm:py-[30px] lg:px-8">
+          <div className="flex w-full min-w-0 max-w-7xl flex-col gap-6">{props.children}</div>
         </main>
       </div>
     </AuthProvider>

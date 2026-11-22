@@ -34,11 +34,14 @@ export default function DetailPropertiPage({ params }: PageProps<"/katalog/[slug
 function KerangkaDetail() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="flex flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-6">
         <Skeleton className="aspect-video w-full rounded-card" />
         <Skeleton className="h-64 rounded-card" />
       </div>
-      <Skeleton className="h-72 rounded-card" />
+      <div className="flex min-w-0 flex-col gap-6">
+        <Skeleton className="h-72 rounded-card" />
+        <Skeleton className="h-80 rounded-card" />
+      </div>
     </div>
   );
 }

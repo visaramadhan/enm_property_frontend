@@ -67,27 +67,31 @@ export function FilterBar({
         </div>
       ) : null}
 
-      {filter.map((item) => (
-        <Select
-          key={item.kunci}
-          value={item.nilai ?? NILAI_SEMUA}
-          onValueChange={(nilai) => item.onUbah(nilai === NILAI_SEMUA ? undefined : nilai)}
-        >
-          <SelectTrigger className={cn("w-full lg:w-48", item.lebar)} aria-label={item.label}>
-            <SelectValue placeholder={item.label} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NILAI_SEMUA}>
-              {item.label}: {t("Semua")}
-            </SelectItem>
-            {item.opsi.map((opsi) => (
-              <SelectItem key={opsi.nilai} value={opsi.nilai}>
-                {opsi.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ))}
+      {filter.length > 0 ? (
+        <div className="grid grid-cols-2 gap-3 lg:flex lg:items-center">
+          {filter.map((item) => (
+            <Select
+              key={item.kunci}
+              value={item.nilai ?? NILAI_SEMUA}
+              onValueChange={(nilai) => item.onUbah(nilai === NILAI_SEMUA ? undefined : nilai)}
+            >
+              <SelectTrigger className={cn("w-full lg:w-48", item.lebar)} aria-label={item.label}>
+                <SelectValue placeholder={item.label} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NILAI_SEMUA}>
+                  {item.label}: {t("Semua")}
+                </SelectItem>
+                {item.opsi.map((opsi) => (
+                  <SelectItem key={opsi.nilai} value={opsi.nilai}>
+                    {opsi.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ))}
+        </div>
+      ) : null}
 
       {aksi ? <div className="flex flex-wrap items-center gap-2 lg:ml-auto">{aksi}</div> : null}
     </div>

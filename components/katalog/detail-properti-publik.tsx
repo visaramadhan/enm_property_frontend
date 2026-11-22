@@ -83,7 +83,7 @@ function Galeri({ properti }: { properti: PropertyDetail }) {
               aria-label={t("Foto {n}", { n: indeks + 1 })}
               aria-current={indeks === aktif}
               className={cn(
-                "size-20 shrink-0 overflow-hidden rounded-field border-2 transition-colors",
+                "size-16 shrink-0 overflow-hidden rounded-field border-2 transition-colors sm:size-20",
                 indeks === aktif ? "border-primary" : "border-line hover:border-ink-subtle",
               )}
             >
@@ -151,7 +151,7 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
         <span className="text-xs font-medium uppercase tracking-wide text-ink-subtle">
           {t("Harga")}
         </span>
-        <CardTitle data-numeric className="text-2xl">
+        <CardTitle data-numeric className="text-xl leading-tight break-words sm:text-2xl">
           {labelHargaProperti(properti.price, properti.price_period, t)}
         </CardTitle>
       </CardHeader>
@@ -192,24 +192,24 @@ function PanelKontak({ properti, slug }: { properti: PropertyDetail; slug: strin
 
         <Separator />
 
-        <dl className="grid grid-cols-3 gap-3 text-center">
-          <div className="flex flex-col gap-1">
+        <dl className="grid grid-cols-3 gap-2 text-center sm:gap-3">
+          <div className="flex min-w-0 flex-col gap-1">
             <dt className="text-xs text-ink-subtle">{t("Tayangan")}</dt>
-            <dd data-numeric className="flex items-center justify-center gap-1 text-sm font-medium text-ink">
+            <dd data-numeric className="flex min-w-0 items-center justify-center gap-1 text-sm font-medium text-ink">
               <Eye className="size-4" aria-hidden="true" />
               {formatAngka(properti.views)}
             </dd>
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-1">
             <dt className="text-xs text-ink-subtle">{t("Rating")}</dt>
-            <dd data-numeric className="flex items-center justify-center gap-1 text-sm font-medium text-ink">
+            <dd data-numeric className="flex min-w-0 items-center justify-center gap-1 text-sm font-medium text-ink">
               <Star className="size-4" aria-hidden="true" />
               {properti.rating_count > 0 ? properti.rating_avg.toFixed(1) : "-"}
             </dd>
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-1">
             <dt className="text-xs text-ink-subtle">{t("Favorit")}</dt>
-            <dd data-numeric className="flex items-center justify-center gap-1 text-sm font-medium text-ink">
+            <dd data-numeric className="flex min-w-0 items-center justify-center gap-1 text-sm font-medium text-ink">
               <Heart className="size-4" aria-hidden="true" />
               {formatAngka(properti.favorite_count)}
             </dd>
@@ -309,11 +309,14 @@ function FormKontak({ slug }: { slug: string }) {
 function KerangkaDetail() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <div className="flex flex-col gap-6">
+      <div className="flex min-w-0 flex-col gap-6">
         <Skeleton className="aspect-video w-full rounded-card" />
         <Skeleton className="h-64 rounded-card" />
       </div>
-      <Skeleton className="h-72 rounded-card" />
+      <div className="flex min-w-0 flex-col gap-6">
+        <Skeleton className="h-72 rounded-card" />
+        <Skeleton className="h-80 rounded-card" />
+      </div>
     </div>
   );
 }
@@ -339,7 +342,7 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
       >
         {(data) => (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="flex flex-col gap-6">
+            <div className="flex min-w-0 flex-col gap-6">
               <Galeri properti={data} />
 
               <Card>
@@ -348,7 +351,9 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                     <Badge variant="primary">{t(LABEL.tipePenawaran[data.listing_type])}</Badge>
                     <Badge variant="outline">{t(LABEL.tipeProperti[data.property_type])}</Badge>
                     {data.category_name ? (
-                      <Badge variant="neutral">{data.category_name}</Badge>
+                      <Badge variant="neutral" className="max-w-full whitespace-normal">
+                        {data.category_name}
+                      </Badge>
                     ) : null}
                     {data.boost_active ? (
                       <Badge variant="accent">
@@ -358,11 +363,13 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
                     ) : null}
                   </div>
 
-                  <CardTitle className="text-xl leading-snug">{data.title}</CardTitle>
+                  <CardTitle className="text-xl leading-snug break-words">{data.title}</CardTitle>
 
                   <p className="flex items-center gap-1.5 text-sm text-ink-muted">
                     <MapPin className="size-4 shrink-0" aria-hidden="true" />
-                    {[data.district, data.city, data.province].filter(Boolean).join(", ")}
+                    <span className="min-w-0 break-words">
+                      {[data.district, data.city, data.province].filter(Boolean).join(", ")}
+                    </span>
                   </p>
                 </CardHeader>
 
@@ -389,7 +396,9 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
 
                   <div className="flex flex-col gap-2">
                     <h3 className="text-sm font-semibold text-ink">{t("Deskripsi")}</h3>
-                    <p className="text-sm whitespace-pre-line text-ink-muted">{data.description}</p>
+                    <p className="text-sm break-words whitespace-pre-line text-ink-muted">
+                      {data.description}
+                    </p>
                   </div>
 
                   {data.facilities.length > 0 ? (
@@ -440,7 +449,7 @@ export function DetailPropertiPublik({ slug }: { slug: string }) {
               </Card>
             </div>
 
-            <div className="flex flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
+            <div className="flex min-w-0 flex-col gap-6 lg:sticky lg:top-24 lg:self-start">
               <PanelKontak properti={data} slug={slug} />
               <FormKontak slug={slug} />
             </div>
