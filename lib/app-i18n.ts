@@ -653,6 +653,7 @@ const EN: Record<string, string> = {
   Perpanjangan: "Renewal",
   Peningkatan: "Upgrade",
   "Bayar sekarang": "Pay now",
+  "Bayar Sekarang": "Payment Now",
   Jenis: "Type",
   "Cari kode order atau paket...": "Search order code or plan...",
   transaksi: "transactions",
@@ -750,42 +751,11 @@ const EN: Record<string, string> = {
     "The free plan does not generate an invoice. Invoices will be available once you pay for a paid plan.",
 
   /* --- Pembayaran order mitra --- */
-  "QRIS — semua e-wallet & m-banking": "QRIS — all e-wallets & m-banking",
-  "Virtual Account BCA": "BCA Virtual Account",
-  "Virtual Account BNI": "BNI Virtual Account",
-  "Virtual Account BRI": "BRI Virtual Account",
-  "Virtual Account Permata": "Permata Virtual Account",
-  "Pilih Metode Pembayaran": "Select Payment Method",
-  "Tentukan cara pembayaran, lalu buat kode agar instruksi pembayaran muncul di halaman ini.":
-    "Choose how to pay, then generate a code so the payment instructions appear on this page.",
-  "Pilih metode pembayaran": "Select a payment method",
-  "Buat kode pembayaran": "Generate payment code",
-  "Kode pembayaran dibuat": "Payment code created",
-  "Selesaikan pembayaran sesuai instruksi di bawah.":
-    "Complete the payment according to the instructions below.",
-  "Instruksi Pembayaran": "Payment Instructions",
-  "Kode QRIS pembayaran": "Payment QRIS code",
-  "Salin kode QRIS": "Copy QRIS code",
-  "Kode QRIS tersalin": "QRIS code copied",
-  "Pindai kode QR di atas memakai aplikasi e-wallet atau m-banking yang mendukung QRIS.":
-    "Scan the QR code above using an e-wallet or m-banking app that supports QRIS.",
-  Bank: "Bank",
-  "Nomor Virtual Account": "Virtual Account Number",
-  "Total pembayaran": "Total payment",
-  "Bayar sebelum": "Pay before",
-  "Nomor VA tersalin": "VA number copied",
-  "Unduh kode QRIS": "Download QRIS code",
-  "Gagal mengunduh kode QRIS": "Failed to download the QRIS code",
-  "Bayar lewat popup Midtrans": "Pay via Midtrans popup",
-  "Popup pembayaran Midtrans tetap tersedia bila kanal QRIS/VA belum aktif.":
-    "The Midtrans payment popup remains available if the QRIS/VA channel is not yet active.",
-  "Selesaikan pembayaran sebelum": "Complete the payment before",
-  "WIB. Halaman ini akan diperbarui otomatis setelah pembayaran terkonfirmasi.":
-    "WIB. This page will update automatically once the payment is confirmed.",
   "Pembayaran": "Payment",
   "Pembayaran Langganan": "Subscription Payment",
   "Selesaikan pembayaran paket Anda melalui Midtrans.":
     "Complete your plan payment via Midtrans.",
+  "Kanal pembayaran belum tersedia": "Payment channel unavailable",
   "Kanal pembayaran belum tersedia. Muat ulang halaman ini beberapa saat lagi.":
     "The payment channel is not available yet. Reload this page in a moment.",
   "Pembayaran berhasil dikirim": "Payment successfully submitted",
@@ -1499,12 +1469,12 @@ const EN: Record<string, string> = {
     "You are being redirected to the payment page for your unfinished order.",
   "Popup pembayaran tidak dapat dibuka. Anda dialihkan ke halaman pembayaran QRIS/VA.":
     "The payment popup could not be opened. You are being redirected to the QRIS/VA payment page.",
-  "Ingin mengganti metode pembayaran atau memilih paket lain? Batalkan pesanan ini lalu pilih kembali.":
-    "Want to change your payment method or choose another plan? Cancel this order and choose again.",
+  "Ingin memilih paket lain? Batalkan pesanan ini lalu pilih paket kembali.":
+    "Want to choose another plan? Cancel this order, then select a plan again.",
   "Batalkan pembayaran": "Cancel payment",
   "Batalkan pembayaran?": "Cancel payment?",
-  "Pesanan yang dibatalkan tidak dapat dilanjutkan. Anda dapat memilih paket dan metode pembayaran lagi dari halaman Paket & Langganan.":
-    "A cancelled order cannot be continued. You can choose a plan and payment method again from the Plans & Subscription page.",
+  "Pesanan yang dibatalkan tidak dapat dilanjutkan. Anda dapat memilih paket lagi dari halaman Paket & Langganan.":
+    "A canceled order cannot be resumed. You can choose another plan from the Plans & Subscription page.",
 };
 
 /** Menyisipkan nilai ke placeholder `{kunci}` bila ada. */
