@@ -37,6 +37,8 @@ export const kunci = {
   perjanjianMitra: () => tunggal("vendor/perjanjian"),
   propertiMitra: (query?: Record<string, unknown>) => daftar("vendor/properti", query),
   detailPropertiMitra: (id: string) => detail("vendor/properti", id),
+  /* Memakai prefiks "vendor/properti" agar ikut dibatalkan saat properti berubah. */
+  saranDeveloperMitra: () => ["vendor/properti", "developer-suggestions"] as const,
   leadProperti: (id: string, channel?: string) =>
     ["vendor/properti", "lead", id, channel ?? "semua"] as const,
   transaksiMitra: (query?: Record<string, unknown>) => daftar("vendor/transaksi", query),

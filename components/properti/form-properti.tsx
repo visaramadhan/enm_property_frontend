@@ -6,6 +6,8 @@ import { useWatch } from "react-hook-form";
 import { z } from "zod";
 
 import { useBahasa } from "@/components/providers/bahasa-provider";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   KelompokField,
@@ -18,10 +20,11 @@ import { useFasilitasPublik } from "@/lib/api/hooks";
 import { OPSI_PERIODE_HARGA, OPSI_TIPE_PENAWARAN, OPSI_TIPE_PROPERTI } from "@/lib/enum";
 import type {
   CreatePropertyRequest,
+  DeveloperSuggestionView,
   ListingType,
   PricePeriod,
-  PropertyDetail,
   PropertyType,
+  VendorPropertyDetail,
 } from "@/types/api";
 
 /**
@@ -135,6 +138,11 @@ export function buatSkemaProperti(t: (teks: string) => string) {
     units_total: bilangan(t, t("Jumlah unit"), 10000),
     facilities: z.string().max(2000, t("Fasilitas terlalu panjang")),
     status: z.enum(["draft", "active"]),
+    /* Data Developer & PIC (privat): boleh kosong untuk properti non-developer. */
+    developer_name: z.string().trim().max(150, t("Nama developer maksimal 150 karakter")),
+    pic_name: z.string().trim().max(150, t("Nama PIC maksimal 150 karakter")),
+    pic_phone: z.string().trim().max(40, t("Nomor telepon PIC maksimal 40 karakter")),
+    pic_address: z.string().trim().max(255, t("Alamat PIC maksimal 255 karakter")),
   });
 }
 
@@ -161,14 +169,18 @@ export const nilaiAwalProperti: NilaiProperti = {
   facilities: "",
   /* Listing baru langsung tayang secara bawaan; mitra dapat memilih "draft". */
   status: "active",
+  developer_name: "",
+  pic_name: "",
+  pic_phone: "",
+  pic_address: "",
 };
 
 function teksAngka(nilai?: number) {
   return nilai === undefined || nilai === 0 ? "" : String(nilai);
 }
 
-/** Membentuk nilai awal form dari detail properti (mode ubah). */
-export function nilaiDariProperti(properti: PropertyDetail): NilaiProperti {
+/** Membentuk nilai awal form dari detail properti mitra (mode ubah). */
+export function nilaiDariProperti(properti: VendorPropertyDetail): NilaiProperti {
   return {
     title: properti.title,
     description: properti.description,
@@ -189,6 +201,10 @@ export function nilaiDariProperti(properti: PropertyDetail): NilaiProperti {
     units_total: teksAngka(properti.units_total),
     facilities: properti.facilities.join(", "),
     status: properti.status === "active" ? "active" : "draft",
+    developer_name: properti.developer_name ?? "",
+    pic_name: properti.pic_name ?? "",
+    pic_phone: properti.pic_phone ?? "",
+    pic_address: properti.pic_address ?? "",
   };
 }
 
@@ -227,6 +243,10 @@ export function kePermintaan(nilai: NilaiProperti): CreatePropertyRequest {
     units_total: keAngka(nilai.units_total),
     facilities: fasilitas.length > 0 ? fasilitas : undefined,
     status: nilai.status === "active" ? "active" : "draft",
+    developer_name: nilai.developer_name.trim() || undefined,
+    pic_name: nilai.pic_name.trim() || undefined,
+    pic_phone: nilai.pic_phone.trim() || undefined,
+    pic_address: nilai.pic_address.trim() || undefined,
   };
 }
 
@@ -234,9 +254,12 @@ export function kePermintaan(nilai: NilaiProperti): CreatePropertyRequest {
 export function BidangProperti({
   control,
   setValue,
+  saran,
 }: {
   control: Control<NilaiProperti>;
   setValue: UseFormSetValue<NilaiProperti>;
+  /** Saran cepat Developer & PIC dari listing mitra sebelumnya (opsional). */
+  saran?: DeveloperSuggestionView[];
 }) {
   const { t } = useBahasa();
   const tipePenawaran = useWatch({ control, name: "listing_type" });
@@ -265,6 +288,14 @@ export function BidangProperti({
       if (idx >= 0) daftar.splice(idx, 1);
     }
     setValue("facilities", daftar.join(", "), { shouldDirty: true });
+  }
+
+  /* Mengisi cepat empat kolom Developer & PIC dari listing sebelumnya. */
+  function isiSaran(item: DeveloperSuggestionView) {
+    setValue("developer_name", item.developer_name, { shouldDirty: true });
+    setValue("pic_name", item.pic_name, { shouldDirty: true });
+    setValue("pic_phone", item.pic_phone, { shouldDirty: true });
+    setValue("pic_address", item.pic_address, { shouldDirty: true });
   }
 
   return (
@@ -398,6 +429,56 @@ export function BidangProperti({
           rows={2}
           placeholder={t("Contoh: Smart Lock, Lift Barang")}
           deskripsi={t("Fasilitas yang dipilih dari daftar di atas otomatis masuk ke sini.")}
+        />
+      </KelompokField>
+
+      {/* Data internal: hanya tampil pada dashboard mitra pemilik listing. */}
+      <KelompokField
+        judul={t("Data Developer & PIC (Privat)")}
+        deskripsi={t("Catatan internal mengenai developer/sumber properti ini.")}
+        kolom={2}
+      >
+        <Alert variant="info" className="sm:col-span-2">
+          <AlertDescription>
+            {t("Data ini hanya terlihat oleh Anda dan tidak akan ditampilkan ke publik.")}
+          </AlertDescription>
+        </Alert>
+
+        {saran && saran.length > 0 ? (
+          <div className="flex flex-col gap-2 sm:col-span-2">
+            <p className="text-xs text-ink-muted">
+              {t("Isi cepat dari listing Anda sebelumnya:")}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {saran.map((item) => (
+                <Button
+                  key={item.developer_name}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => isiSaran(item)}
+                >
+                  {item.developer_name}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        <TextField control={control} name="developer_name" label={t("Nama Developer")} />
+        <TextField control={control} name="pic_name" label={t("Nama PIC")} />
+        <TextField
+          control={control}
+          name="pic_phone"
+          label={t("Nomor Telepon PIC")}
+          inputMode="tel"
+          placeholder="+62812xxxxxxx"
+        />
+        <TextField
+          control={control}
+          name="pic_address"
+          label={t("Alamat PIC / Kantor Developer")}
+          className="sm:col-span-2"
         />
       </KelompokField>
     </div>

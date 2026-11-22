@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Eye, LoaderCircle, Save } from "lucide-react";
+import { ArrowLeft, Building2, Eye, LoaderCircle, MessageCircle, Save } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -22,6 +22,7 @@ import { DaftarDeskripsi } from "@/components/shared/daftar-deskripsi";
 import { KontenAsync } from "@/components/shared/konten-async";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { TombolSalin } from "@/components/shared/tombol-salin";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,10 +33,11 @@ import {
   useDetailPropertiMitra,
   usePerbaruiProperti,
   useProfilMitra,
+  useSaranDeveloperMitra,
   useUnggahFotoMitra,
 } from "@/lib/api/hooks";
 import { formatAngka, formatRupiah, formatTanggalWib } from "@/lib/format";
-import type { PropertyDetail } from "@/types/api";
+import type { VendorPropertyDetail } from "@/types/api";
 
 /**
  * Formulir properti mitra (mode tambah & ubah).
@@ -66,7 +68,7 @@ function PanelProperti({
   properti,
 }: {
   mode: "baru" | "ubah";
-  properti?: PropertyDetail;
+  properti?: VendorPropertyDetail;
 }) {
   const router = useRouter();
   const { t } = useBahasa();
@@ -74,6 +76,7 @@ function PanelProperti({
   const ubah = usePerbaruiProperti();
   const unggah = useUnggahFotoMitra();
   const profil = useProfilMitra(mode === "baru");
+  const saran = useSaranDeveloperMitra();
   const [fotoBaru, setFotoBaru] = React.useState<File[]>([]);
   const skema = React.useMemo(() => buatSkemaProperti(t), [t]);
   const form = useForm<NilaiProperti>({
@@ -156,7 +159,11 @@ function PanelProperti({
               onSubmit={form.handleSubmit(kirim)}
               className="flex flex-col gap-6"
             >
-              <BidangProperti control={form.control} setValue={form.setValue} />
+              <BidangProperti
+                control={form.control}
+                setValue={form.setValue}
+                saran={saran.data ?? []}
+              />
 
               {mode === "baru" ? (
                 <PilihFotoLokal berkas={fotoBaru} onUbah={setFotoBaru} />
@@ -179,58 +186,126 @@ function PanelProperti({
           </CardContent>
         </Card>
 
-        {properti ? (
-          <Card className="lg:sticky lg:top-6 lg:self-start">
-            <CardHeader>
-              <CardTitle>{t("Ringkasan")}</CardTitle>
-              <CardDescription>{t("Data ini diperbarui otomatis oleh sistem.")}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusBadge
-                  jenis="properti"
-                  status={properti.status}
-                  label={properti.status_label}
-                />
-              </div>
+        <div className="flex flex-col gap-6 lg:sticky lg:top-6 lg:self-start">
+          {properti ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("Ringkasan")}</CardTitle>
+                <CardDescription>{t("Data ini diperbarui otomatis oleh sistem.")}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusBadge
+                    jenis="properti"
+                    status={properti.status}
+                    label={properti.status_label}
+                  />
+                </div>
 
-              <DaftarDeskripsi
-                kolom={1}
-                item={[
-                  { label: t("Harga"), nilai: formatRupiah(properti.price) },
-                  { label: t("Tayangan"), nilai: formatAngka(properti.views) },
-                  { label: t("Unit tersedia"), nilai: formatAngka(properti.units_available) },
-                  { label: t("Slug"), nilai: properti.slug },
-                  { label: t("Diajukan"), nilai: formatTanggalWib(properti.created_at) },
-                  { label: t("Diperbarui"), nilai: formatTanggalWib(properti.updated_at) },
-                ]}
-              />
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="lg:sticky lg:top-6 lg:self-start">
-            <CardHeader>
-              <CardTitle>{t("Tips listing")}</CardTitle>
-              <CardDescription>{t("Agar properti lebih cepat mendapat peminat.")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <ul className="flex flex-col gap-3 text-[13px] text-ink-muted">
-                <li>{t("Gunakan judul yang menyebut tipe properti dan lokasi.")}</li>
-                <li>{t("Isi luas tanah, luas bangunan, serta jumlah kamar bila ada.")}</li>
-                <li>
-                  {t("Pisahkan fasilitas dengan koma, contoh: Carport, Taman, Keamanan 24 jam.")}
-                </li>
-                <li>
-                  {t(
-                    "Pilih foto sebelum menyimpan; foto diunggah otomatis setelah properti tersimpan.",
-                  )}
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        )}
+                <DaftarDeskripsi
+                  kolom={1}
+                  item={[
+                    { label: t("Harga"), nilai: formatRupiah(properti.price) },
+                    { label: t("Tayangan"), nilai: formatAngka(properti.views) },
+                    { label: t("Unit tersedia"), nilai: formatAngka(properti.units_available) },
+                    { label: t("Slug"), nilai: properti.slug },
+                    { label: t("Diajukan"), nilai: formatTanggalWib(properti.created_at) },
+                    { label: t("Diperbarui"), nilai: formatTanggalWib(properti.updated_at) },
+                  ]}
+                />
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("Tips listing")}</CardTitle>
+                <CardDescription>{t("Agar properti lebih cepat mendapat peminat.")}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="flex flex-col gap-3 text-[13px] text-ink-muted">
+                  <li>{t("Gunakan judul yang menyebut tipe properti dan lokasi.")}</li>
+                  <li>{t("Isi luas tanah, luas bangunan, serta jumlah kamar bila ada.")}</li>
+                  <li>
+                    {t("Pisahkan fasilitas dengan koma, contoh: Carport, Taman, Keamanan 24 jam.")}
+                  </li>
+                  <li>
+                    {t(
+                      "Pilih foto sebelum menyimpan; foto diunggah otomatis setelah properti tersimpan.",
+                    )}
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          )}
+
+          {properti ? <KartuDeveloperPic properti={properti} /> : null}
+        </div>
       </div>
     </>
+  );
+}
+
+/** Normalisasi nomor telepon Indonesia menjadi tautan chat WhatsApp. */
+function tautanWhatsapp(nomor: string) {
+  const digit = nomor.replace(/\D/g, "");
+  if (digit === "") return "";
+  if (digit.startsWith("62")) return `https://wa.me/${digit}`;
+  if (digit.startsWith("0")) return `https://wa.me/62${digit.slice(1)}`;
+  return `https://wa.me/62${digit}`;
+}
+
+/**
+ * Kartu data Developer & Kontak PIC pada halaman properti mitra.
+ *
+ * Bersifat privat: hanya dirender pada dashboard mitra pemilik listing dan
+ * tidak pernah muncul di halaman publik.
+ */
+function KartuDeveloperPic({ properti }: { properti: VendorPropertyDetail }) {
+  const { t } = useBahasa();
+  const adaData =
+    properti.developer_name || properti.pic_name || properti.pic_phone || properti.pic_address;
+  if (!adaData) return null;
+
+  const wa = tautanWhatsapp(properti.pic_phone);
+
+  const item = [
+    properti.developer_name ? { label: t("Developer"), nilai: properti.developer_name } : null,
+    properti.pic_name ? { label: t("Nama PIC"), nilai: properti.pic_name } : null,
+    properti.pic_phone ? { label: t("Telepon PIC"), nilai: properti.pic_phone } : null,
+    properti.pic_address ? { label: t("Alamat PIC"), nilai: properti.pic_address } : null,
+  ].filter((baris): baris is { label: string; nilai: string } => baris !== null);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="size-4" aria-hidden="true" />
+          {t("Developer & Kontak PIC")}
+        </CardTitle>
+        <CardDescription>{t("Data privat; tidak ditampilkan ke publik.")}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-5">
+        <DaftarDeskripsi kolom={1} item={item} />
+
+        <div className="flex flex-wrap gap-2">
+          {wa ? (
+            <Button variant="outline" asChild>
+              <a href={wa} target="_blank" rel="noopener noreferrer">
+                <MessageCircle />
+                {t("Chat WhatsApp PIC")}
+              </a>
+            </Button>
+          ) : null}
+          {properti.pic_phone ? (
+            <TombolSalin
+              teks={properti.pic_phone}
+              label={t("Salin nomor")}
+              judulSukses={t("Nomor PIC tersalin")}
+            />
+          ) : null}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

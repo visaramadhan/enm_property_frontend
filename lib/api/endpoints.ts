@@ -39,6 +39,7 @@ import type {
   CreateFacilityRequest,
   CreatePlanRequest,
   CreatePropertyRequest,
+  DeveloperSuggestionView,
   FavoriteToggleResponse,
   FavoriteView,
   FacilityView,
@@ -91,6 +92,7 @@ import type {
   UserView,
   VendorAgreementResponse,
   VendorDashboard,
+  VendorPropertyDetail,
   PhotoView,
 } from "@/types/api";
 
@@ -337,15 +339,15 @@ export function daftarPropertiMitra(query: PropertyFilterQuery = {}) {
 }
 
 export function detailPropertiMitra(id: string) {
-  return apiGet<PropertyDetail>(`/vendor/properties/${id}`);
+  return apiGet<VendorPropertyDetail>(`/vendor/properties/${id}`);
 }
 
 export function buatProperti(body: CreatePropertyRequest) {
-  return apiPost<PropertyDetail>("/vendor/properties", body);
+  return apiPost<VendorPropertyDetail>("/vendor/properties", body);
 }
 
 export function perbaruiProperti(id: string, body: CreatePropertyRequest) {
-  return apiPut<PropertyDetail>(`/vendor/properties/${id}`, body);
+  return apiPut<VendorPropertyDetail>(`/vendor/properties/${id}`, body);
 }
 
 export function hapusProperti(id: string) {
@@ -353,16 +355,24 @@ export function hapusProperti(id: string) {
 }
 
 export function ubahStatusProperti(id: string, body: SetPropertyStatusRequest) {
-  return apiPatch<PropertyDetail>(`/vendor/properties/${id}/status`, body);
+  return apiPatch<VendorPropertyDetail>(`/vendor/properties/${id}/status`, body);
 }
 
 export function ubahKetersediaanProperti(id: string, body: SetAvailabilityRequest) {
-  return apiPatch<PropertyDetail>(`/vendor/properties/${id}/availability`, body);
+  return apiPatch<VendorPropertyDetail>(`/vendor/properties/${id}/availability`, body);
 }
 
 /** Mengaktifkan/menonaktifkan boost listing (kuota mengikuti paket mitra). */
 export function ubahBoostProperti(id: string, body: SetBoostRequest) {
-  return apiPatch<PropertyDetail>(`/vendor/properties/${id}/boost`, body);
+  return apiPatch<VendorPropertyDetail>(`/vendor/properties/${id}/boost`, body);
+}
+
+/**
+ * Saran cepat data Developer & PIC dari listing mitra sebelumnya.
+ * Dipakai untuk mengisi formulir lebih cepat (quick fill) di sisi mitra.
+ */
+export function saranDeveloperMitra() {
+  return apiGet<DeveloperSuggestionView[]>("/vendor/developer-suggestions");
 }
 
 /** Daftar lead (klik WA / isi form) pada satu properti mitra. */

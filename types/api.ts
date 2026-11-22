@@ -274,6 +274,28 @@ export interface PropertyDetail extends PropertySummary {
   updated_at: string;
 }
 
+/**
+ * Detail properti sisi MITRA (endpoint `/vendor/properties...`).
+ *
+ * Menyertakan data PRIVAT Developer & PIC yang SENGAJA tidak dikirim pada
+ * endpoint katalog publik (`PropertyDetail`). Jangan pakai tipe ini pada
+ * komponen/halaman publik agar data internal tidak tersebar.
+ */
+export interface VendorPropertyDetail extends PropertyDetail {
+  developer_name: string;
+  pic_name: string;
+  pic_phone: string;
+  pic_address: string;
+}
+
+/** Saran cepat Developer & PIC dari listing mitra sebelumnya (quick fill). */
+export interface DeveloperSuggestionView {
+  developer_name: string;
+  pic_name: string;
+  pic_phone: string;
+  pic_address: string;
+}
+
 export interface CreatePropertyRequest {
   title: string;
   description: string;
@@ -295,6 +317,11 @@ export interface CreatePropertyRequest {
   units_total?: number;
   category_id?: string;
   status?: "draft" | "active";
+  /** Data Developer & PIC (privat); hanya tampil pada sisi mitra/admin. */
+  developer_name?: string;
+  pic_name?: string;
+  pic_phone?: string;
+  pic_address?: string;
 }
 
 export interface AdminUpdatePropertyRequest

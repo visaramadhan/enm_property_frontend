@@ -29,6 +29,7 @@ import type {
   CreateFacilityRequest,
   CreatePlanRequest,
   CreatePropertyRequest,
+  DeveloperSuggestionView,
   FavoriteToggleResponse,
   FavoriteView,
   FacilityView,
@@ -78,6 +79,7 @@ import type {
   UserView,
   VendorAgreementResponse,
   VendorDashboard,
+  VendorPropertyDetail,
 } from "@/types/api";
 
 /** Menormalkan objek filter menjadi entri kunci cache yang stabil. */
@@ -527,15 +529,29 @@ export function useDaftarPropertiMitra(query: PropertyFilterQuery = {}) {
 }
 
 export function useDetailPropertiMitra(id: string) {
-  return useQuery<PropertyDetail>({
+  return useQuery<VendorPropertyDetail>({
     queryKey: kunci.detailPropertiMitra(id),
     queryFn: () => api.detailPropertiMitra(id),
     enabled: Boolean(id),
   });
 }
 
+/**
+ * Saran cepat Developer & PIC dari listing mitra sebelumnya.
+ *
+ * Dipakai formulir tambah/ubah properti agar agen yang menjual banyak rumah
+ * dari developer yang sama tidak perlu mengetik ulang data PIC.
+ */
+export function useSaranDeveloperMitra(aktif = true) {
+  return useQuery<DeveloperSuggestionView[]>({
+    queryKey: kunci.saranDeveloperMitra(),
+    queryFn: api.saranDeveloperMitra,
+    enabled: aktif,
+  });
+}
+
 export function useBuatProperti() {
-  return useMutasi<PropertyDetail, CreatePropertyRequest>({
+  return useMutasi<VendorPropertyDetail, CreatePropertyRequest>({
     mutasi: api.buatProperti,
     kunciInvalidasi: [awalan.propertiMitra, awalan.dashboardMitra, awalan.langgananMitra],
     pesanSukses: "Properti berhasil diajukan",
@@ -544,7 +560,7 @@ export function useBuatProperti() {
 }
 
 export function usePerbaruiProperti() {
-  return useMutasi<PropertyDetail, { id: string; body: CreatePropertyRequest }>({
+  return useMutasi<VendorPropertyDetail, { id: string; body: CreatePropertyRequest }>({
     mutasi: ({ id, body }) => api.perbaruiProperti(id, body),
     kunciInvalidasi: [awalan.propertiMitra, awalan.dashboardMitra],
     pesanSukses: "Properti berhasil diperbarui",
@@ -562,7 +578,7 @@ export function useHapusProperti() {
 }
 
 export function useUbahStatusProperti() {
-  return useMutasi<PropertyDetail, { id: string; body: SetPropertyStatusRequest }>({
+  return useMutasi<VendorPropertyDetail, { id: string; body: SetPropertyStatusRequest }>({
     mutasi: ({ id, body }) => api.ubahStatusProperti(id, body),
     kunciInvalidasi: [awalan.propertiMitra, awalan.dashboardMitra],
     pesanSukses: "Status properti diperbarui",
@@ -571,7 +587,7 @@ export function useUbahStatusProperti() {
 }
 
 export function useUbahKetersediaanProperti() {
-  return useMutasi<PropertyDetail, { id: string; body: SetAvailabilityRequest }>({
+  return useMutasi<VendorPropertyDetail, { id: string; body: SetAvailabilityRequest }>({
     mutasi: ({ id, body }) => api.ubahKetersediaanProperti(id, body),
     kunciInvalidasi: [awalan.propertiMitra],
     pesanSukses: "Ketersediaan unit diperbarui",
@@ -581,7 +597,7 @@ export function useUbahKetersediaanProperti() {
 
 /** Mengaktifkan/menonaktifkan boost listing (kuota mengikuti paket mitra). */
 export function useUbahBoostProperti() {
-  return useMutasi<PropertyDetail, { id: string; body: SetBoostRequest }>({
+  return useMutasi<VendorPropertyDetail, { id: string; body: SetBoostRequest }>({
     mutasi: ({ id, body }) => api.ubahBoostProperti(id, body),
     kunciInvalidasi: [awalan.propertiMitra, awalan.dashboardMitra],
     pesanSukses: "Status boost diperbarui",
