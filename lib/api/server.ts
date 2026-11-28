@@ -98,6 +98,13 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
   footer_description: "",
   footer_copyright: "",
   footer_links: [],
+  footer_address: "",
+  footer_phone: "",
+  footer_email: "",
+  footer_hours: "",
+  footer_instagram: "",
+  footer_tiktok: "",
+  footer_linkedin: "",
   // Varian Inggris dibiarkan kosong: halaman `/en` akan memakai teks bawaan
   // kamus Inggris sehingga tetap tampil utuh saat backend belum tersedia.
   hero_title_en: "",
@@ -121,6 +128,8 @@ export const KONTEN_LANDING_CADANGAN: LandingContentView = {
   footer_description_en: "",
   footer_copyright_en: "",
   footer_links_en: [],
+  footer_address_en: "",
+  footer_hours_en: "",
   updated_at: "",
 };
 

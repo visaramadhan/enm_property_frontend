@@ -45,6 +45,7 @@ export function buatSkemaPaket(t: Terjemah) {
       .max(60, t("Slug maksimal 60 karakter"))
       .refine((nilai) => nilai === "" || /^[a-z0-9-]+$/.test(nilai), t("Slug hanya huruf kecil, angka, dan tanda hubung")),
     description: z.string().trim().max(500, t("Deskripsi maksimal 500 karakter")),
+    description_en: z.string().trim().max(500, t("Deskripsi maksimal 500 karakter")),
     price: bilangan(t, "Harga", 0),
     duration_days: bilangan(t, "Durasi", 1, 3650),
     listing_quota: bilangan(t, "Kuota listing", -1, 100000),
@@ -66,6 +67,7 @@ export const nilaiAwalPaket: NilaiPaket = {
   name: "",
   slug: "",
   description: "",
+  description_en: "",
   price: "0",
   duration_days: "30",
   listing_quota: "10",
@@ -86,6 +88,7 @@ export function nilaiDariPaket(paket: PlanView): NilaiPaket {
     name: paket.name,
     slug: paket.slug,
     description: paket.description,
+    description_en: paket.description_en,
     price: String(paket.price),
     duration_days: String(paket.duration_days),
     listing_quota: String(paket.listing_quota),
@@ -115,6 +118,7 @@ export function keCreatePlan(nilai: NilaiPaket): CreatePlanRequest {
     slug: nilai.slug.trim() || undefined,
     name: nilai.name.trim(),
     description: nilai.description.trim() || undefined,
+    description_en: nilai.description_en.trim() || undefined,
     price: nilai.is_free ? 0 : Number(nilai.price),
     duration_days: Number(nilai.duration_days),
     listing_quota: Number(nilai.listing_quota),
@@ -175,6 +179,13 @@ export function BidangPaket({
           control={control}
           name="description"
           label={t("Deskripsi")}
+          rows={3}
+          className="sm:col-span-2"
+        />
+        <TextareaField
+          control={control}
+          name="description_en"
+          label={t("Deskripsi (Inggris)")}
           rows={3}
           className="sm:col-span-2"
         />

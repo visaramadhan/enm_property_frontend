@@ -432,6 +432,8 @@ export interface PlanView {
   slug: string;
   name: string;
   description: string;
+  /** Varian bahasa Inggris deskripsi paket (dipakai pada landing `/en`). */
+  description_en: string;
   price: number;
   price_label: string;
   duration_days: number;
@@ -461,6 +463,7 @@ export interface CreatePlanRequest {
   slug?: string;
   name: string;
   description?: string;
+  description_en?: string;
   price: number;
   duration_days: number;
   listing_quota: number;
@@ -479,6 +482,7 @@ export interface CreatePlanRequest {
 export interface UpdatePlanRequest {
   name?: string;
   description?: string;
+  description_en?: string;
   price?: number;
   duration_days?: number;
   listing_quota?: number;
@@ -1016,6 +1020,14 @@ export interface LandingContentView {
   footer_description: string;
   footer_copyright: string;
   footer_links: LandingFooterLink[];
+  /** Kontak & identitas kantor pada footer; kosong memakai teks bawaan. */
+  footer_address: string;
+  footer_phone: string;
+  footer_email: string;
+  footer_hours: string;
+  footer_instagram: string;
+  footer_tiktok: string;
+  footer_linkedin: string;
   /** Varian bahasa Inggris (khusus halaman landing `/en`). */
   hero_title_en: string;
   hero_subtitle_en: string;
@@ -1039,6 +1051,9 @@ export interface LandingContentView {
   footer_description_en: string;
   footer_copyright_en: string;
   footer_links_en: LandingFooterLink[];
+  /** Varian Inggris alamat & jam operasional kantor. */
+  footer_address_en: string;
+  footer_hours_en: string;
   updated_at: string;
 }
 
@@ -1078,6 +1093,14 @@ export interface UpdateLandingRequest {
   footer_description: string;
   footer_copyright: string;
   footer_links: LandingFooterLink[];
+  /** Kontak & identitas kantor pada footer; opsional (boleh kosong). */
+  footer_address: string;
+  footer_phone: string;
+  footer_email: string;
+  footer_hours: string;
+  footer_instagram: string;
+  footer_tiktok: string;
+  footer_linkedin: string;
   /** Varian bahasa Inggris; opsional (boleh kosong). */
   hero_title_en: string;
   hero_subtitle_en: string;
@@ -1101,6 +1124,9 @@ export interface UpdateLandingRequest {
   footer_description_en: string;
   footer_copyright_en: string;
   footer_links_en: LandingFooterLink[];
+  /** Varian Inggris alamat & jam operasional kantor. */
+  footer_address_en: string;
+  footer_hours_en: string;
 }
 
 /** Jenis gambar landing yang dapat diunggah melalui CMS. */

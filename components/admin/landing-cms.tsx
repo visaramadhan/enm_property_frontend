@@ -102,6 +102,14 @@ function buatSkemaLanding(t: Terjemah) {
         }),
       )
       .max(FOOTER_LINK_MAKSIMAL, t("Maksimal {n} tautan", { n: FOOTER_LINK_MAKSIMAL })),
+    // Kontak & identitas kantor pada footer.
+    footer_address: z.string().trim().max(300, t("Maksimal 300 karakter")),
+    footer_phone: z.string().trim().max(40, t("Maksimal 40 karakter")),
+    footer_email: z.string().trim().max(120, t("Maksimal 120 karakter")),
+    footer_hours: z.string().trim().max(120, t("Maksimal 120 karakter")),
+    footer_instagram: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    footer_tiktok: z.string().trim().max(200, t("Maksimal 200 karakter")),
+    footer_linkedin: z.string().trim().max(200, t("Maksimal 200 karakter")),
     // Varian bahasa Inggris (khusus halaman `/en`). Semua opsional: bila
     // dikosongkan, halaman Inggris memakai teks bawaan komponen.
     hero_title_en: z.string().trim().max(70, t("Maksimal 70 karakter")),
@@ -140,6 +148,8 @@ function buatSkemaLanding(t: Terjemah) {
         }),
       )
       .max(FOOTER_LINK_MAKSIMAL, t("Maksimal {n} tautan", { n: FOOTER_LINK_MAKSIMAL })),
+    footer_address_en: z.string().trim().max(300, t("Maksimal 300 karakter")),
+    footer_hours_en: z.string().trim().max(120, t("Maksimal 120 karakter")),
   });
 }
 
@@ -209,6 +219,13 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
     footer_description: konten.footer_description,
     footer_copyright: konten.footer_copyright,
     footer_links: konten.footer_links ?? [],
+    footer_address: konten.footer_address,
+    footer_phone: konten.footer_phone,
+    footer_email: konten.footer_email,
+    footer_hours: konten.footer_hours,
+    footer_instagram: konten.footer_instagram,
+    footer_tiktok: konten.footer_tiktok,
+    footer_linkedin: konten.footer_linkedin,
     hero_title_en: konten.hero_title_en,
     hero_subtitle_en: konten.hero_subtitle_en,
     hero_cta_text_en: konten.hero_cta_text_en,
@@ -230,6 +247,8 @@ function nilaiAwal(konten: LandingContentView): NilaiLanding {
     footer_description_en: konten.footer_description_en,
     footer_copyright_en: konten.footer_copyright_en,
     footer_links_en: konten.footer_links_en ?? [],
+    footer_address_en: konten.footer_address_en,
+    footer_hours_en: konten.footer_hours_en,
   };
 }
 
@@ -888,6 +907,48 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
             label={t("Hak cipta")}
             deskripsi={t("Maksimal 200 karakter.")}
           />
+          <TextField
+            control={form.control}
+            name="footer_address"
+            label={t("Alamat kantor")}
+            deskripsi={t("Alamat kantor fisik yang tampil pada kolom identitas footer.")}
+          />
+          <TextField
+            control={form.control}
+            name="footer_phone"
+            label={t("Nomor WhatsApp dukungan")}
+            deskripsi={t("Format internasional, mis. +62 812-3456-7890. Dipakai untuk tombol WhatsApp footer.")}
+          />
+          <TextField
+            control={form.control}
+            name="footer_email"
+            label={t("Email resmi")}
+            deskripsi={t("Alamat surel dukungan, mis. support@enmproperty.com.")}
+          />
+          <TextField
+            control={form.control}
+            name="footer_hours"
+            label={t("Jam operasional")}
+            deskripsi={t("Contoh: Senin – Sabtu, 09.00 – 18.00 WITA.")}
+          />
+          <TextField
+            control={form.control}
+            name="footer_instagram"
+            label={t("Instagram")}
+            deskripsi={t("Nama pengguna tanpa @, mis. enmproperty2026.")}
+          />
+          <TextField
+            control={form.control}
+            name="footer_tiktok"
+            label={t("TikTok")}
+            deskripsi={t("Nama pengguna tanpa @.")}
+          />
+          <TextField
+            control={form.control}
+            name="footer_linkedin"
+            label={t("LinkedIn")}
+            deskripsi={t("Slug halaman perusahaan LinkedIn.")}
+          />
           <FieldTautanFooter
             form={form}
             nama="footer_links"
@@ -998,6 +1059,18 @@ function FormLanding({ konten }: { konten: LandingContentView }) {
               name="footer_copyright_en"
               label={t("Footer copyright (EN)")}
               deskripsi={t("Maksimal 200 karakter.")}
+            />
+            <TextField
+              control={form.control}
+              name="footer_address_en"
+              label={t("Office address (EN)")}
+              deskripsi={t("Alamat kantor versi bahasa Inggris.")}
+            />
+            <TextField
+              control={form.control}
+              name="footer_hours_en"
+              label={t("Operating hours (EN)")}
+              deskripsi={t("Jam operasional versi bahasa Inggris, mis. Monday – Saturday, 09:00 – 18:00 WITA.")}
             />
           </div>
 

@@ -588,9 +588,9 @@ const EN: Record<string, string> = {
   Kantor: "Office",
   Gudang: "Warehouse",
   Lainnya: "Other",
-  "Per hari": "Per day",
-  "Per bulan": "Per month",
-  "Per tahun": "Per year",
+  "Per hari": "day",
+  "Per bulan": "month",
+  "Per tahun": "year",
 
   /* ---------------------------------------------- Formulir properti mitra -- */
   "Ubah Properti": "Edit Property",

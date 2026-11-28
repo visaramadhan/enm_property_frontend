@@ -1,20 +1,21 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { cacheLife } from "next/cache";
 import {
   Check,
   Home as IkonHome,
-  MapPin,
   MessageCircle,
   Search,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 
+import { EditableImage } from "@/components/editor/editable-image";
+import { EditableText } from "@/components/editor/editable-text";
+import { LandingPageEditor } from "@/components/editor/landing-page-editor";
+import { EditableFaq } from "@/components/landing/editable-faq";
+import { Footer } from "@/components/landing/footer";
 import { HeaderLanding } from "@/components/landing/header-landing";
-import { MenuAkun } from "@/components/layout/menu-akun";
 import { SkemaItemList } from "@/components/landing/skema-item-list";
 import { TombolLacak } from "@/components/landing/tombol-lacak";
 import { KartuProperti } from "@/components/properti/kartu-properti";
@@ -204,7 +205,7 @@ export async function LandingHalaman({ bahasa }: { bahasa: Bahasa }) {
   const areaUtama = area[0] ?? "Bali";
 
   return (
-    <div className="flex flex-1 flex-col">
+    <LandingPageEditor bahasa={bahasa}>
       <HeaderLanding bahasa={bahasa} />
       <PenandaAsalBeranda />
       <main className="flex flex-1 flex-col">
@@ -213,12 +214,16 @@ export async function LandingHalaman({ bahasa }: { bahasa: Bahasa }) {
         <PropertiPilihan daftar={properti} t={t} k={k} />
         <PaketMitra daftar={paket} t={t} k={k} bahasa={bahasa} />
         <PanduanMitra t={t} k={k} />
-        <Faq t={t} k={k} />
-        <CtaMitra t={t} k={k} />
+        <EditableFaq
+          eyebrow={k.faq.eyebrow}
+          judul={t.faqTitle}
+          subjudul={t.faqSubtitle}
+          items={t.faqItems}
+        />
       </main>
 
-      <FooterLanding t={t} k={k} />
-    </div>
+      <Footer konten={konten} bahasa={bahasa} tahun={<TahunHakCipta />} />
+    </LandingPageEditor>
   );
 }
 
@@ -269,35 +274,6 @@ function gambarKolase(
   return [...daftarCms, hero, ...dariProperti].filter((url) => url.length > 0).slice(0, 4);
 }
 
-/** Satu slot kolase hero; menampilkan blok netral bila gambar belum tersedia. */
-function SlotKolase({
-  src,
-  alt,
-  kelas,
-  utama = false,
-}: {
-  src?: string;
-  alt: string;
-  kelas: string;
-  utama?: boolean;
-}) {
-  return (
-    <div className={cn("absolute overflow-hidden rounded-panel bg-divider shadow-md", kelas)}>
-      {src ? (
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes="(max-width: 960px) 80vw, 40vw"
-          className="object-cover"
-          loading={utama ? "eager" : "lazy"}
-          fetchPriority={utama ? "high" : "auto"}
-        />
-      ) : null}
-    </div>
-  );
-}
-
 /** Bagian hero: judul utama (H1 tunggal), CTA, wilayah unggulan, dan kolase foto. */
 function Hero({
   konten,
@@ -326,11 +302,20 @@ function Hero({
         <div>
           <Eyebrow>{k.hero.eyebrow}</Eyebrow>
 
-          <h1 className="my-4 max-w-2xl text-[clamp(30px,4.2vw,44px)] leading-[1.15] font-bold tracking-[-0.04em] text-ink">
-            {t.heroTitle}
-          </h1>
+          <EditableText
+            as="h1"
+            kunci="hero_title"
+            nilai={t.heroTitle}
+            className="my-4 max-w-2xl text-[clamp(30px,4.2vw,44px)] leading-[1.15] font-bold tracking-[-0.04em] text-ink"
+          />
 
-          <p className="max-w-[470px] text-base leading-[1.65] text-ink-muted">{t.heroSubtitle}</p>
+          <EditableText
+            as="p"
+            multiline
+            kunci="hero_subtitle"
+            nilai={t.heroSubtitle}
+            className="max-w-[470px] text-base leading-[1.65] text-ink-muted"
+          />
 
           <div className="mt-6 mb-4 flex flex-wrap gap-3">
             <TombolLacak href="/katalog" section="hero_banner" label={t.heroCta} size="lg">
@@ -365,24 +350,28 @@ function Hero({
         </div>
 
         <div className="relative h-[300px] sm:h-[400px]" aria-label={k.hero.ariaKolase}>
-          <SlotKolase
-            src={gambar[0]}
+          <EditableImage
+            indeks={0}
+            sumber={gambar[0]}
             alt={altKolase}
             utama
             kelas="top-0 right-0 left-[20%] h-[210px] sm:left-[34%] sm:h-[285px]"
           />
-          <SlotKolase
-            src={gambar[1]}
+          <EditableImage
+            indeks={1}
+            sumber={gambar[1]}
             alt={altKolase}
             kelas="top-[130px] right-[56%] left-0 h-[130px] border-[5px] border-canvas sm:top-[150px] sm:right-1/2 sm:h-[185px]"
           />
-          <SlotKolase
-            src={gambar[2]}
+          <EditableImage
+            indeks={2}
+            sumber={gambar[2]}
             alt={altKolase}
             kelas="bottom-0 left-[40%] right-[22%] h-[100px] border-[5px] border-canvas sm:h-[140px]"
           />
-          <SlotKolase
-            src={gambar[3]}
+          <EditableImage
+            indeks={3}
+            sumber={gambar[3]}
             alt={altKolase}
             kelas="right-0 bottom-0 left-[78%] hidden h-[90px] sm:block"
           />
@@ -402,14 +391,22 @@ function Keunggulan({ t, k }: { t: KontenTerpilih; k: Kamus }) {
   return (
     <section className="border-y border-line bg-surface">
       <div className={cn(KONTAINER, "py-9")}>
-        {t.keunggulanTitle ? (
+        {t.keunggulanTitle || t.keunggulanSubtitle ? (
           <KepalaBagian>
             <Eyebrow center>{k.keunggulan.eyebrow}</Eyebrow>
-            <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink">
-              {t.keunggulanTitle}
-            </h2>
+            <EditableText
+              as="h2"
+              kunci="keunggulan_title"
+              nilai={t.keunggulanTitle}
+              className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink"
+            />
             {t.keunggulanSubtitle ? (
-              <p className="text-sm text-ink-muted">{t.keunggulanSubtitle}</p>
+              <EditableText
+                as="p"
+                kunci="keunggulan_subtitle"
+                nilai={t.keunggulanSubtitle}
+                className="text-sm text-ink-muted"
+              />
             ) : null}
           </KepalaBagian>
         ) : null}
@@ -462,10 +459,18 @@ function PropertiPilihan({
         <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
           <div>
             <Eyebrow>{k.properti.eyebrow}</Eyebrow>
-            <h2 className="my-2 text-2xl font-semibold tracking-[-0.025em] text-ink">
-              {t.propertiTitle}
-            </h2>
-            <p className="text-sm text-ink-muted">{t.propertiSubtitle}</p>
+            <EditableText
+              as="h2"
+              kunci="properti_title"
+              nilai={t.propertiTitle}
+              className="my-2 text-2xl font-semibold tracking-[-0.025em] text-ink"
+            />
+            <EditableText
+              as="p"
+              kunci="properti_subtitle"
+              nilai={t.propertiSubtitle}
+              className="text-sm text-ink-muted"
+            />
           </div>
           <Link
             href="/katalog"
@@ -567,6 +572,7 @@ function PaketMitra({
   k: Kamus;
   bahasa: Bahasa;
 }) {
+  const inggris = bahasa === "en";
   const unggulanId = daftar
     .filter((paket) => !paket.is_free)
     .reduce<PlanView | null>(
@@ -583,10 +589,18 @@ function PaketMitra({
           <Eyebrow center gold>
             {k.paket.eyebrow}
           </Eyebrow>
-          <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-white">
-            {t.paketTitle}
-          </h2>
-          <p className="text-sm text-white/80">{t.paketSubtitle}</p>
+          <EditableText
+            as="h2"
+            kunci="paket_title"
+            nilai={t.paketTitle}
+            className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-white"
+          />
+          <EditableText
+            as="p"
+            kunci="paket_subtitle"
+            nilai={t.paketSubtitle}
+            className="text-sm text-white/80"
+          />
         </KepalaBagian>
 
         {daftar.length > 0 ? (
@@ -612,9 +626,9 @@ function PaketMitra({
                   </h3>
 
                   <p className="mb-4 min-h-[60px] text-[13px] leading-[1.55] text-ink-muted">
-                    {paket.description
-                      ? terjemah(bahasa, paket.description)
-                      : k.paket.deskripsiBawaan}
+                    {(inggris ? paket.description_en : "") ||
+                      (paket.description ? terjemah(bahasa, paket.description) : "") ||
+                      k.paket.deskripsiBawaan}
                   </p>
 
                   <div className="mt-auto mb-4 rounded-[10px] border border-divider bg-canvas px-3.5 py-3">
@@ -706,10 +720,18 @@ function PanduanMitra({ t, k }: { t: KontenTerpilih; k: Kamus }) {
       <div className={KONTAINER}>
         <KepalaBagian>
           <Eyebrow center>{k.panduan.eyebrow}</Eyebrow>
-          <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink">
-            {t.panduanTitle}
-          </h2>
-          <p className="text-sm text-ink-muted">{t.panduanSubtitle}</p>
+          <EditableText
+            as="h2"
+            kunci="panduan_title"
+            nilai={t.panduanTitle}
+            className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink"
+          />
+          <EditableText
+            as="p"
+            kunci="panduan_subtitle"
+            nilai={t.panduanSubtitle}
+            className="text-sm text-ink-muted"
+          />
         </KepalaBagian>
 
         <div className="grid gap-[18px] sm:grid-cols-2 lg:grid-cols-4">
@@ -787,77 +809,6 @@ function PanduanMitra({ t, k }: { t: KontenTerpilih; k: Kamus }) {
 }
 
 /**
- * Pertanyaan umum.
- *
- * Memakai elemen bawaan `<details>`/`<summary>` sehingga jawaban tetap ada di
- * HTML awal (terbaca mesin pencari) meski tanpa JavaScript.
- */
-function Faq({ t, k }: { t: KontenTerpilih; k: Kamus }) {
-  return (
-    <section id="faq" className={cn(JANGKAR, "border-t border-line bg-surface py-12 sm:py-16")}>
-      <div className={KONTAINER}>
-        <KepalaBagian>
-          <Eyebrow center>{k.faq.eyebrow}</Eyebrow>
-          <h2 className="my-2.5 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-ink">
-            {t.faqTitle}
-          </h2>
-          <p className="text-sm text-ink-muted">{t.faqSubtitle}</p>
-        </KepalaBagian>
-
-        <div className="mx-auto flex max-w-[850px] flex-col gap-3">
-          {t.faqItems.map((item, indeks) => (
-            <details
-              key={item.tanya}
-              open={indeks === 0}
-              className="group rounded-[10px] border border-line bg-surface"
-            >
-              <summary className="flex list-none cursor-pointer items-center justify-between gap-4 p-5 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
-                {item.tanya}
-                <Sparkles
-                  className="size-4 shrink-0 text-primary transition-transform duration-250 group-open:rotate-45"
-                  aria-hidden="true"
-                />
-              </summary>
-              <p className="px-5 pb-[18px] text-[13px] leading-[1.7] text-ink-muted">{item.jawab}</p>
-            </details>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/** Ajakan mendaftar sebagai mitra; teksnya berasal dari modul CTA Mitra di CMS. */
-function CtaMitra({ t, k }: { t: KontenTerpilih; k: Kamus }) {
-  return (
-    <section id="kemitraan" className={cn(JANGKAR, "bg-canvas py-12 sm:py-16")}>
-      <div className={KONTAINER}>
-        <div className="rounded-[20px] bg-[linear-gradient(101deg,#203E34,#2E4A3E)] px-5 py-12 text-center shadow-md sm:px-8 sm:py-14">
-          <Eyebrow center gold>
-            {k.cta.eyebrow}
-          </Eyebrow>
-          <h2 className="my-3 text-[clamp(24px,3vw,30px)] leading-tight font-bold tracking-[-0.03em] text-white">
-            {t.ctaTitle}
-          </h2>
-          <p className="mx-auto mb-6 max-w-[620px] text-sm leading-[1.6] text-white/80">
-            {t.ctaDescription}
-          </p>
-          <TombolLacak
-            href="/register?role=mitra"
-            section="cta_mitra"
-            label={t.ctaTitle}
-            size="lg"
-            className="mx-auto"
-          >
-            {k.cta.tombol}
-          </TombolLacak>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/**
  * Tahun hak cipta.
  *
  * `new Date()` tidak boleh dievaluasi langsung saat prerender (Next.js 16
@@ -870,49 +821,4 @@ async function TahunHakCipta() {
   cacheLife({ stale: 86400, revalidate: 604800, expire: 2592000 });
 
   return <>{new Date().getFullYear()}</>;
-}
-
-/** Kaki halaman landing: identitas ringkas, navigasi bagian, dan hak cipta. */
-function FooterLanding({ t, k }: { t: KontenTerpilih; k: Kamus }) {
-  return (
-    <footer className="border-t border-line bg-surface pt-9">
-      <div className={KONTAINER}>
-        <div className="flex flex-wrap justify-between gap-7 pb-6">
-          <div>
-            <Link href="/" className="flex items-center gap-2.5" aria-label={k.footer.ariaBrand}>
-              <span className="grid size-[30px] shrink-0 place-items-center rounded-lg bg-primary text-[12px] font-bold text-primary-foreground">
-                {t.footerBrandInitial}
-              </span>
-              <span className="text-base font-bold tracking-tight text-ink">{t.footerBrandName}</span>
-            </Link>
-            <p className="mt-2.5 max-w-[390px] text-xs leading-[1.7] text-ink-muted">
-              {t.footerDescription}
-            </p>
-          </div>
-
-          <nav className="flex flex-wrap gap-6 text-xs text-ink-muted" aria-label={k.footer.navigasi}>
-            {t.footerLinks.map((item) => (
-              <a
-                key={`${item.href}-${item.label}`}
-                href={item.href}
-                className="transition-colors hover:text-primary"
-              >
-                {item.label}
-              </a>
-            ))}
-            <MenuAkun variasi="tautan" className="transition-colors hover:text-primary" />
-            <Link href="/katalog" className="transition-colors hover:text-primary">
-              {k.footer.katalog}
-            </Link>
-          </nav>
-        </div>
-
-        <div className="border-t border-divider py-4 text-center text-[11px] text-ink-subtle">
-          <span className="inline-flex items-center gap-1.5">
-            <MapPin className="size-3.5" aria-hidden="true" />© <TahunHakCipta /> {t.footerCopyright}
-          </span>
-        </div>
-      </div>
-    </footer>
-  );
 }

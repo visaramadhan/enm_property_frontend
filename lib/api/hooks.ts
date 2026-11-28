@@ -918,11 +918,17 @@ export function useLaporanLanggananOwner(query: ReportFilterQuery = {}) {
 
 /* =============================================================== Landing */
 
-/** Konten landing page untuk editor CMS admin/superadmin. */
-export function useLandingAdmin(): UseQueryResult<LandingContentView> {
+/**
+ * Konten landing page untuk editor CMS admin/superadmin.
+ *
+ * `aktif` dipakai editor visual agar permintaan hanya dijalankan setelah
+ * peran pengguna diketahui admin/superadmin (menghindari 403 bagi pengunjung).
+ */
+export function useLandingAdmin(aktif = true): UseQueryResult<LandingContentView> {
   return useQuery({
     queryKey: kunci.landing(),
     queryFn: api.ambilLandingAdmin,
+    enabled: aktif,
   });
 }
 

@@ -30,7 +30,7 @@ import type { PlanView } from "@/types/api";
 
 /** Satu kartu paket dengan ringkasan harga dan tombol pilih. */
 function KartuPaket({ paket }: { paket: PlanView }) {
-  const { t } = useBahasa();
+  const { t, bahasa } = useBahasa();
 
   return (
     <Card className="flex flex-col">
@@ -38,7 +38,11 @@ function KartuPaket({ paket }: { paket: PlanView }) {
         <div className="flex flex-col gap-1">
           <CardTitle>{paket.name}</CardTitle>
           <CardDescription>
-            {paket.description ? t(paket.description) : t("Paket langganan mitra ENM Property.")}
+            {bahasa === "en" && paket.description_en
+              ? paket.description_en
+              : paket.description
+                ? t(paket.description)
+                : t("Paket langganan mitra ENM Property.")}
           </CardDescription>
         </div>
         {paket.is_free ? <Badge variant="success">{t("Gratis")}</Badge> : null}

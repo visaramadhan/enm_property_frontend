@@ -351,7 +351,7 @@ function KartuPaket({
   aktif: boolean;
   onPilih: () => void;
 }) {
-  const { t } = useBahasa();
+  const { t, bahasa } = useBahasa();
 
   return (
     <Card className="gap-5">
@@ -359,7 +359,11 @@ function KartuPaket({
         <div className="flex flex-col gap-1">
           <CardTitle>{paket.name}</CardTitle>
           <CardDescription>
-            {paket.description ? t(paket.description) : t("Paket langganan mitra.")}
+            {bahasa === "en" && paket.description_en
+              ? paket.description_en
+              : paket.description
+                ? t(paket.description)
+                : t("Paket langganan mitra.")}
           </CardDescription>
         </div>
         {aktif ? (
